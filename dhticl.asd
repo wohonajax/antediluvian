@@ -15,4 +15,4 @@
   :long-description "DHT in Common Lisp"
   :components ((:file "packages")
 	       (:file "util" :depends-on ("packages")))
-  :depends-on (usocket ironclad))
+  :depends-on (usocket ironclad bencode))
