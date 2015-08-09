@@ -125,6 +125,21 @@
 	    (sort-bucket-by-distance true-bucket)
 	    (return))))))
 
+(defmacro find-in-table (criteria &body body)
+  "Attempts to find a node in the routing table that satisfies CRITERIA. If
+  none is found, executes BODY, otherwise returns the node."
+  (alexandria:with-gensyms (target node)
+    `(let ((,target nil))
+       (tagbody (iterate-table (lambda (,node)
+				 (when (funcall ,criteria ,node)
+				   (setf ,target ,node)
+				   (go away)))
+			       :nodely t)
+	away)
+       (if ,target
+	   ,target
+	   ,@body))))
+
 (defun add-to-table (node)
   "Adds NODE to the appropriate bucket in the routing table."
   (tagbody
@@ -237,6 +252,57 @@
 		    (lambda (node)
 		      (when (eq :questionable (node-health node))
 			(handle-questionable-node node))))))
+
+(defun find-node-in-table (id)
+  "Tries to find a node in the routing table based on its ID. Otherwise, returns
+  a list of the K closest nodes."
+  (find-in-table (lambda (x) (string-equal id (node-id x)))
+		 (let ((goal (convert-id-to-int id))
+		       (worst nil)
+		       (winners nil)
+		       (ticker 0))
+		   (flet ((sorter (x y)
+			    (cond ((and x y) (< x y))
+				  (x t)
+				  (t nil)))
+			  (list-sorter (x y)
+			    (let ((xid (when x
+					 (node-id x)))
+				  (yid (when y
+					 (node-id y))))
+			      (cond ((and xid yid)
+				     (< (calculate-distance xid goal)
+					(calculate-distance yid goal)))
+				    (xid t)
+				    (yid nil)
+				    (x t)
+				    (y nil)
+				    (t t))))
+			  (handle-overflowing-list ()
+			    (setf winners (butlast winners))))
+		     (tagbody
+			(iterate-table
+			 (lambda (node)
+			   (when node
+			     (let ((distance
+				    (calculate-distance (node-id node)
+							goal))
+				   (len (length winners)))
+			       (if (sorter distance worst)
+				   (progn (push node winners)
+					  (setf winners
+						(sort winners
+						      #'list-sorter))
+					  (setf worst distance)
+					  (when (> len +k+)
+					    (handle-overflowing-list)))
+				   (progn (unless (< len +k+)
+					    (incf ticker))
+					  (when (> ticker 1)
+					    (go away)))))))
+			 :nodely t)
+		      away))
+		   winners)))
 
 #| TODO: this is pseudocode of what happens
 (defun closest-nodes ()

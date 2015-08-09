@@ -3,12 +3,18 @@
 (defpackage #:dhticl-util
   (:use #:cl)
   (:export #:within
-	   #:minutes-since))
+	   #:minutes-since
+	   #:awhen
+	   #:it))
 
 (defpackage #:dhticl-krpc
-  (:use #:cl)
+  (:use #:cl
+	#:dhticl-util)
   (:export #:*default-port*
-	   #:ping-node))
+	   #:poke-node
+	   #:hit-on-node
+	   #:ask-node-for-peers
+	   #:inform-node))
 
 (defpackage #:dhticl-nodes
   (:use #:cl

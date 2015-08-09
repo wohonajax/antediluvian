@@ -15,3 +15,9 @@
 	  (- (the fixnum (get-universal-time))
 	     time))
      60))
+
+(defmacro awhen (test &body forms)
+  "Your usual anaphoric WHEN."
+  `(let ((it ,test))
+     (when it
+       ,@forms)))
