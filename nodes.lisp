@@ -1,64 +1,70 @@
 (in-package #:dhticl-nodes)
 
-(defconstant +my-id+ (format nil "~44,'0,':,8:x" (random (expt 2 160))))
-
-;;; distance is bit-wise XOR
-(defun node-distance (a b)
-  "Returns the distance between nodes A and B."
+(defun calculate-distance (a b)
+  "Returns the distance between A and B."
   (logxor a b))
 
-(defclass node ()
-  ((id :accessor id
-       :initarg :id
-       :initform 0)
-   (ip :accessor ip
-       :initarg :ip
-       :initform 0)
-   (distance :accessor distance
-	     :initarg :distance
-	     :initform 0)))
+(defun convert-id-to-int (id)
+  "Converts a node ID from a hexadecimal string to a decimal integer."
+  (parse-integer id :radix 16))
 
-(defparameter *routing-table* (make-array))
+(defun convert-id-to-hex (id)
+  "Converts a node ID from a decimal integer to a hexadecimal string."
+  (string-downcase (format nil "~X" id)))
 
-;;; size defaults to 8 (bucket size limit)
-;;; we make it optional so split-bucket can specify smaller
-(defun make-bucket (&optional (size 8))
-  (make-array size :initial-element nil))
+(defconstant +my-id+
+  (convert-id-to-hex (random (expt 2 160))))
 
-(defun add-to-bucket (node bucket)
-  (unless (dotimes (i (length bucket))
-	          (when (null (aref bucket i))
-	            (setf (aref bucket i) node)
-	            (return t)))
-    (kbucket-splitp bucket)))
+(defstruct node
+  (id nil :type string
+      :read-only t)
+  (ip nil :read-only t)
+  (distance nil :read-only t)
+  (last-activity nil :type fixnum)
+  (health))
 
-;;; split bucket if our id is in its range, otherwise ping from oldest to new
-(defun kbucket-splitp (bucket)
-  (if (= +my-id+
-	       (clamp +my-id+
-		            (min (values-list bucket))
-		            (max (values-list bucket))))
-      (kbucket-split bucket)
-      (ping-old-nodes bucket)))
+(defun create-node (&key (id nil) (ip nil) (distance nil)
+		      (last-activity nil)
+		      (health :questionable))
+  "Creates a node object with the specified attributes."
+  (make-node :id id
+	     :ip ip
+	     :distance distance
+	     :last-activity last-activity
+	     :health health))
 
-(defun kbucket-split (bucket)
-  (let ((new-len (/ (length bucket)
-		                2)))
-    (when (> new-len 1)
-      (let ((a (make-bucket new-len))
-	          (b (make-bucket new-len)))
-	      (seed-buckets a b bucket)
-	      (values a b)))))
+(defun calculate-node-distance (node)
+  "Returns the distance between NODE and us."
+  (calculate-distance (convert-id-to-int +my-id+)
+		      (node-id node)))
 
-;;; FIXME: add new buckets to the table
-(defun seed-buckets (first second seed)
-  "Seeds the values of a bucket into 2 new buckets."
-  (let* ((seed-len (length seed))
-         (new-len (/ seed-len 2))
-	       (sorted-seed (sort seed #'<)))
-    (dotimes (i new-len)
-      (setf (aref first i) (aref sorted-seed i)
-	    (aref second i) (aref sorted-seed (+ new-len i))))))
+(defun calculate-elapsed-inactivity (node)
+  "Returns the time in minutes since NODE's last seen activity."
+  (let ((last-activity (node-last-activity node)))
+    (and last-activity (minutes-since last-activity))))
 
-(defun ping-old-nodes (bucket)
-  "")
+(defun calculate-last-activity (node)
+  "Returns the universal timestamp of NODE's last seen activity."
+  (let ((time-inactive (calculate-elapsed-inactivity node)))
+    (cond (time-inactive time-inactive)
+	  ((ping-node) (get-universal-time))
+	  (t nil))))
+
+(defun calculate-node-health (node)
+  "Returns the node's health as a keyword, either :GOOD, :QUESTIONABLE, or :BAD."
+  (let ((time-inactive (calculate-elapsed-inactivity node)))
+    (cond ((null time-inactive) :questionable)
+	  ((< time-inactive 15) :good)
+	  ((ping-node node) :good)
+	  (t :bad))))
+
+(defun update-node (node)
+  "Recalculates the time since NODE's last activity and updates its health
+  accordingly."
+  (setf (node-last-activity node) (calculate-last-activity node)
+	(node-health node) (calculate-node-health node)))
+#|
+(defun make-node-hash (node)
+  "Constructs an infohash using NODE."
+  (make-hash (ironclad:integer-to-octets (ip node))))
+|#
