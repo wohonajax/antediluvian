@@ -226,7 +226,7 @@
   "Pings the nodes in a bucket from oldest to newest."
   (let ((true-bucket (ensure-bucket bucket)))
     (sort-bucket-by-age true-bucket)
-    (iterate-bucket true-bucket #'ping-node)
+    (iterate-bucket true-bucket #'poke-node)
     (sort-bucket-by-distance true-bucket)))
 
 (defun purge-bad-nodes (bucket)
@@ -241,8 +241,8 @@
 (defun handle-questionable-node (node)
   "Elucidates the health of NODE."
   (setf (node-health node)
-	(cond ((ping-node node) :good)
-	      ((ping-node node) :good)
+	(cond ((poke-node node) :good)
+	      ((poke-node node) :good)
 	      (t :bad))))
 
 (defun handle-questionable-nodes (bucket)

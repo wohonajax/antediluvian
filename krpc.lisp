@@ -40,10 +40,10 @@
     (format stream "~A" data)
     (force-output stream)))
 
-(defun make-char-list (byte-vector)
-  "Returns a list of characters made by using BYTE-VECTOR as an array of
+(defun make-string-from-bytes (byte-vector)
+  "Returns a string of characters made by using BYTE-VECTOR as an array of
   character codes."
-  (map 'list (lambda (x) (code-char x)) byte-vector))
+  (map 'string (lambda (x) (code-char x)) byte-vector))
 
 (defun generate-transaction-id (&optional (stream nil))
   "Creates a transaction ID and writes it as a string to STREAM. If STREAM is
@@ -52,9 +52,13 @@
     (flet ((random-bit (x)
 	     (declare (ignore x))
 	     (random 2)))
-      (format stream "~{~S~}~{~S~}"
-	      (map 'list #'random-bit array)
-	      (map 'list #'random-bit array)))))
+      (format stream "~A~A"
+	      (make-string-from-bytes (map 'vector #'random-bit array))
+	      (make-string-from-bytes (map 'vector #'random-bit array))))))
+
+(defun get-transaction-id (query)
+  "Retrieves the transaction ID from the Bencoded QUERY."
+  (gethash "t" (de-bencode query)))
 
 (defun parse-node-ip (ip)
   "Parses a node's IP field into a usable form."
@@ -72,7 +76,7 @@
 
 (defun parse-node-id (id)
   "Parses a node's ID field into a usable form."
-  (make-char-list (ironclad:hex-string-to-byte-array id)))
+  (make-string-from-bytes (ironclad:hex-string-to-byte-array id)))
 
 (defvar *parsed-id*
   (parse-node-id +my-id+))
@@ -147,82 +151,74 @@
     (mapcan (lambda (key) (remhash key *token-table*))
 	    slate)))
 
-(defmacro send-message (type target
-			&key (transaction-id (generate-transaction-id))
-			&body body)
+(defun send-message (type target transaction-id &rest body)
   "Sends a TYPE (query, response, or error) KRPC message to TARGET."
   (let ((real-target (multiple-value-call (lambda (ip port)
 					    (usocket:socket-connect
 					     ip port :protocol :datagram))
 		       (parse-node-ip (node-ip target)))))
-    `(bencode:encode
-      (bencode:decode (format nil
-			      (concatenate 'string
-					   "d1:t16:~A1:y1:~A1:~:*~A"
-					   ,@body
-					   "e")
-			      ,transaction-id
-			      ,(case type
-				     ((:query) "q")
-				     ((:response) "r")
-				     ((:error) "e"))))
-      ,real-target)))
+    (bencode:encode
+     (bencode:decode (format nil
+			     (concatenate 'string
+					  "d1:t16:~{~A~}1:y1:~A1:~:*~A"
+					  body
+					  "e")
+			     transaction-id
+			     (case type
+			       ((:query) "q")
+			       ((:response) "r")
+			       ((:error) "e"))))
+     real-target)))
 
 ;;;; official RPC stuff
 (defun ping (node)
   "Sends a PING query to NODE."
-  (send-message :query node
-    (format nil "4:ping1:ad2:id20:~{~C~}e" *parsed-id*)))
+  (send-message :query node (generate-transaction-id)
+    (format nil "4:ping1:ad2:id20:~Ae" *parsed-id*)))
 
 (defun find-node (node)
   "Sends a FIND_NODE query to NODE."
   (let ((target (node-id node)))
-    (send-message :query node
-      (format nil "9:find_node1:ad2:id20:~{~C~}6:target20:~{~C~}e"
+    (send-message :query node (generate-transaction-id)
+      (format nil "9:find_node1:ad2:id20:~A6:target20:~Ae"
 	      *parsed-id* (parse-node-id target)))))
 
 (defun get-peers (torrent node)
   "Sends a GET_PEERS query to NODE with respect to torrent."
-  (let ((hash (make-char-list (ensure-hash torrent))))
-    (send-message :query node
-      (format nil "9:get_peers1:ad2:id20:~{~C~}9:info_hash20:~{~C~}e"
+  (let ((hash (make-string-from-bytes (ensure-hash torrent))))
+    (send-message :query node (generate-transaction-id)
+      (format nil "9:get_peers1:ad2:id20:~A9:info_hash20:~Ae"
 	      *parsed-id* hash))))
 
 (defun announce-peer (torrent node)
   "Sends an ANNOUNCE_PEER query to NODE with respect to TORRENT."
   (let* ((hash (ensure-hash torrent))
-	 (info-hash (make-char-list hash))
+	 (info-hash (make-string-from-bytes hash))
 	 (token (recall-token hash)))
-    (send-message :query node
-      (format nil "13:announce_peer1:ad2:id20:~{~C~}9:info_hash20:~{~C~}4:porti~De5:token~D:~Ae"
+    (send-message :query node (generate-transaction-id)
+      (format nil "13:announce_peer1:ad2:id20:~A9:info_hash20:~A4:porti~De5:token~D:~Ae"
 	      *parsed-id* info-hash *default-port* (length token) token))))
 
-(defun respond-to-query (node string &rest args)
-  "Responds to a querying NODE."
-  (let ((transaction-id ))
-    (send-message :response node :transaction-id transaction-id
-		  (format nil string args))))
-
-(flet ((respond-to-query (string node)
-	 (let ((transaction-id ))
-	   (send-message :response node :transaction-id transaction-id
-			 (format nil
-				 (concatenate 'string
-					      string
-					      "e"))))))
+(flet ((respond-to-query (string node transaction-id)
+	 (send-message :response node transaction-id
+	   (format nil
+		   (concatenate 'string
+				string
+				"e")))))
   (defun respond-to-ping (query node)
     "Sends a PING response to the querying NODE."
     (respond-to-query (concatenate 'string
 				   "d2:id20:"
-				   (format nil "~{~C~}"
+				   (format nil "~A"
 					   *parsed-id*))
-		      node))
+		      node
+		      (get-transaction-id query)))
 
   (defun respond-to-find-node (query node response)
     "Sends a FIND_NODE response to the querying NODE."
     (let ((listp (listp response)))
       (respond-to-query (concatenate 'string
-				     (format nil "d2:id20:~{~C~}5:nodes"
+				     (format nil "d2:id20:~A5:nodes"
 					     *parsed-id*)
 				     (format nil
 					     (if listp
@@ -235,21 +231,24 @@
 							 response)
 						 (parse-node-ip
 						  (node-ip response)))))
-			node)))
+			node
+			(get-transaction-id query))))
 
   (defun respond-to-get-peers (query node)
     "Sends a GET_PEERS response to the querying NODE."
     (respond-to-query (concatenate 'string
 				   "")
 		      ;; TODO
-		      node))
+		      node
+		      (get-transaction-id query)))
 
   (defun respond-to-announce-peer (query node)
     "Sends an ANNOUNCE_PEER response to the querying NODE."
     (respond-to-query (concatenate 'string
 				   "")
 		      ;; TODO
-		      node)))
+		      node
+		      (get-transaction-id query))))
 
 (defun dht-error ()
   "Emits an error message."
@@ -283,12 +282,38 @@
   (find-node node)
   (listen-closely))
 
-(defun ask-node-for-peers (node torrent)
+(defun beg-node (node torrent)
   "Asks NODE for peers of TORRENT."
   (get-peers torrent node)
   (listen-closely))
 
-(defun inform-node (node torrent)
+(defun divulge-to-node (node torrent)
   "Tells NODE we're entering the swarm for TORRENT."
   (announce-peer torrent node)
   (listen-closely))
+
+(defun calculate-elapsed-inactivity (node)
+  "Returns the time in minutes since NODE's last seen activity."
+  (let ((last-activity (node-last-activity node)))
+    (and last-activity (minutes-since last-activity))))
+
+(defun calculate-last-activity (node)
+  "Returns the universal timestamp of NODE's last seen activity."
+  (let ((time-inactive (calculate-elapsed-inactivity node)))
+    (cond (time-inactive time-inactive)
+	  ((poke-node node) (get-universal-time))
+	  (t nil))))
+
+(defun calculate-node-health (node)
+  "Returns the node's health as a keyword, either :GOOD, :QUESTIONABLE, or :BAD."
+  (let ((time-inactive (calculate-elapsed-inactivity node)))
+    (cond ((null time-inactive) :questionable)
+	  ((< time-inactive 15) :good)
+	  ((poke-node node) :good)
+	  (t :bad))))
+
+(defun update-node (node)
+  "Recalculates the time since NODE's last activity and updates its health
+  accordingly."
+  (setf (node-last-activity node) (calculate-last-activity node)
+	(node-health node) (calculate-node-health node)))

@@ -21,3 +21,15 @@
   `(let ((it ,test))
      (when it
        ,@forms)))
+
+(defun calculate-distance (a b)
+  "Returns the distance between A and B."
+  (logxor a b))
+
+(defun convert-id-to-int (id)
+  "Converts a node ID from a hexadecimal string to a decimal integer."
+  (parse-integer id :radix 16))
+
+(defun convert-id-to-hex (id)
+  "Converts a node ID from a decimal integer to a hexadecimal string."
+  (string-downcase (format nil "~X" id)))

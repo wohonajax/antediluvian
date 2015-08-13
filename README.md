@@ -1,4 +1,4 @@
 DHTiCL
 ======
 
-DHT in Common Lisp
+Mainline DHT in Common Lisp

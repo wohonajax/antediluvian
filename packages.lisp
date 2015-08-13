@@ -5,35 +5,32 @@
   (:export #:within
 	   #:minutes-since
 	   #:awhen
-	   #:it))
-
-(defpackage #:dhticl-krpc
-  (:use #:cl
-	#:dhticl-util)
-  (:export #:*default-port*
-	   #:poke-node
-	   #:hit-on-node
-	   #:ask-node-for-peers
-	   #:inform-node))
+	   #:it
+	   #:calculate-distance
+	   #:convert-id-to-int
+	   #:convert-id-to-hex))
 
 (defpackage #:dhticl-nodes
   (:use #:cl
-	#:dhticl-util
-	#:dhticl-krpc)
+	#:dhticl-util)
   (:export #:+my-id+
-	   #:convert-id-to-int
-	   #:convert-id-to-hex
 	   #:node-id
 	   #:node-ip
 	   #:node-distance
 	   #:node-last-activity
 	   #:node-health
-	   #:create-node
-	   #:update-node))
+	   #:create-node))
 
-(in-package #:dhticl-krpc)
-(use-package '#:dhticl-nodes)
-(in-package #:cl-user)
+(defpackage #:dhticl-krpc
+  (:use #:cl
+	#:dhticl-util
+	#:dhticl-nodes)
+  (:export #:*default-port*
+	   #:poke-node
+	   #:hit-on-node
+	   #:beg-node
+	   #:divulge-to-node
+	   #:update-node))
 
 (defpackage #:dhticl-routing
   (:use #:cl
