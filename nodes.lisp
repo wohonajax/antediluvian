@@ -1,7 +1,11 @@
-(in-package #:dhticl-nodes)
+(in-package #:dhticl)
 
-(defvar +my-id+ ;; TODO: don't forget to make this a constant
-  (convert-id-to-hex (random (expt 2 160))))
+(define-constant +my-id+
+  (make-string-from-bytes
+   (map '(vector (unsigned-byte 8))
+        #'random-byte
+        (make-array 20)))
+  :test #'equal)
 
 (defstruct node
   (id nil :type string
@@ -9,17 +13,20 @@
   (ip nil :read-only t)
   (distance nil :read-only t)
   (last-activity nil :type fixnum)
-  (health))
+  (health)
+  (hashes nil :type list))
 
 (defun create-node (&key (id nil) (ip nil) (distance nil)
 		      (last-activity nil)
-		      (health :questionable))
+		      (health :questionable)
+                      (hashes nil))
   "Creates a node object with the specified attributes."
   (make-node :id id
 	     :ip ip
 	     :distance distance
 	     :last-activity last-activity
-	     :health health))
+	     :health health
+             :hashes hashes))
 
 (defun calculate-node-distance (node)
   "Returns the distance between NODE and us."

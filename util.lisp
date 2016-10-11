@@ -1,12 +1,12 @@
-(in-package #:dhticl-util)
+(in-package #:dhticl)
 
 (defun within (number first-bound end-bound)
   "Tests whether NUMBER is contained within the range bounded by FIRST-BOUND
   and END-BOUND."
   (= number
-     (alexandria:clamp number
-		       first-bound
-		       end-bound)))
+     (clamp number
+            first-bound
+            end-bound)))
 
 (defun minutes-since (time)
   "Returns the time in minutes that has elapsed since TIME."
@@ -16,20 +16,31 @@
 	     time))
      60))
 
-(defmacro awhen (test &body forms)
-  "Your usual anaphoric WHEN."
-  `(let ((it ,test))
-     (when it
-       ,@forms)))
-
 (defun calculate-distance (a b)
   "Returns the distance between A and B."
   (logxor a b))
 
-(defun convert-id-to-int (id)
-  "Converts a node ID from a hexadecimal string to a decimal integer."
-  (parse-integer id :radix 16))
+(defun random-byte (x)
+  "MAPpable function for seeding random bytes."
+  (declare (ignore x))
+  (random 256))
 
-(defun convert-id-to-hex (id)
-  "Converts a node ID from a decimal integer to a hexadecimal string."
-  (string-downcase (format nil "~X" id)))
+(defun make-string-from-bytes (byte-vector)
+  "Returns a string of characters made by using BYTE-VECTOR as an array of
+character codes."
+  (map 'string #'code-char byte-vector))
+
+(defun make-bytes-from-string (string)
+  "Returns a byte vector representation of STRING."
+  (map '(vector (unsigned-byte 8)) #'char-code string))
+
+(defun convert-id-to-int (id)
+  "Converts a node ID from an ID string to a decimal integer."
+  (reduce #'+ (make-bytes-from-string id)))
+
+(defmacro with-listening-usocket-stream ((socket-var stream-var host port) &body body)
+  (with-gensyms (socket)
+    `(usocket:with-socket-listener (,socket ,host ,port :reuse-address t)
+       (usocket:with-connected-socket (,socket-var (usocket:socket-accept ,socket))
+         (let ((,stream-var (usocket:socket-stream ,socket-var)))
+           ,@body)))))
