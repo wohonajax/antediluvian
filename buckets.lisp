@@ -7,27 +7,27 @@
 (defun save-table ()
   "Saves the routing table to a file."
   (with-open-file (file *routing-table-location*
-			:direction :output
-		        :if-exists :overwrite
-			:if-does-not-exist :create)
+                        :direction :output
+                        :if-exists :overwrite
+                        :if-does-not-exist :create)
     (format file "(")
     (map nil
-	 (lambda (bucket)
-	   (format file "(")
-	   (map nil
-		(lambda (node)
-		  (if node
-		      (format file
-			      "(~S ~S ~S ~S ~S)"
-			      (node-id node)
-			      (node-ip node)
-			      (node-distance node)
-			      (node-last-activity node)
-			      (node-health node))
-		      (format file "(~S)" nil)))
-		bucket)
-	   (format file ")"))
-	 *routing-table*)
+         (lambda (bucket)
+           (format file "(")
+           (map nil
+                (lambda (node)
+                  (if node
+                      (format file
+                              "(~S ~S ~S ~S ~S)"
+                              (node-id node)
+                              (node-ip node)
+                              (node-distance node)
+                              (node-last-activity node)
+                              (node-health node))
+                      (format file "(~S)" nil)))
+                bucket)
+           (format file ")"))
+         *routing-table*)
     (format file ")")))
 
 (defun load-table ()
@@ -37,18 +37,18 @@ routing table."
   (when (probe-file *routing-table-location*)
     (with-open-file (file *routing-table-location*)
       (let ((empty-node (list nil)))
-	(map-into *routing-table*
-		  (lambda (bucket)
-		    (map 'vector
-			 (lambda (node)
-			   (unless (equal node empty-node)
-			     (create-node :id (first node)
-					  :ip (second node)
-					  :distance (third node)
-					  :last-activity (fourth node)
-					  :health (fifth node))))
-			 bucket))
-		  (read file))))))
+        (map-into *routing-table*
+                  (lambda (bucket)
+                    (map 'vector
+                         (lambda (node)
+                           (unless (equal node empty-node)
+                             (create-node :id (first node)
+                                          :ip (second node)
+                                          :distance (third node)
+                                          :last-activity (fourth node)
+                                          :health (fifth node))))
+                         bucket))
+                  (read file))))))
 
 ;;; recommended bucket size limit is 8
 (defconstant +k+ 8 "Bucket size limit.")
@@ -97,28 +97,28 @@ routing table."
   (let ((len (1- +k+))
         (nodes (bucket-nodes bucket)))
     (cond ((bucket-emptyp bucket) (first-node-in-bucket bucket))
-	  ((bucket-fullp bucket) (aref nodes len))
-	  (t (dotimes (i +k+)
-	       (when (null (aref nodes (1+ i)))
-		 (return (aref nodes i))))))))
+          ((bucket-fullp bucket) (aref nodes len))
+          (t (dotimes (i +k+)
+               (when (null (aref nodes (1+ i)))
+                 (return (aref nodes i))))))))
 
 (flet ((node-sorter (x y field pred)
-	 (let ((xfield (when x
-			 (funcall field x)))
-	       (yfield (when y
-			 (funcall field y))))
-	   (cond ((and xfield yfield) (funcall pred xfield yfield))
-		 (xfield t)
-		 (yfield nil)
-		 (x t)
-		 (y nil)
-		 (t t)))))
+         (let ((xfield (when x
+                         (funcall field x)))
+               (yfield (when y
+                         (funcall field y))))
+           (cond ((and xfield yfield) (funcall pred xfield yfield))
+                 (xfield t)
+                 (yfield nil)
+                 (x t)
+                 (y nil)
+                 (t t)))))
 
   (defun sort-bucket-by-age (bucket)
     "Sorts BUCKET so the nodes it contains are ordered from oldest to newest."
     (setf (bucket-nodes bucket)
           (sort (bucket-nodes bucket) (lambda (x y)
-                                        (node-sorter x y			       
+                                        (node-sorter x y                               
                                                      #'node-last-activity
                                                      #'>)))))
 
@@ -147,7 +147,7 @@ closest to furthest."
                               (mid (truncate max 2)))
   "Splits BUCKET into two new buckets."
   (let ((a (make-new-bucket min mid))
-	(b (make-new-bucket (1+ mid) max)))
+        (b (make-new-bucket (1+ mid) max)))
     (seed-buckets a b bucket)))
 
 ;;; split bucket if our id is in its range, otherwise ping from oldest to newest
@@ -194,21 +194,21 @@ none is found, executes BODY, otherwise returns the node."
   (with-gensyms (target node)
     `(let ((,target nil))
        (tagbody (iterate-table (lambda (,node)
-				 (when (funcall ,criteria ,node)
-				   (setf ,target ,node)
-				   (go away)))
-			       :nodely t)
-	away)
+                                 (when (funcall ,criteria ,node)
+                                   (setf ,target ,node)
+                                   (go away)))
+                               :nodely t)
+        away)
        (if ,target
-	   ,target
-	   ,@body))))
+           ,target
+           ,@body))))
 
 (defun sort-table ()
   "Ensures the buckets of the routing table are sorted."
   (setf *routing-table*
-	(sort *routing-table*
-	      (lambda (x y)
-		(< (bucket-min x) (bucket-min y))))))
+        (sort *routing-table*
+              (lambda (x y)
+                (< (bucket-min x) (bucket-min y))))))
 
 (defun find-closest-nodes (id &aux (goal (convert-id-to-int id)) (worst '())
                                 (winners '()) (ticker 0))
@@ -268,7 +268,7 @@ none is found, executes BODY, otherwise returns the node."
 #| TODO: this is pseudocode of what happens
 (defun closest-nodes ()
   (min (logxor (infohash torrent)
-	       (ids nodes-in-routing-table))))
+               (ids nodes-in-routing-table))))
 
 (when (finding node)
   (ask-for-peers (closest-nodes))
@@ -282,5 +282,5 @@ none is found, executes BODY, otherwise returns the node."
 
 (let* ((secret (change-every-five-minutes))
        (token (concat (sha1 ip)
-		      secret)))
+                      secret)))
   (maintain previous-secret)) |#

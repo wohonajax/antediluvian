@@ -16,14 +16,14 @@
 (defun save-settings ()
   "Saves settings."
   (macrolet ((make-setting (setting)
-	       `(list 'setf ',setting ,setting)))
+               `(list 'setf ',setting ,setting)))
     (with-open-file (file *settings-location*
-			  :direction :output
-			  :if-exists :overwrite
-			  :if-does-not-exist :create)
+                          :direction :output
+                          :if-exists :overwrite
+                          :if-does-not-exist :create)
       (format file "~{~S~}" (list (make-setting *routing-table-location*)
-				  (make-setting *default-port*)
-				  (make-setting *ipv6p*))))))
+                                  (make-setting *default-port*)
+                                  (make-setting *ipv6p*))))))
 
 (define-condition peer-requested () ())
 (define-condition peer-request () ())
@@ -47,4 +47,4 @@
   (unwind-protect
        (main-loop)
     (progn (save-settings)
-	   (save-table))))
+           (save-table))))

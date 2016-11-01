@@ -17,7 +17,7 @@
   "Ensures VAGUE-HASH is really an SHA1 hash. If it is, return it, otherwise
 hash it and return the hash."
   (if (equal '(simple-array (unsigned-byte 8) (20))
-	     (type-of vague-hash))
+             (type-of vague-hash))
       vague-hash
       (make-hash vague-hash)))
 
@@ -25,7 +25,7 @@ hash it and return the hash."
   "Takes a bencoded OBJECT and decodes it."
   (if (pathnamep object)
       (with-open-file (file object :element-type '(unsigned-byte 8))
-	(bencode:decode file))
+        (bencode:decode file))
       (bencode:decode object)))
 
 (defun really-send (data socket)
@@ -70,22 +70,22 @@ NIL (the default), returns the string directly."
 (defun ensure-secret ()
   "Makes sure the current secret isn't stale. If it is, returns a fresh secret."
   (if (> (minutes-since (cdr *current-secret*))
-	 5)
+         5)
       (make-secret)
       (car *current-secret*)))
 
 (defun consider-token (node token)
   "Checks whether TOKEN received from NODE is valid or not."
   (let* ((node-ip-hash (make-array 20 :element-type '(unsigned-byte 8)))
-	 (token-value (token-value token))
-	 (token-hash (subseq token-value 0 20))
-	 (token-secret (subseq token-value 20)))
+         (token-value (token-value token))
+         (token-hash (subseq token-value 0 20))
+         (token-secret (subseq token-value 20)))
     (map-into node-ip-hash #'identity
-	      (make-hash (parse-node-ip (node-ip node))))
+              (make-hash (parse-node-ip (node-ip node))))
     (ensure-secret)
     (and (equal node-ip-hash token-hash)
-	 (or (equal token-secret (car *previous-secret*))
-	     (equal token-secret (car *current-secret*))))))
+         (or (equal token-secret (car *previous-secret*))
+             (equal token-secret (car *current-secret*))))))
 
 (defun invent-token (hash ip)
   "Creates a token associated with HASH using IP."

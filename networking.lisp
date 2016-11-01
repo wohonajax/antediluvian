@@ -2,11 +2,12 @@
 
 (defun listen-closely ()
   "Creates a temporary listening socket to receive responses."
-  (usocket:with-connected-socket (socket (usocket:socket-connect
-					  usocket:*wildcard-host* *default-port*
-					  :protocol :datagram
-					  :element-type '(unsigned-byte 8)
-					  :timeout 5))
+  (usocket:with-connected-socket
+      (socket (usocket:socket-connect
+               usocket:*wildcard-host* *default-port*
+               :protocol :datagram
+               :element-type '(unsigned-byte 8)
+               :timeout 5))
     (usocket:socket-receive socket nil 2048)))
 
 ;;;; TODO: make another layer of abstraction
@@ -40,22 +41,22 @@ response if we get one, otherwise returns NIL."
   "Returns the universal timestamp of NODE's last seen activity."
   (let ((time-inactive (calculate-elapsed-inactivity node)))
     (cond (time-inactive time-inactive)
-	  ((poke-node node) (get-universal-time))
-	  (t nil))))
+          ((poke-node node) (get-universal-time))
+          (t nil))))
 
 (defun calculate-node-health (node)
   "Returns the node's health as a keyword, either :GOOD, :QUESTIONABLE, or :BAD."
   (let ((time-inactive (calculate-elapsed-inactivity node)))
     (cond ((null time-inactive) :questionable)
-	  ((< time-inactive 15) :good)
-	  ((poke-node node) :good)
-	  (t :bad))))
+          ((< time-inactive 15) :good)
+          ((poke-node node) :good)
+          (t :bad))))
 
 (defun update-node (node)
   "Recalculates the time since NODE's last activity and updates its health
 accordingly."
   (setf (node-last-activity node) (calculate-last-activity node)
-	(node-health node) (calculate-node-health node)))
+        (node-health node) (calculate-node-health node)))
 
 (defun ping-old-nodes (bucket)
   "Pings the nodes in a bucket from oldest to newest."
@@ -77,9 +78,9 @@ accordingly."
 (defun handle-questionable-node (node)
   "Elucidates the health of NODE."
   (setf (node-health node)
-	(cond ((poke-node node) :good)
-	      ((poke-node node) :good)
-	      (t :bad)))
+        (cond ((poke-node node) :good)
+              ((poke-node node) :good)
+              (t :bad)))
   (update-bucket (correct-bucket (node-id node))))
 
 (defun handle-questionable-nodes (bucket)

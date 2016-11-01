@@ -9,7 +9,7 @@
                 #:symbolicate
                 #:define-constant)
   (:export #:dht
-	   #:kill
+           #:kill
            #:+my-id+
            #:*parsed-id*
            #:*default-port*
