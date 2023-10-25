@@ -10,28 +10,11 @@
                :timeout 5))
     (usocket:socket-receive socket nil 2048)))
 
+(defmacro do-then-listen (action node)
+  `(progn (,action ,node)
+          (listen-closely)))
+
 ;;;; TODO: make another layer of abstraction
-(defun poke-node (node)
-  "Pings NODE and waits a short length of time for a response. Returns the
-response if we get one, otherwise returns NIL."
-  (ping node)
-  (listen-closely))
-
-(defun hit-on-node (node)
-  "Asks NODE for its contact information."
-  (find-node node)
-  (listen-closely))
-
-(defun beg-node (node torrent)
-  "Asks NODE for peers of TORRENT."
-  (get-peers torrent node)
-  (listen-closely))
-
-(defun divulge-to-node (node torrent)
-  "Tells NODE we're entering the swarm for TORRENT."
-  (announce-peer torrent node)
-  (listen-closely))
-
 (defun calculate-elapsed-inactivity (node)
   "Returns the time in minutes since NODE's last seen activity."
   (let ((last-activity (node-last-activity node)))
@@ -41,7 +24,7 @@ response if we get one, otherwise returns NIL."
   "Returns the universal timestamp of NODE's last seen activity."
   (let ((time-inactive (calculate-elapsed-inactivity node)))
     (cond (time-inactive time-inactive)
-          ((poke-node node) (get-universal-time))
+          ((do-then-listen ping node) (get-universal-time))
           (t nil))))
 
 (defun calculate-node-health (node)
@@ -49,7 +32,7 @@ response if we get one, otherwise returns NIL."
   (let ((time-inactive (calculate-elapsed-inactivity node)))
     (cond ((null time-inactive) :questionable)
           ((< time-inactive 15) :good)
-          ((poke-node node) :good)
+          ((do-then-listen ping node) :good)
           (t :bad))))
 
 (defun update-node (node)
@@ -61,7 +44,7 @@ accordingly."
 (defun ping-old-nodes (bucket)
   "Pings the nodes in a bucket from oldest to newest."
   (sort-bucket-by-age bucket)
-  (iterate-bucket bucket #'poke-node)
+  (iterate-bucket bucket (lambda (node) (do-then-listen ping node)))
   (sort-bucket-by-distance bucket)
   (update-bucket bucket))
 
@@ -78,8 +61,8 @@ accordingly."
 (defun handle-questionable-node (node)
   "Elucidates the health of NODE."
   (setf (node-health node)
-        (cond ((poke-node node) :good)
-              ((poke-node node) :good)
+        (cond ((do-then-listen ping node) :good)
+              ((do-then-listen ping node) :good)
               (t :bad)))
   (update-bucket (correct-bucket (node-id node))))
 

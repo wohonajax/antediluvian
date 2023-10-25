@@ -150,10 +150,10 @@ closest to furthest."
         (b (make-new-bucket (1+ mid) max)))
     (seed-buckets a b bucket)))
 
-;;; split bucket if our id is in its range, otherwise ping from oldest to newest
 (defun bucket-splitp (bucket &aux (id (convert-id-to-int +my-id+))
                                (nodes (bucket-nodes bucket)))
-  "Determines whether to split BUCKET."
+  "Splits BUCKET if our ID is in its range, otherwise pings from oldest to
+newest."
   (if (within id
               (reduce #'min nodes)
               (reduce #'max nodes))
@@ -174,13 +174,13 @@ closest to furthest."
           (return t)))))
 
 (defun iterate-bucket (bucket action)
-  "Performs ACTION on each node in BUCKET."
+  "Funcalls ACTION on each node in BUCKET."
   (dotimes (i (length (bucket-nodes bucket)))
     (funcall action (aref (bucket-nodes bucket) i))))
 
 (defun iterate-table (action &key (nodely nil)
                       &aux (limit (length *routing-table*)))
-  "Performs ACTION on each bucket in the routing table, or on each node
+  "Funcalls ACTION on each bucket in the routing table, or on each node
 if NODELY is non-NIL."
   (dotimes (i limit)
     (let ((current-bucket (aref *routing-table* i)))
