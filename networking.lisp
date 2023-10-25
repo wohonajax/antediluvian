@@ -10,9 +10,9 @@
                :timeout 5))
     (usocket:socket-receive socket nil 2048)))
 
-(defmacro do-then-listen (action node)
-  `(progn (,action ,node)
-          (listen-closely)))
+(defun ping-then-listen (node)
+  (progn (send-message :ping node)
+         (listen-closely)))
 
 ;;;; TODO: make another layer of abstraction
 (defun calculate-elapsed-inactivity (node)
@@ -24,7 +24,7 @@
   "Returns the universal timestamp of NODE's last seen activity."
   (let ((time-inactive (calculate-elapsed-inactivity node)))
     (cond (time-inactive time-inactive)
-          ((do-then-listen ping node) (get-universal-time))
+          ((ping-then-listen node) (get-universal-time))
           (t nil))))
 
 (defun calculate-node-health (node)
@@ -32,7 +32,7 @@
   (let ((time-inactive (calculate-elapsed-inactivity node)))
     (cond ((null time-inactive) :questionable)
           ((< time-inactive 15) :good)
-          ((do-then-listen ping node) :good)
+          ((ping-then-listen node) :good)
           (t :bad))))
 
 (defun update-node (node)
@@ -44,7 +44,7 @@ accordingly."
 (defun ping-old-nodes (bucket)
   "Pings the nodes in a bucket from oldest to newest."
   (sort-bucket-by-age bucket)
-  (iterate-bucket bucket (lambda (node) (do-then-listen ping node)))
+  (iterate-bucket bucket (lambda (node) (ping-then-listen node)))
   (sort-bucket-by-distance bucket)
   (update-bucket bucket))
 
@@ -61,8 +61,8 @@ accordingly."
 (defun handle-questionable-node (node)
   "Elucidates the health of NODE."
   (setf (node-health node)
-        (cond ((do-then-listen ping node) :good)
-              ((do-then-listen ping node) :good)
+        (cond ((ping-then-listen node) :good)
+              ((ping-then-listen node) :good)
               (t :bad)))
   (update-bucket (correct-bucket (node-id node))))
 

@@ -265,22 +265,27 @@ none is found, executes BODY, otherwise returns the node."
                    :nodely t)
     bag))
 
+(defun closest-nodes (hash) ;; FIXME
+  "Returns the closest nodes in the routing table for HASH."
+  (min (logxor hash (iterate-table (lambda (node) (node-id node))
+                                   :nodely t))))
+
 #| TODO: this is pseudocode of what happens
-(defun closest-nodes ()
-  (min (logxor (infohash torrent)
-               (ids nodes-in-routing-table))))
-
-(when (finding node)
-  (ask-for-peers (closest-nodes))
-  (when (exhausted nodes-in-routing-table)
-    (send +my-id+)))
-
-(when (asked-for-peers)
-  (if (have-peers)
-      (send peer-info)
-      (send closest-nodes)))
-
-(let* ((secret (change-every-five-minutes))
-       (token (concat (sha1 ip)
-                      secret)))
-  (maintain previous-secret)) |#
+(defun closest-nodes ()                 ; ;
+(min (logxor (infohash torrent)         ; ;
+(ids nodes-in-routing-table))))         ; ;
+                                        ; ;
+(when (finding node)                    ; ;
+(ask-for-peers (closest-nodes))         ; ;
+(when (exhausted nodes-in-routing-table) ; ;
+(send +my-id+)))                        ; ;
+                                        ; ;
+(when (asked-for-peers)                 ; ;
+(if (have-peers)                        ; ;
+(send peer-info)                        ; ;
+(send closest-nodes)))                  ; ;
+                                        ; ;
+(let* ((secret (change-every-five-minutes)) ; ;
+(token (concat (sha1 ip)                ; ;
+secret)))                               ; ;
+(maintain previous-secret)) |#

@@ -2,6 +2,24 @@
 
 (defvar *default-port* 6881)
 
+(defun ping-node (stream)
+  )
+
+(defun send-message (type node)
+  (let ((target (multiple-value-call
+                    (lambda (ip port)  ;; TODO: figure out listening after msg
+                      (usocket:socket-connect ip port :protocol :datagram))
+                  (parse-node-ip (node-ip node)))))
+    (handler-case (ecase type
+                    (:ping (ping-node target))
+                    (:store)
+                    (:find_node)
+                    (:find_value)
+                    (:announce_peer))
+      (simple-error () (invoke-restart :continue)))))
+
+(defun send-response (type))
+
 (defmacro define-message (name arglist &body message)
   (with-gensyms (target)
     `(defun ,name ,arglist
