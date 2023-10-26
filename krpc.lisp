@@ -2,23 +2,129 @@
 
 (defvar *default-port* 6881)
 
-(defun ping-node (stream)
-  )
+(defun ping-node (client-socket-stream)
+  "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
+is linked to a ping query."
+  (usocket:with-socket-listener
+      (listening-socket nil nil
+                        :protocol :datagram
+                        :element-type '(unsigned-byte 8)
+                        :timeout 5
+                        :local-host usocket:*wildcard-host*
+                        :local-port *default-port*)
+    (usocket:with-connected-socket
+        (connection (usocket:socket-accept listening-socket))
+      (let ((query-dict (make-hash-table))
+            (query-body-dict (make-hash-table)))
+        (setf (gethash "id" query-body-dict) +my-id+
+              (gethash "t" query-dict) (generate-transaction-id)
+              (gethash "y" query-dict) "q"
+              (gethash "q" query-dict "ping")
+              (gethash "a" query-dict) query-body-dict)
+        (bencode:encode query-dict client-socket-stream
+                        :external-format '(unsigned-byte 8))
+        (force-output client-socket-stream))
+      (bencode:decode connection :external-format '(unsigned-byte 8)))))
 
-(defun send-message (type node)
-  (let ((target (multiple-value-call
-                    (lambda (ip port)  ;; TODO: figure out listening after msg
-                      (usocket:socket-connect ip port :protocol :datagram))
-                  (parse-node-ip (node-ip node)))))
-    (handler-case (ecase type
-                    (:ping (ping-node target))
-                    (:store)
-                    (:find_node)
-                    (:find_value)
-                    (:announce_peer))
-      (simple-error () (invoke-restart :continue)))))
+(defun find-node (client-socket-stream node-id)
+  "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
+is linked to a find_node query for NODE-ID."
+  (usocket:with-socket-listener
+      (listening-socket nil nil
+                        :protocol :datagram
+                        :element-type '(unsigned-byte 8)
+                        :timeout 5
+                        :local-host usocket:*wildcard-host*
+                        :local-port *default-port*)
+    (usocket:with-connected-socket
+        (connection (usocket:socket-accept listening-socket))
+      (let ((query-dict (make-hash-table))
+            (query-body-dict (make-hash-table)))
+        (setf (gethash "id" query-body-dict) +my-id+
+              (gethash "target" query-body-dict) node-id
+              (gethash "t" query-dict) (generate-transaction-id)
+              (gethash "y" query-dict) "q"
+              (gethash "q" query-dict) "find_node"
+              (gethash "a" query-dict) query-body-dict)
+        (bencode:encode query-dict client-socket-stream
+                        :external-format '(unsigned-byte 8))
+        (force-output client-socket-stream))
+      (bencode:decode connection :external-format '(unsigned-byte 8)))))
+
+(defun get-peers (client-socket-stream info-hash)
+  "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
+is linked to a get_peers query using INFO-HASH."
+  (usocket:with-socket-listener
+      (listening-socket nil nil
+                        :protocol :datagram
+                        :element-type '(unsigned-byte 8)
+                        :timeout 5
+                        :local-host usocket:*wildcard-host*
+                        :local-port *default-port*)
+    (usocket:with-connected-socket
+        (connection (usocket:socket-accept listening-socket))
+      (let ((query-dict (make-hash-table))
+            (query-body-dict (make-hash-table)))
+        (setf (gethash "id" query-body-dict) +my-id+
+              (gethash "info_hash" query-body-dict) (ensure-hash info-hash)
+              (gethash "t" query-dict) (generate-transaction-id)
+              (gethash "y" query-dict) "q"
+              (gethash "q" query-dict) "get_peers"
+              (gethash "a" query-dict) query-body-dict)
+        (bencode:encode query-dict client-socket-stream
+                        :external-format '(unsigned-byte 8))
+        (force-output client-socket-stream))
+      (bencode:decode connection :external-format '(unsigned-byte 8)))))
+
+(defun announce-peer (client-socket-stream info-hash)
+  "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
+is linked to an announce_peer query using INFO-HASH."
+  (usocket:with-socket-listener
+      (listening-socket nil nil
+                        :protocol :datagram
+                        :element-type '(unsigned-byte 8)
+                        :timeout 5
+                        :local-host usocket:*wildcard-host*
+                        :local-port *default-port*)
+    (usocket:with-connected-socket
+        (connection (usocket:socket-accept listening-socket))
+      (let* ((query-dict (make-hash-table))
+             (query-body-dict (make-hash-table))
+             (surely-hash (ensure-hash info-hash))
+             (token (recall-token sure-hash)))
+        (setf (gethash "id" query-body-dict) +my-id+
+              (gethash "info_hash" query-body-dict) surely-hash
+              (gethash "port" query-body-dict) *default-port*
+              (gethash "token" query-body-dict) token
+              (gethash "t" query-dict) (generate-transaction-id)
+              (gethash "y" query-dict) "q"
+              (gethash "q" query-dict) "announce_peer"
+              (gethash "a" query-dict) query-body-dict)
+        (bencode:encode query-dict client-socket-stream
+                        :external-format '(unsigned-byte 8))
+        (force-output client-socket-stream))
+      (bencode:decode connection :external-format '(unsigned-byte 8)))))
+
+(defun send-message (type node &key info-hash)
+  (multiple-value-bind (ip port)
+      (parse-node-ip (node-ip node))
+    (usocket:with-client-socket
+        (target-socket target-stream ip port
+                       :protocol :datagram
+                       :element-type '(unsigned-byte 8)
+                       :timeout 5)
+      (handler-case (ecase type
+                      (:ping (ping-node target-stream))
+                      (:store)
+                      (:find_node (find-node target-stream (node-id node)))
+                      (:find_value)
+                      (:get_peers (get-peers target-stream info-hash))
+                      (:announce_peer (announce-peer target-stream info-hash)))
+        (simple-error () (invoke-restart :continue))))))
 
 (defun send-response (type))
+
+;;;; Everything below this point is being rewritten
 
 (defmacro define-message (name arglist &body message)
   (with-gensyms (target)
@@ -94,22 +200,6 @@
             (princ (node-ip a) x))
           list-of-nodes)
     (princ "e" x)))
-
-(define-query ping nil nil)
-
-(define-query find-node nil
-  (concatenate 'string "6:target" "20:" (node-id node)))
-
-(define-query get-peers t
-  (concatenate 'string "9:info_hash" "20:" (ensure-hash hash)))
-
-(define-query announce-peer t
-  (let* ((sure-hash (ensure-hash hash))
-         (token (recall-token sure-hash)))
-    (concatenate 'string
-                 "9:info_hash" "20:" sure-hash
-                 "4:port" *default-port*
-                 "5:token" (format nil "~D" (length token)) ":" token)))
 
 (define-response ping nil)
 
