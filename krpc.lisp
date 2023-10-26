@@ -2,6 +2,8 @@
 
 (defvar *default-port* 6881)
 
+(defvar *use-implied-port-p* nil)
+
 (defun ping-node (client-socket-stream)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
 is linked to a ping query."
@@ -17,6 +19,7 @@ is linked to a ping query."
       (let ((query-dict (make-hash-table))
             (query-body-dict (make-hash-table)))
         (setf (gethash "id" query-body-dict) +my-id+
+
               (gethash "t" query-dict) (generate-transaction-id)
               (gethash "y" query-dict) "q"
               (gethash "q" query-dict "ping")
@@ -42,6 +45,7 @@ is linked to a find_node query for NODE-ID."
             (query-body-dict (make-hash-table)))
         (setf (gethash "id" query-body-dict) +my-id+
               (gethash "target" query-body-dict) node-id
+
               (gethash "t" query-dict) (generate-transaction-id)
               (gethash "y" query-dict) "q"
               (gethash "q" query-dict) "find_node"
@@ -67,6 +71,7 @@ is linked to a get_peers query using INFO-HASH."
             (query-body-dict (make-hash-table)))
         (setf (gethash "id" query-body-dict) +my-id+
               (gethash "info_hash" query-body-dict) (ensure-hash info-hash)
+
               (gethash "t" query-dict) (generate-transaction-id)
               (gethash "y" query-dict) "q"
               (gethash "q" query-dict) "get_peers"
@@ -93,9 +98,11 @@ is linked to an announce_peer query using INFO-HASH."
              (surely-hash (ensure-hash info-hash))
              (token (recall-token sure-hash)))
         (setf (gethash "id" query-body-dict) +my-id+
+              (gethash "implied_port" query-body-dict) (if *use-implied-port-p* 1 0)
               (gethash "info_hash" query-body-dict) surely-hash
               (gethash "port" query-body-dict) *default-port*
               (gethash "token" query-body-dict) token
+
               (gethash "t" query-dict) (generate-transaction-id)
               (gethash "y" query-dict) "q"
               (gethash "q" query-dict) "announce_peer"
