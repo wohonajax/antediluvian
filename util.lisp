@@ -37,7 +37,3 @@ character codes."
 (defun convert-id-to-int (id)
   "Converts a node ID from an ID string to a decimal integer."
   (reduce #'+ (make-bytes-from-string id)))
-
-(defun convert-number-to-byte-vector (number)
-  "Converts NUMBER to a byte-vector of length 2 in big-endian format."
-  (reverse (intbytes:int->octets number 2)))

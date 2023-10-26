@@ -41,4 +41,4 @@
   (format nil "~a~a"
           (node-ip node)
           (map 'string #'code-char
-               (convert-int-to-byte-vector (node-port node)))))
+               (ironclad:integer-to-octets (node-port node)))))
