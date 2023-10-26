@@ -30,15 +30,20 @@
 (define-condition kill-signal () ())
 
 (defun main-loop ()
-  (handler-bind ((peer-requested (lambda () ))
-                 (peer-request (lambda () ))
-                 (kill-signal (lambda () (return-from main-loop))))
-    (with-listening-usocket-stream (socket stream usocket:*wildcard-host*
-                                           *default-port*)
+  (handler-bind ((peer-requested (lambda (c) c))
+                 (peer-request (lambda (c) c))
+                 (kill-signal (lambda (c) (declare (ignore c))
+                                (return-from main-loop))))
+    (usocket:with-connected-socket
+        (stream (usocket:socket-connect nil nil
+                                        :protocol :datagram
+                                        :element-type '(unsigned-byte 8)
+                                        :local-host usocket:*wildcard-host*
+                                        :local-port *default-port*))
       (loop :for line := (read-line stream nil) :doing
-         (alexandria:switch (line :test #'string-equal)
-           ;; TODO
-           (""))))))
+        (alexandria:switch (line :test #'string-equal)
+          ;; TODO
+          (""))))))
 
 (defun dht ()
   "Initiates the distributed hash table."
