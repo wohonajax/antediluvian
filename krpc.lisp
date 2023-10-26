@@ -23,10 +23,9 @@ is linked to a ping query."
             (gethash "y" query-dict) "q"
             (gethash "q" query-dict) "ping"
             (gethash "a" query-dict) query-body-dict)
-      (bencode:encode query-dict client-socket-stream
-                      :external-format '(unsigned-byte 8))
+      (bencode:encode query-dict client-socket-stream)
       (force-output client-socket-stream))
-    (bencode:decode connection :external-format '(unsigned-byte 8))))
+    (bencode:decode connection)))
 
 (defun find-node (client-socket-stream node-id)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
@@ -46,10 +45,9 @@ is linked to a find_node query for NODE-ID."
             (gethash "y" query-dict) "q"
             (gethash "q" query-dict) "find_node"
             (gethash "a" query-dict) query-body-dict)
-      (bencode:encode query-dict client-socket-stream
-                      :external-format '(unsigned-byte 8))
+      (bencode:encode query-dict client-socket-stream)
       (force-output client-socket-stream))
-    (bencode:decode connection :external-format '(unsigned-byte 8))))
+    (bencode:decode connection)))
 
 (defun get-peers (client-socket-stream info-hash)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
@@ -69,10 +67,9 @@ is linked to a get_peers query using INFO-HASH."
             (gethash "y" query-dict) "q"
             (gethash "q" query-dict) "get_peers"
             (gethash "a" query-dict) query-body-dict)
-      (bencode:encode query-dict client-socket-stream
-                      :external-format '(unsigned-byte 8))
+      (bencode:encode query-dict client-socket-stream)
       (force-output client-socket-stream))
-    (bencode:decode connection :external-format '(unsigned-byte 8))))
+    (bencode:decode connection)))
 
 (defun announce-peer (client-socket-stream info-hash)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
@@ -97,10 +94,9 @@ is linked to an announce_peer query using INFO-HASH."
             (gethash "y" query-dict) "q"
             (gethash "q" query-dict) "announce_peer"
             (gethash "a" query-dict) query-body-dict)
-      (bencode:encode query-dict client-socket-stream
-                      :external-format '(unsigned-byte 8))
+      (bencode:encode query-dict client-socket-stream)
       (force-output client-socket-stream))
-    (bencode:decode connection :external-format '(unsigned-byte 8))))
+    (bencode:decode connection)))
 
 (defun dht-error (client-socket-stream transaction-id type)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
@@ -113,8 +109,7 @@ is linked to a dht_error message of type TYPE using TRANSACTION-ID."
                                      (:server (list 202 "Server Error"))
                                      (:protocol (list 203 "Protocol Error"))
                                      (:method (list 204 "Method Unknown"))))
-    (bencode:encode query-dict client-socket-stream
-                    :external-format '(unsigned-byte 8))
+    (bencode:encode query-dict client-socket-stream)
     (force-output client-socket-stream)))
 
 (defun send-message (type node &key transaction-id info-hash error-type)
@@ -149,11 +144,10 @@ linked to by CLIENT-SOCKET-STREAM using DICT."
           (gethash "t" response-dict) (gethash "t" dict)
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-body-dict)
-    (bencode:encode response-dict client-socket-stream
-                    :external-format '(unsigned-byte 8))
+    (bencode:encode response-dict client-socket-stream)
     (force-output client-socket-stream)))
 
-(defun respond-to-get-peers (client-socket-stream dict)
+(defun respond-to-get-peers (client-socket-stream dict node)
   "Responds to a get_peers query from the node connected to via the socket
 linked to by CLIENT-SOCKET-STREAM using DICT."
   (let* ((hash (gethash "info_hash" (gethash "a" dict)))
@@ -171,7 +165,9 @@ linked to by CLIENT-SOCKET-STREAM using DICT."
         (setf (gethash "values" response-body-dict)
               peers)
         (setf (gethash "nodes" response-body-dict)
-              (find-closest-nodes (gethash "id" (gethash "a" dict)))))))
+              (find-closest-nodes (gethash "id" (gethash "a" dict)))))
+    (bencode:encode response-dict client-socket-stream)
+    (force-output client-socket-stream)))
 
 (defun respond-to-announce-peer (client-socket-stream dict)
   "Responds to an announce_peer query from the node connected to via the socket
@@ -189,7 +185,7 @@ linked to by CLIENT-SOCKET-STREAM using DICT.")
                       (:find_node
                        (respond-to-find-node target-stream dict))
                       (:get_peers
-                       (respond-to-get-peers target-stream dict))
+                       (respond-to-get-peers target-stream dict node))
                       (:announce_peer
                        (respond-to-announce-peer target-stream dict)))
         (simple-error () (invoke-restart :continue))))))
