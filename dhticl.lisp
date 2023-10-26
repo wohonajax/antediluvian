@@ -36,7 +36,7 @@
     (with-listening-usocket-stream (socket stream usocket:*wildcard-host*
                                            *default-port*)
       (loop :for line := (read-line stream nil) :doing
-         (switch (line :test #'string-equal)
+         (alexandria:switch (line :test #'string-equal)
            ;; TODO
            (""))))))
 

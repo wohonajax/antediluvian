@@ -1,6 +1,6 @@
 (in-package #:dhticl)
 
-(define-constant +my-id+
+(alexandria:define-constant +my-id+
   (make-string-from-bytes
    (map '(vector (unsigned-byte 8))
         #'random-byte
@@ -34,3 +34,11 @@
   "Returns the distance between NODE and us."
   (calculate-distance (convert-id-to-int +my-id+)
                       (convert-id-to-int (node-id node))))
+
+(defun compact-node-info (node)
+  "Translates NODE's IP and port into compact format."
+  ;; FIXME: translate port to byte-string
+  (format nil "~a~a"
+          (node-ip node)
+          (map 'string #'code-char
+               (convert-int-to-byte-vector (node-port node)))))

@@ -15,4 +15,5 @@
                (:file "networking")
                (:file "dhticl"))
   :serial t
-  :depends-on (usocket bordeaux-threads bencode alexandria ironclad))
+  :depends-on (usocket bordeaux-threads bencode
+                       alexandria ironclad cl-intbytes))

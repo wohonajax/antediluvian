@@ -120,7 +120,7 @@ is linked to a dht_error message of type TYPE using TRANSACTION-ID."
                        :protocol :datagram
                        :element-type '(unsigned-byte 8)
                        :timeout 5)
-      (handler-case (ecase type
+      (handler-case (case type
                       (:ping (ping-node target-stream))
                       (:store)
                       (:find_node (find-node target-stream (node-id node)))
@@ -130,6 +130,19 @@ is linked to a dht_error message of type TYPE using TRANSACTION-ID."
         (simple-error () (invoke-restart :continue))))))
 
 ;;; Responses to queries
+
+(defun respond-to-ping (client-socket-stream dict)
+  "Responds to a ping query from the node connected to via the socket
+linked to by CLIENT-SOCKET-STREAM using DICT."
+  (let ((response-dict (make-hash-table))
+        (response-arguments (make-hash-table)))
+    (setf (gethash "id" response-arguments) +my-id+
+
+          (gethash "t" response-dict) (gethash "t" dict)
+          (gethash "y" response-dict) "r"
+          (gethash "r" response-dict) response-arguments)
+    (bencode:encode response-dict client-socket-stream)
+    (force-output client-socket-stream)))
 
 (defun respond-to-find-node (client-socket-stream dict)
   "Responds to a find_node query from the node connected to via the socket
@@ -146,7 +159,7 @@ linked to by CLIENT-SOCKET-STREAM using DICT."
     (force-output client-socket-stream)))
 
 (defun respond-to-get-peers (client-socket-stream dict node)
-  "Responds to a get_peers query from the node connected to via the socket
+  "Responds to a get_peers query from the node NODE connected to via the socket
 linked to by CLIENT-SOCKET-STREAM using DICT."
   (let* ((arguments-dict (gethash "a" dict))
          (hash (gethash "info_hash" arguments-dict))
@@ -162,7 +175,7 @@ linked to by CLIENT-SOCKET-STREAM using DICT."
           (gethash "r" response-dict) response-arguments)
     (if peers
         (setf (gethash "values" response-arguments)
-              peers)
+              (mapcar #'compact-node-info peers))
         (setf (gethash "nodes" response-arguments)
               (find-closest-nodes (gethash "id" arguments-dict))))
     (bencode:encode response-dict client-socket-stream)
@@ -209,6 +222,8 @@ linked to by CLIENT-SOCKET-STREAM using DICT."
                        :element-type '(unsigned-byte 8)
                        :timeout 5)
       (handler-case (case type
+                      (:ping
+                       (respond-to-ping target-stream dict))
                       (:find_node
                        (respond-to-find-node target-stream dict))
                       (:get_peers
