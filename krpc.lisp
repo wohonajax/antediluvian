@@ -97,8 +97,8 @@ is linked to an announce_peer query using INFO-HASH."
       (bencode:encode query-dict client-socket-stream)
       (force-output client-socket-stream))
     (bencode:decode connection)))
-
-(defun dht-error (client-socket-stream transaction-id type)
+;;; TODO: dht_error correctly
+(defun dht-error (client-socket-stream type)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
 is linked to a dht_error message of type TYPE using TRANSACTION-ID."
   (let ((query-dict (make-hash-table)))
@@ -112,7 +112,7 @@ is linked to a dht_error message of type TYPE using TRANSACTION-ID."
     (bencode:encode query-dict client-socket-stream)
     (force-output client-socket-stream)))
 
-(defun send-message (type node &key transaction-id info-hash error-type)
+(defun send-message (type node &key info-hash error-type)
   (multiple-value-bind (ip port)
       (parse-node-ip (node-ip node))
     (usocket:with-client-socket
@@ -126,9 +126,7 @@ is linked to a dht_error message of type TYPE using TRANSACTION-ID."
                       (:find_node (find-node target-stream (node-id node)))
                       (:find_value)
                       (:get_peers (get-peers target-stream info-hash))
-                      (:announce_peer (announce-peer target-stream info-hash))
-                      (:dht_error (dht-error target-stream
-                                             transaction-id error-type)))
+                      (:announce_peer (announce-peer target-stream info-hash)))
         (simple-error () (invoke-restart :continue))))))
 
 ;;; Responses to queries
@@ -150,7 +148,8 @@ linked to by CLIENT-SOCKET-STREAM using DICT."
 (defun respond-to-get-peers (client-socket-stream dict node)
   "Responds to a get_peers query from the node connected to via the socket
 linked to by CLIENT-SOCKET-STREAM using DICT."
-  (let* ((hash (gethash "info_hash" (gethash "a" dict)))
+  (let* ((arguments-dict (gethash "a" dict))
+         (hash (gethash "info_hash" arguments-dict))
          (peers (have-peers hash))
          (response-dict (make-hash-table))
          (response-arguments (make-hash-table)))
@@ -165,7 +164,7 @@ linked to by CLIENT-SOCKET-STREAM using DICT."
         (setf (gethash "values" response-arguments)
               peers)
         (setf (gethash "nodes" response-arguments)
-              (find-closest-nodes (gethash "id" (gethash "a" dict)))))
+              (find-closest-nodes (gethash "id" arguments-dict))))
     (bencode:encode response-dict client-socket-stream)
     (force-output client-socket-stream)))
 
@@ -175,19 +174,31 @@ linked to by CLIENT-SOCKET-STREAM using DICT."
   (let* ((response-dict (make-hash-table))
          (response-arguments (make-hash-table))
          (argument-dict (gethash "a" dict))
+         (id (gethash "id" argument-dict))
          (implied-port-p (gethash "implied_port" argument-dict))
          (port (if (and implied-port-p (= implied-port-p 1))
                    (usocket:get-peer-port client-socket)
-                   (gethash "port" argument-dict))))
-    ;; TODO:  "queried node must verify that the token was previously sent
-    ;; to the same IP address as the querying node. Then the queried node
-    ;; should store the IP address of the querying node and the supplied
-    ;; port number under the infohash in its store of peer contact information"
+                   (gethash "port" argument-dict)))
+         (token (gethash "token" argument-dict))
+         (node (create-node :id id
+                            :ip (usocket:get-peer-address client-socket)
+                            :port port
+                            :distance
+                            (calculate-distance (convert-id-to-int id)
+                                                (convert-id-to-int +my-id+))
+                            :last-activity (get-universal-time)
+                            :health :good
+                            :hashes (list (gethash "info_hash"
+                                                   argument-dict)))))
+    (consider-token node token)
+    (add-to-bucket node)
     (setf (gethash "id" response-arguments) +my-id+
 
           (gethash "t" response-dict) (gethash "t" dict)
           (gethash "y" response-dict) "r"
-          (gethash "r" response-dict) response-arguments)))
+          (gethash "r" response-dict) response-arguments)
+    (bencode:encode response-dict client-socket-stream)
+    (force-output client-socket-stream)))
 
 (defun send-response (type node dict)
   (multiple-value-bind (ip port)

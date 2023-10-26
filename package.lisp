@@ -2,12 +2,6 @@
 
 (defpackage #:dhticl
   (:use #:cl)
-  (:import-from #:alexandria
-                #:with-gensyms
-                #:clamp
-                #:switch
-                #:symbolicate
-                #:define-constant)
   (:export #:dht
            #:kill
            #:+my-id+

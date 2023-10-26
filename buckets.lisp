@@ -1,3 +1,4 @@
+;;; TODO: fix the routing table to organize by info_hash
 (in-package #:dhticl)
 
 (defvar *routing-table-location*
@@ -23,7 +24,7 @@
                               (node-ip node)
                               (node-distance node)
                               (node-last-activity node)
-                              (node-health node))
+                              (node-hashes node))
                       (format file "(~S)" nil)))
                 bucket)
            (format file ")"))
@@ -46,7 +47,7 @@ routing table."
                                           :ip (second node)
                                           :distance (third node)
                                           :last-activity (fourth node)
-                                          :health (fifth node))))
+                                          :hashes (fifth node))))
                          bucket))
                   (read file))))))
 
@@ -162,7 +163,7 @@ newest."
   (update-bucket bucket))
 
 (defun add-to-bucket (node &aux (bucket (correct-bucket (node-id node))))
-  "Adds NODE to the correct bucket."
+  "Adds NODE to the correct bucket, per its ID."
   (if (bucket-fullp bucket)
       (bucket-splitp bucket)
       (dotimes (i +k+)
@@ -191,7 +192,7 @@ if NODELY is non-NIL."
 (defmacro find-in-table (criteria &body body)
   "Attempts to find a node in the routing table that satisfies CRITERIA. If
 none is found, executes BODY, otherwise returns the node."
-  (with-gensyms (target node)
+  (alexandria:with-unique-names (target node)
     `(let ((,target nil))
        (tagbody (iterate-table (lambda (,node)
                                  (when (funcall ,criteria ,node)
@@ -256,19 +257,19 @@ none is found, executes BODY, otherwise returns the node."
   (find-in-table (lambda (x) (string-equal id (node-id x)))
     (find-closest-nodes id)))
 
-(defun have-peers (hash)
-  "Returns a list of peers for HASH from the routing table."
+(defun have-peers (info-hash)
+  "Returns a list of peers for INFO-HASH from the routing table."
   (let ((bag '()))
     (iterate-table (lambda (node)
-                     (when (member hash (node-hashes node) :test #'equal)
+                     (when (member info-hash (node-hashes node) :test #'equal)
                        (push node bag)))
                    :nodely t)
     bag))
 
-(defun closest-nodes (hash) ;; FIXME
-  "Returns the closest nodes in the routing table for HASH."
-  (min (logxor hash (iterate-table (lambda (node) (node-id node))
-                                   :nodely t))))
+(defun closest-nodes (info-hash) ;; TODO
+  "Returns a list of the K closest nodes in the routing table for INFO-HASH."
+  (reduce (lambda (x))
+          (have-peers info-hash)))
 
 #| TODO: this is pseudocode of what happens
 (defun closest-nodes ()                 ; ;

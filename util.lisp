@@ -4,9 +4,9 @@
   "Tests whether NUMBER is contained within the range bounded by FIRST-BOUND
   and END-BOUND."
   (= number
-     (clamp number
-            first-bound
-            end-bound)))
+     (alexandria:clamp number
+                       first-bound
+                       end-bound)))
 
 (defun minutes-since (time)
   "Returns the time in minutes that has elapsed since TIME."
@@ -37,10 +37,3 @@ character codes."
 (defun convert-id-to-int (id)
   "Converts a node ID from an ID string to a decimal integer."
   (reduce #'+ (make-bytes-from-string id)))
-
-(defmacro with-listening-usocket-stream ((socket-var stream-var host port) &body body)
-  (with-gensyms (socket)
-    `(usocket:with-socket-listener (,socket ,host ,port :reuse-address t)
-       (usocket:with-connected-socket (,socket-var (usocket:socket-accept ,socket))
-         (let ((,stream-var (usocket:socket-stream ,socket-var)))
-           ,@body)))))
