@@ -4,10 +4,12 @@
   "Creates a temporary listening socket to receive responses."
   (usocket:with-connected-socket
       (socket (usocket:socket-connect
-               usocket:*wildcard-host* *default-port*
+               nil nil
                :protocol :datagram
                :element-type '(unsigned-byte 8)
-               :timeout 5))
+               :timeout 5
+               :local-host usocket:*wildcard-host*
+               :local-port *default-port*))
     (usocket:socket-receive socket nil 2048)))
 
 (defun ping-then-listen (node)
@@ -59,7 +61,7 @@ accordingly."
   (update-bucket bucket))
 
 (defun handle-questionable-node (node)
-  "Elucidates the health of NODE."
+  "Checks the health of NODE."
   (setf (node-health node)
         (cond ((ping-then-listen node) :good)
               ((ping-then-listen node) :good)
