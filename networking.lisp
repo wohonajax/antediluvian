@@ -46,7 +46,7 @@ accordingly."
 (defun ping-old-nodes (bucket)
   "Pings the nodes in a bucket from oldest to newest."
   (sort-bucket-by-age bucket)
-  (iterate-bucket bucket (lambda (node) (ping-then-listen node)))
+  (iterate-bucket bucket #'ping-then-listen)
   (sort-bucket-by-distance bucket)
   (update-bucket bucket))
 

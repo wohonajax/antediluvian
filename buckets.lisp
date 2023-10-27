@@ -62,7 +62,7 @@ routing table."
 
 (defun make-new-bucket (min max)
   "Adds a bucket to the routing table with a range from MIN to MAX."
-  (setf *routing-table* (cons (make-bucket :min min :max max) *routing-table*)))
+  (push (make-bucket :min min :max max) *routing-table*))
 
 (defun correct-bucket (id)
   "Returns the proper bucket for ID."

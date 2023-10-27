@@ -23,16 +23,10 @@ hash it and return the hash."
 
 (defun de-bencode (object)
   "Takes a bencoded OBJECT and decodes it."
-  (if (pathnamep object)
+  (if (or (stringp object) (pathnamep object))
       (with-open-file (file object :element-type '(unsigned-byte 8))
         (bencode:decode file))
       (bencode:decode object)))
-
-(defun really-send (data socket)
-  "Forces DATA to be sent through SOCKET rather than accumulating in a buffer."
-  (let ((stream (usocket:socket-stream socket)))
-    (format stream "~A" data)
-    (force-output stream)))
 
 (defun generate-transaction-id (&aux (array (make-array 2)))
   "Creates a transaction ID and writes it as a string to STREAM. If STREAM is
@@ -41,15 +35,11 @@ NIL (the default), returns the string directly."
           (make-string-from-bytes (map '(vector (unsigned-byte 8))
                                        #'random-byte array))))
 
-(defun get-transaction-id (query)
-  "Retrieves the transaction ID from the Bencoded QUERY."
-  (gethash "t" (de-bencode query)))
-
 (defun parse-node-ip (ip &aux (ip-vector (make-array 4 :element-type
                                                      '(unsigned-byte 8)))
                            (port-vector (make-array 2 :element-type
                                                     '(unsigned-byte 8))))
-  "Parses a node's IP field into a usable form."
+  "Returns a node's IP address and port as multiple values."
   (flet ((parse-char (char)
            (char-code (char ip char))))
     (setf (aref ip-vector 0) (parse-char 0)
@@ -99,7 +89,7 @@ NIL (the default), returns the string directly."
 
 (defun valid-token-p (token)
   "Determines whether TOKEN is valid or not."
-  (when token ; handle NILs
+  (when token ; FIXME: handle NILs
     (< (minutes-since (token-birth token)) 10)))
 
 (defun recall-token (hash)
