@@ -9,12 +9,7 @@
 (defun ping-node (client-socket-stream)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
 is linked to a ping query."
-  (usocket:with-connected-socket
-      (connection (usocket:socket-connect nil nil
-                                          :protocol :datagram
-                                          :element-type '(unsigned-byte 8)
-                                          :local-host usocket:*wildcard-host*
-                                          :local-port *default-port*))
+  (with-listening-usocket-stream socket
     (let ((query-dict (make-hash-table))
           (query-arguments (make-hash-table)))
       (setf (gethash "id" query-arguments) +my-id+
@@ -30,12 +25,7 @@ is linked to a ping query."
 (defun find-node (client-socket-stream node-id)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
 is linked to a find_node query for NODE-ID."
-  (usocket:with-connected-socket
-      (connection (usocket:socket-connect nil nil
-                                          :protocol :datagram
-                                          :element-type '(unsigned-byte 8)
-                                          :local-host usocket:*wildcard-host*
-                                          :local-port *default-port*))
+  (with-listening-usocket-stream socket
     (let ((query-dict (make-hash-table))
           (query-arguments (make-hash-table)))
       (setf (gethash "id" query-arguments) +my-id+
@@ -52,12 +42,7 @@ is linked to a find_node query for NODE-ID."
 (defun get-peers (client-socket-stream info-hash)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
 is linked to a get_peers query using INFO-HASH."
-  (usocket:with-connected-socket
-      (connection (usocket:socket-connect nil nil
-                                          :protocol :datagram
-                                          :element-type '(unsigned-byte 8)
-                                          :local-host usocket:*wildcard-host*
-                                          :local-port *default-port*))
+  (with-listening-usocket-stream socket
     (let ((query-dict (make-hash-table))
           (query-arguments (make-hash-table)))
       (setf (gethash "id" query-arguments) +my-id+
@@ -74,12 +59,7 @@ is linked to a get_peers query using INFO-HASH."
 (defun announce-peer (client-socket-stream info-hash)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
 is linked to an announce_peer query using INFO-HASH."
-  (usocket:with-connected-socket
-      (connection (usocket:socket-connect nil nil
-                                          :protocol :datagram
-                                          :element-type '(unsigned-byte 8)
-                                          :local-host usocket:*wildcard-host*
-                                          :local-port *default-port*))
+  (with-listening-usocket-stream socket
     (let* ((query-dict (make-hash-table))
            (query-arguments (make-hash-table))
            (surely-hash (ensure-hash info-hash))
