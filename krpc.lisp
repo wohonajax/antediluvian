@@ -24,7 +24,7 @@ is linked to a ping query."
             (gethash "a" query-dict) query-arguments)
       (bencode:encode query-dict client-socket-stream)
       (force-output client-socket-stream))
-    (receive-data socket 47)))
+    (bencode:decode (receive-data socket 47))))
 
 (defun find-node (client-socket-stream node-id)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
@@ -47,7 +47,7 @@ is linked to a find_node query for NODE-ID."
     ;; length is 60 + (x * 6), where x is either 1 or k
     (let* ((x (if :k-nodes +k+ 1))
            (buffer-length (+ 60 (* x 6))))
-      (receive-data socket buffer-length))))
+      (bencode:decode (receive-data socket buffer-length)))))
 
 (defun get-peers (client-socket-stream info-hash)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
@@ -68,7 +68,7 @@ is linked to a get_peers query using INFO-HASH."
     ;; if there's a "nodes" key the length is x + (k * 6)
     ;; if there's a "values" key the length is potentially unbounded...
     (let ((buffer-length 1000)) ; FIXME: filler value here
-      (receive-data socket buffer-length))))
+      (bencode:decode (receive-data socket buffer-length)))))
 
 (defun announce-peer (client-socket-stream info-hash)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
@@ -90,11 +90,11 @@ is linked to an announce_peer query using INFO-HASH."
             (gethash "a" query-dict) query-arguments)
       (bencode:encode query-dict client-socket-stream)
       (force-output client-socket-stream))
-    (receive-data socket 47)))
+    (bencode:decode (receive-data socket 47))))
 ;;; TODO: dht_error correctly
 (defun dht-error (client-socket-stream type dict)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
-is linked to a dht_error message of type TYPE using TRANSACTION-ID."
+is linked to a dht_error message of type TYPE using DICT."
   (let ((error-dict (make-hash-table)))
     (setf (gethash "t" error-dict) (gethash "t" dict)
           (gethash "y" error-dict) "e"
