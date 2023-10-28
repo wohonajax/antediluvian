@@ -37,3 +37,13 @@ character codes."
 (defun convert-id-to-int (id)
   "Converts a node ID from an ID string to a decimal integer."
   (reduce #'+ (make-bytes-from-string id)))
+
+(defmacro with-listening-usocket-stream (socket-var &body body)
+  `(usocket:with-connected-socket
+       (,socket-var (usocket:socket-connect nil nil
+                                            :protocol :datagram
+                                            :element-type '(unsigned-byte 8)
+                                            :timeout 5
+                                            :local-host usocket:*wildcard-host*
+                                            :local-port *default-port*))
+     ,@body))
