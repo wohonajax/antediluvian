@@ -44,11 +44,9 @@ is linked to a find_node query for NODE-ID."
     ;; TODO: figure out the right length for RECEIVE-DATA here
     ;; parse the result of RECEIVE-DATA and return a vector of proper length
     ;; parsing should look at the value for "nodes" key's length
-    ;; length is either 66 for a 1-node response
-    ;; or 60 + (k * 6) for a k-node response
-    (let ((buffer-length (if :k-nodes
-                             (+ 60 (* +k+ 6))
-                             (+ 60 6))))
+    ;; length is 60 + (x * 6), where x is either 1 or k
+    (let* ((x (if :k-nodes +k+ 1))
+           (buffer-length (+ 60 (* x 6))))
       (receive-data socket buffer-length))))
 
 (defun get-peers (client-socket-stream info-hash)
