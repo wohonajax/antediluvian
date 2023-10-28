@@ -11,8 +11,7 @@
 ;;; Queries
 
 (defun ping-node (node client-socket-stream)
-  "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
-is linked to a ping query."
+  "Sends NODE a ping message."
   (with-listening-usocket-stream socket
     (let ((query-dict (make-hash-table))
           (query-arguments (make-hash-table)))
@@ -27,8 +26,7 @@ is linked to a ping query."
     (bencode:decode (receive-data socket 47))))
 
 (defun find-node (client-socket-stream node-id)
-  "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
-is linked to a find_node query for NODE-ID."
+  "Asks a peer for a node's contact information."
   (with-listening-usocket-stream socket
     (let ((query-dict (make-hash-table))
           (query-arguments (make-hash-table)))
@@ -50,8 +48,7 @@ is linked to a find_node query for NODE-ID."
       (bencode:decode (receive-data socket buffer-length)))))
 
 (defun get-peers (client-socket-stream info-hash)
-  "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
-is linked to a get_peers query using INFO-HASH."
+  "Asks for peers under INFO-HASH."
   (with-listening-usocket-stream socket
     (let ((query-dict (make-hash-table))
           (query-arguments (make-hash-table)))
@@ -71,8 +68,7 @@ is linked to a get_peers query using INFO-HASH."
       (bencode:decode (receive-data socket buffer-length)))))
 
 (defun announce-peer (client-socket-stream info-hash)
-  "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
-is linked to an announce_peer query using INFO-HASH."
+  "Announces peer status under INFO_HASH."
   (with-listening-usocket-stream socket
     (let* ((query-dict (make-hash-table))
            (query-arguments (make-hash-table))
@@ -93,8 +89,7 @@ is linked to an announce_peer query using INFO-HASH."
     (bencode:decode (receive-data socket 47))))
 ;;; TODO: dht_error correctly
 (defun dht-error (client-socket-stream type dict)
-  "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
-is linked to a dht_error message of type TYPE using DICT."
+  "Sends a DHT error message."
   (let ((error-dict (make-hash-table)))
     (setf (gethash "t" error-dict) (gethash "t" dict)
           (gethash "y" error-dict) "e"
@@ -107,6 +102,8 @@ is linked to a dht_error message of type TYPE using DICT."
     (force-output client-socket-stream)))
 
 (defun send-message (type node &key info-hash error-type)
+  "Sends NODE a TYPE message. TYPE should be a keyword like
+:PING or :FIND_NODE."
   (multiple-value-bind (ip port)
       (parse-node-ip (node-ip node))
     (usocket:with-client-socket
@@ -126,8 +123,7 @@ is linked to a dht_error message of type TYPE using DICT."
 ;;; Responses to queries
 
 (defun respond-to-ping (client-socket-stream dict)
-  "Responds to a ping query from the node connected to via the socket
-linked to by CLIENT-SOCKET-STREAM using DICT."
+  "Responds to a ping query."
   (let ((response-dict (make-hash-table))
         (response-arguments (make-hash-table)))
     (setf (gethash "id" response-arguments) +my-id+
@@ -139,8 +135,7 @@ linked to by CLIENT-SOCKET-STREAM using DICT."
     (force-output client-socket-stream)))
 
 (defun respond-to-find-node (client-socket-stream dict)
-  "Responds to a find_node query from the node connected to via the socket
-linked to by CLIENT-SOCKET-STREAM using DICT."
+  "Responds to a find_node query."
   (let ((response-dict (make-hash-table))
         (response-arguments (make-hash-table)))
     (setf (gethash "id" response-arguments) +my-id+
@@ -153,8 +148,7 @@ linked to by CLIENT-SOCKET-STREAM using DICT."
     (force-output client-socket-stream)))
 
 (defun respond-to-get-peers (client-socket-stream dict node)
-  "Responds to a get_peers query from the node NODE connected to via the socket
-linked to by CLIENT-SOCKET-STREAM using DICT."
+  "Responds to a get_peers query."
   (let* ((arguments-dict (gethash "a" dict))
          (hash (gethash "info_hash" arguments-dict))
          (peers (have-peers hash))
@@ -176,8 +170,7 @@ linked to by CLIENT-SOCKET-STREAM using DICT."
     (force-output client-socket-stream)))
 
 (defun respond-to-announce-peer (client-socket-stream dict client-socket)
-  "Responds to an announce_peer query from the node connected to via the socket
-linked to by CLIENT-SOCKET-STREAM using DICT."
+  "Responds to an announce_peer query."
   (let* ((response-dict (make-hash-table))
          (response-arguments (make-hash-table))
          (argument-dict (gethash "a" dict))
