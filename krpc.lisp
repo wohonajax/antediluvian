@@ -4,9 +4,13 @@
 
 (defvar *use-implied-port-p* nil)
 
+(defun receive-data (socket length)
+  (let ((buffer (make-array length :element-type '(unsigned-byte 8))))
+    (map 'string #'code-char (usocket:socket-receive socket buffer length))))
+
 ;;; Queries
 
-(defun ping-node (client-socket-stream)
+(defun ping-node (node client-socket-stream)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
 is linked to a ping query."
   (with-listening-usocket-stream socket
@@ -20,7 +24,7 @@ is linked to a ping query."
             (gethash "a" query-dict) query-arguments)
       (bencode:encode query-dict client-socket-stream)
       (force-output client-socket-stream))
-    (bencode:decode connection)))
+    (receive-data socket 47)))
 
 (defun find-node (client-socket-stream node-id)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
@@ -37,7 +41,15 @@ is linked to a find_node query for NODE-ID."
             (gethash "a" query-dict) query-arguments)
       (bencode:encode query-dict client-socket-stream)
       (force-output client-socket-stream))
-    (bencode:decode connection)))
+    ;; TODO: figure out the right length for RECEIVE-DATA here
+    ;; parse the result of RECEIVE-DATA and return a vector of proper length
+    ;; parsing should look at the value for "nodes" key's length
+    ;; length is either 66 for a 1-node response
+    ;; or 60 + (k * 6) for a k-node response
+    (let ((buffer-length (if :k-nodes
+                             (+ 60 (* +k+ 6))
+                             (+ 60 6))))
+      (receive-data socket buffer-length))))
 
 (defun get-peers (client-socket-stream info-hash)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
@@ -54,7 +66,11 @@ is linked to a get_peers query using INFO-HASH."
             (gethash "a" query-dict) query-arguments)
       (bencode:encode query-dict client-socket-stream)
       (force-output client-socket-stream))
-    (bencode:decode connection)))
+    ;; TODO: figure out the right length for a buffer here
+    ;; if there's a "nodes" key the length is x + (k * 6)
+    ;; if there's a "values" key the length is potentially unbounded...
+    (let ((buffer-length 1000)) ; FIXME: filler value here
+      (receive-data socket buffer-length))))
 
 (defun announce-peer (client-socket-stream info-hash)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
@@ -76,20 +92,20 @@ is linked to an announce_peer query using INFO-HASH."
             (gethash "a" query-dict) query-arguments)
       (bencode:encode query-dict client-socket-stream)
       (force-output client-socket-stream))
-    (bencode:decode connection)))
+    (receive-data socket 47)))
 ;;; TODO: dht_error correctly
-(defun dht-error (client-socket-stream type)
+(defun dht-error (client-socket-stream type dict)
   "Sends the node connected to via the socket that CLIENT-SOCKET-STREAM
 is linked to a dht_error message of type TYPE using TRANSACTION-ID."
-  (let ((query-dict (make-hash-table)))
-    (setf (gethash "t" query-dict) transaction-id
-          (gethash "y" query-dict) "e"
-          (gethash "e" query-dict) (case type
+  (let ((error-dict (make-hash-table)))
+    (setf (gethash "t" error-dict) (gethash "t" dict)
+          (gethash "y" error-dict) "e"
+          (gethash "e" error-dict) (case type
                                      (:generic (list 201 "Generic Error"))
                                      (:server (list 202 "Server Error"))
                                      (:protocol (list 203 "Protocol Error"))
                                      (:method (list 204 "Method Unknown"))))
-    (bencode:encode query-dict client-socket-stream)
+    (bencode:encode error-dict client-socket-stream)
     (force-output client-socket-stream)))
 
 (defun send-message (type node &key info-hash error-type)
@@ -101,11 +117,11 @@ is linked to a dht_error message of type TYPE using TRANSACTION-ID."
                        :element-type '(unsigned-byte 8)
                        :timeout 5)
       (handler-case (case type
-                      (:ping (ping-node target-stream))
+                      (:ping (ping-node node target-stream))
                       (:store)
-                      (:find_node (find-node target-stream (node-id node)))
+                      (:find_node (find-node node target-stream (node-id node)))
                       (:find_value)
-                      (:get_peers (get-peers target-stream info-hash))
+                      (:get_peers (get-peers node target-stream info-hash))
                       (:announce_peer (announce-peer target-stream info-hash)))
         (simple-error () (invoke-restart :continue))))))
 
