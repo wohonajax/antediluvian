@@ -68,7 +68,7 @@
       (bencode:decode (receive-data socket buffer-length)))))
 
 (defun announce-peer (client-socket-stream info-hash)
-  "Announces peer status under INFO_HASH."
+  "Announces peer status under INFO-HASH."
   (with-listening-usocket-stream socket
     (let* ((query-dict (make-hash-table))
            (query-arguments (make-hash-table))
@@ -170,7 +170,8 @@
     (force-output client-socket-stream)))
 
 (defun respond-to-announce-peer (client-socket-stream dict client-socket)
-  "Responds to an announce_peer query."
+  "Responds to an announce_peer query. If the received token isn't valid,
+sends a protocol error message."
   (let* ((response-dict (make-hash-table))
          (response-arguments (make-hash-table))
          (argument-dict (gethash "a" dict))
@@ -190,15 +191,16 @@
                             :health :good
                             :hashes (list (gethash "info_hash"
                                                    argument-dict)))))
-    (consider-token node token)
-    (add-to-bucket node)
-    (setf (gethash "id" response-arguments) +my-id+
+    (if (consider-token node token)
+        (progn (add-to-bucket node)
+               (setf (gethash "id" response-arguments) +my-id+
 
-          (gethash "t" response-dict) (gethash "t" dict)
-          (gethash "y" response-dict) "r"
-          (gethash "r" response-dict) response-arguments)
-    (bencode:encode response-dict client-socket-stream)
-    (force-output client-socket-stream)))
+                     (gethash "t" response-dict) (gethash "t" dict)
+                     (gethash "y" response-dict) "r"
+                     (gethash "r" response-dict) response-arguments)
+               (bencode:encode response-dict client-socket-stream)
+               (force-output client-socket-stream))
+        (dht-error client-socket-stream :protocol dict))))
 
 (defun send-response (type node dict)
   (multiple-value-bind (ip port)
