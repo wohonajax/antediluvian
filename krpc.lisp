@@ -155,8 +155,7 @@
          (response-dict (make-hash-table))
          (response-arguments (make-hash-table)))
     (setf (gethash "id" response-arguments) +my-id+
-          (gethash "token" response-arguments) (invent-token hash
-                                                             (node-ip node))
+          (gethash "token" response-arguments) (invent-token hash node)
 
           (gethash "t" response-dict) (gethash "t" dict)
           (gethash "y" response-dict) "r"
@@ -189,6 +188,7 @@ sends a protocol error message."
                                                 (convert-id-to-int +my-id+))
                             :last-activity (get-universal-time)
                             :health :good
+                            ;; TODO: associate a node with multiple hashes
                             :hashes (list (gethash "info_hash"
                                                    argument-dict)))))
     (if (consider-token node token)

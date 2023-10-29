@@ -7,7 +7,8 @@
 (defstruct token
   (birth nil :type fixnum :read-only t)
   (value)
-  (hash))
+  (hash)
+  (node))
 
 (defun make-hash (byte-vector)
   "Hashes BYTE-VECTOR using the SHA1 algorithm."
@@ -77,15 +78,17 @@ NIL (the default), returns the string directly."
          (or (equal token-secret (car *previous-secret*))
              (equal token-secret (car *current-secret*))))))
 
-(defun invent-token (hash ip)
-  "Creates a token associated with HASH using IP."
-  (let* ((ip-vec (parse-node-ip ip))
+(defun invent-token (hash node)
+  "Creates a token associated with HASH and NODE."
+  (let* ((ip-vec (parse-node-ip (node-ip node)))
          (token (make-token :birth (get-universal-time)
                             :value (concatenate '(vector (unsigned-byte 8))
                                                 (make-hash ip-vec)
                                                 (ensure-secret))
-                            :hash (ensure-hash hash))))
-    (push token *token-history*)))
+                            :hash (ensure-hash hash)
+                            :node node)))
+    (push token *token-history*)
+    (first *token-history*)))
 
 (defun valid-token-p (token)
   "Determines whether TOKEN is valid or not."
