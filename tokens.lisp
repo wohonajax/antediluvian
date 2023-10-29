@@ -85,7 +85,7 @@ NIL (the default), returns the string directly."
                                                 (make-hash ip-vec)
                                                 (ensure-secret))
                             :hash (ensure-hash hash))))
-    (setf *token-history* (cons token *token-history*))))
+    (push token *token-history*)))
 
 (defun valid-token-p (token)
   "Determines whether TOKEN is valid or not."
@@ -96,8 +96,9 @@ NIL (the default), returns the string directly."
   "Retrieves the token value associated with HASH. If a recent enough token
 isn't found, returns NIL."
   (dolist (x *token-history*)
-    (let ((validp (valid-token-p x)))
-      (cond ((and validp (equal hash (token-hash x)))
+    (let ((validp (valid-token-p x))
+          (really-hash (ensure-hash hash)))
+      (cond ((and validp (equal really-hash (token-hash x)))
              (return x))
             ((not validp)
              (return))
