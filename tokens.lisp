@@ -22,17 +22,9 @@ hash it and return the hash."
       vague-hash
       (make-hash vague-hash)))
 
-(defun de-bencode (object)
-  "Takes a bencoded OBJECT and decodes it."
-  (if (or (stringp object) (pathnamep object))
-      (with-open-file (file object :element-type '(unsigned-byte 8))
-        (bencode:decode file))
-      (bencode:decode object)))
-
 (defun generate-transaction-id (&aux (array (make-array 2)))
-  "Creates a transaction ID and writes it as a string to STREAM. If STREAM is
-NIL (the default), returns the string directly."
-  (format nil "~A"
+  "Creates a transaction ID and returns it as a string."
+  (format nil "~a"
           (make-string-from-bytes (map '(vector (unsigned-byte 8))
                                        #'random-byte array))))
 
