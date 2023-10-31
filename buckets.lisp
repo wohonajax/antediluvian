@@ -266,11 +266,6 @@ none is found, executes BODY, otherwise returns the node."
                    :nodely t)
     bag))
 
-(defun closest-nodes (info-hash) ;; TODO
-  "Returns a list of the K closest nodes in the routing table for INFO-HASH."
-  (reduce (lambda (x))
-          (have-peers info-hash)))
-
 #| TODO: this is pseudocode of what happens
 (defun closest-nodes ()                 ; ;
 (min (logxor (infohash torrent)         ; ;

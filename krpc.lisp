@@ -139,8 +139,15 @@
   (let ((response-dict (make-hash-table))
         (response-arguments (make-hash-table)))
     (setf (gethash "id" response-arguments) +my-id+
-          (gethash "nodes" response-arguments) :TODO
-          ;; TODO: response body
+          (gethash "nodes" response-arguments)
+          (let* ((target (gethash "target" dict))
+                 (targetp (member target *node-list*)))
+            (if targetp
+                (compact-node-info (car targetp)) ; MEMBER returns a list
+                (with-output-to-string (str)
+                  (mapc (lambda (peer) (princ (compact-node-info peer) str))
+                        (find-closest-nodes target)))))
+
           (gethash "t" response-dict) (gethash "t" dict)
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-arguments)
@@ -164,7 +171,7 @@
         (setf (gethash "values" response-arguments)
               (mapcar #'compact-node-info peers))
         (setf (gethash "nodes" response-arguments)
-              (find-closest-nodes (gethash "id" arguments-dict))))
+              (find-closest-nodes hash))) ; TODO: is a list correct?
     (bencode:encode response-dict client-socket-stream)
     (force-output client-socket-stream)))
 

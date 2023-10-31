@@ -7,9 +7,11 @@
         (make-array 20)))
   :test #'equal)
 
+(defvar *node-list* (list))
+
 (defstruct node
   (id nil :type string
-      :read-only t)
+          :read-only t)
   (ip nil :read-only t)
   (port nil :read-only t)
   (distance nil :read-only t)
@@ -22,13 +24,15 @@
                       (health :questionable)
                       (hashes nil))
   "Creates a node object with the specified attributes."
-  (make-node :id id
-             :ip ip
-             :port port
-             :distance distance
-             :last-activity last-activity
-             :health health
-             :hashes hashes))
+  (let ((node (make-node :id id
+                         :ip ip
+                         :port port
+                         :distance distance
+                         :last-activity last-activity
+                         :health health
+                         :hashes hashes)))
+    (push node *node-list*)
+    node))
 
 (defun calculate-node-distance (node)
   "Returns the distance between NODE and us."
