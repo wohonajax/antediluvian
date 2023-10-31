@@ -38,8 +38,8 @@ character codes."
   "Converts a node ID from an ID string to a decimal integer."
   (reduce #'+ (make-bytes-from-string id)))
 
-(defmacro with-listening-usocket-stream (socket-var &body body)
-  "Creates a listening UDP socket and bined it to SOCKET-VAR."
+(defmacro with-listening-usocket (socket-var &body body)
+  "Creates a listening UDP socket and binds it to SOCKET-VAR."
   `(usocket:with-connected-socket
        (,socket-var (usocket:socket-connect nil nil
                                             :protocol :datagram

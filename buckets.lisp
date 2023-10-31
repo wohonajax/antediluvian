@@ -233,9 +233,7 @@ none is found, executes BODY, otherwise returns the node."
        (iterate-table
         (lambda (node)
           (when node
-            (let ((distance
-                   (calculate-distance (node-id node)
-                                       goal))
+            (let ((distance (calculate-distance (node-id node) goal))
                   (len (length winners)))
               (cond ((sorter distance worst)
                      (push node winners)

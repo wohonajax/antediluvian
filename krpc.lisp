@@ -12,7 +12,7 @@
 
 (defun ping-node (node client-socket-stream)
   "Sends NODE a ping message."
-  (with-listening-usocket-stream socket
+  (with-listening-usocket socket
     (let ((query-dict (make-hash-table))
           (query-arguments (make-hash-table)))
       (setf (gethash "id" query-arguments) +my-id+
@@ -27,7 +27,7 @@
 
 (defun find-node (client-socket-stream node-id)
   "Asks a peer for a node's contact information."
-  (with-listening-usocket-stream socket
+  (with-listening-usocket socket
     (let ((query-dict (make-hash-table))
           (query-arguments (make-hash-table)))
       (setf (gethash "id" query-arguments) +my-id+
@@ -49,7 +49,7 @@
 
 (defun get-peers (client-socket-stream info-hash)
   "Asks for peers under INFO-HASH."
-  (with-listening-usocket-stream socket
+  (with-listening-usocket socket
     (let ((query-dict (make-hash-table))
           (query-arguments (make-hash-table)))
       (setf (gethash "id" query-arguments) +my-id+
@@ -69,7 +69,7 @@
 
 (defun announce-peer (client-socket-stream info-hash)
   "Announces peer status under INFO-HASH."
-  (with-listening-usocket-stream socket
+  (with-listening-usocket socket
     (let* ((query-dict (make-hash-table))
            (query-arguments (make-hash-table))
            (surely-hash (ensure-hash info-hash))
@@ -122,7 +122,7 @@
 
 ;;; Responses to queries
 
-(defun respond-to-ping (client-socket-stream dict)
+(defun respond-to-ping (client-socket-stream dict node)
   "Responds to a ping query."
   (let ((response-dict (make-hash-table))
         (response-arguments (make-hash-table)))
@@ -131,6 +131,7 @@
           (gethash "t" response-dict) (gethash "t" dict)
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-arguments)
+    (setf (node-health node) :good)
     (bencode:encode response-dict client-socket-stream)
     (force-output client-socket-stream)))
 
@@ -151,6 +152,7 @@
           (gethash "t" response-dict) (gethash "t" dict)
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-arguments)
+    (setf (node-health node) :good)
     (bencode:encode response-dict client-socket-stream)
     (force-output client-socket-stream)))
 
@@ -170,8 +172,8 @@
     (if peers
         (setf (gethash "values" response-arguments)
               (mapcar #'compact-node-info peers))
-        (setf (gethash "nodes" response-arguments)
-              (find-closest-nodes hash))) ; TODO: is a list correct?
+        (setf (gethash "nodes" response-arguments) ;; TODO: is a list correct?
+              (mapcar #'compact-node-info (find-closest-nodes hash))))
     (setf (node-health node) :good)
     (bencode:encode response-dict client-socket-stream)
     (force-output client-socket-stream)))
@@ -222,9 +224,9 @@ sends a protocol error message."
                        :timeout 5)
       (handler-case (case type
                       (:ping
-                       (respond-to-ping target-stream dict))
+                       (respond-to-ping target-stream dict node))
                       (:find_node
-                       (respond-to-find-node target-stream dict))
+                       (respond-to-find-node target-stream dict node))
                       (:get_peers
                        (respond-to-get-peers target-stream dict node))
                       (:announce_peer
