@@ -141,9 +141,9 @@
     (setf (gethash "id" response-arguments) +my-id+
           (gethash "nodes" response-arguments)
           (let* ((target (gethash "target" dict))
-                 (targetp (member target *node-list*)))
-            (if targetp
-                (compact-node-info (car targetp)) ; MEMBER returns a list
+                 (have-target-p (member target *node-list*)))
+            (if have-target-p
+                (compact-node-info (car have-target-p)) ; MEMBER returns a list
                 (with-output-to-string (str)
                   (mapc (lambda (peer) (princ (compact-node-info peer) str))
                         (find-closest-nodes target)))))
@@ -172,6 +172,7 @@
               (mapcar #'compact-node-info peers))
         (setf (gethash "nodes" response-arguments)
               (find-closest-nodes hash))) ; TODO: is a list correct?
+    (setf (node-health node) :good)
     (bencode:encode response-dict client-socket-stream)
     (force-output client-socket-stream)))
 
@@ -184,7 +185,9 @@ sends a protocol error message."
          (id (gethash "id" argument-dict))
          (implied-port-p (gethash "implied_port" argument-dict))
          (port (if (and implied-port-p (= implied-port-p 1))
-                   (usocket:get-peer-port client-socket)
+                   ;; if implied_port is 1, use the source port
+                   (usocket:get-peer-port client-socket) ; FIXME: actually get a new port
+                   ;; otherwise use the supplied port
                    (gethash "port" argument-dict)))
          (token (gethash "token" argument-dict))
          (node (create-node :id id
@@ -229,16 +232,3 @@ sends a protocol error message."
                                                  dict
                                                  target-socket)))
         (simple-error () (invoke-restart :continue))))))
-
-;;;; Everything below this point is being rewritten
-
-(defun format-nodes (list-of-nodes)
-  "Formats a list of nodes appropriately for bencoding."
-  (with-output-to-string (x)
-    (princ "l" x)
-    (mapc (lambda (a)
-            (princ "26:" x)
-            (princ (node-id a) x)
-            (princ (node-ip a) x))
-          list-of-nodes)
-    (princ "e" x)))
