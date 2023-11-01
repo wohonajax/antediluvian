@@ -43,7 +43,11 @@
                   (let* ((packet (subseq buffer 0 size))
                          (dict (bencode:decode packet)))
                     (alexandria:switch ((gethash "y" dict) :test #'string=)
-                      ("q" )
+                      ("q" (alexandria:switch ((gethash "q" dict) :test #'string=)
+                             ("ping")
+                             ("find_node")
+                             ("get_peers")
+                             ("announce_peer")))
                       ("r" )
                       ("e" ))))))))
 

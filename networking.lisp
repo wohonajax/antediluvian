@@ -75,3 +75,30 @@ accordingly."
                     (when (eql :questionable (node-health node))
                       (handle-questionable-node node))))
   (update-bucket bucket))
+
+(defun parse-response (dict ip port)
+  "Parses a Bencoded response dictionary."
+  (let* ((transaction-id (gethash "t" dict))
+         (arguments (gethash "a" dict))
+         (id (gethash "id" arguments))
+         (token (gethash "token" arguments))
+         (nodes (gethash "nodes" arguments))
+         (values (gethash "values" arguments))
+         (implied-port (gethash "implied_port" arguments))
+         (peer-port (gethash "port" arguments))
+         (node (car (member id *node-list* :key #'node-id :test #'string=))))
+    (if node
+        (progn (setf (node-last-activity node) (get-universal-time)
+                     (node-health node) :good)
+               (pushnew (gethash "info_hash" arguments)
+                        (node-hashes node)
+                        :test #'equalp)
+               (cond (implied_port (setf (node-port node) port))
+                     (peer-port (setf (node-port node) peer-port))))
+        (push (create-node :id id :ip ip :port port
+                           :distance
+                           (calculate-distance (convert-id-to-int id)
+                                               (convert-id-to-int +my-id+))
+                           :last-activity (get-universal-time)
+                           :health :good)
+              *node-list*))))
