@@ -1,5 +1,7 @@
 (in-package #:dhticl)
 
+(defvar *hashmap* (make-hash-table :test #'equalp))
+
 (defun listen-closely ()
   "Creates a temporary listening socket to receive responses."
   (usocket:with-connected-socket
@@ -79,16 +81,18 @@ accordingly."
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
   (flet ((parse-nodes (str)
-           (handler-case
-               (let (nodes)
-                 (dotimes (i +k+)
+           (let (nodes)
+             (handler-case
+                 (dotimes (i +k+ nodes)
                    (let ((index (* i 6)))
                      (multiple-value-bind (parsed-ip parsed-port)
-                         (parse-node-ip str index (+ index 6))
-                       (push (cons parsed-ip parsed-port)))))
-                 nodes)
-             ;; when we get an array index error, we're done
-             (error () (return-from parse-nodes nodes)))))
+                         (parse-node-ip (subseq str index (+ index 6)))
+                       (push (cons parsed-ip parsed-port) nodes))))
+               ;; when we get an array index error, we're done
+               (error () (return-from parse-nodes nodes)))))
+         (ping-nodes (node-list)
+           (mapc (lambda (pair) (send-message :ping (car pair) (cdr pair)))
+                 node-list)))
     (let* ((transaction-id (gethash "t" dict))
            (arguments (gethash "a" dict))
            (id (gethash "id" arguments))
@@ -109,7 +113,7 @@ accordingly."
                  (pushnew (gethash "info_hash" arguments)
                           (node-hashes node)
                           :test #'equalp)
-                 (cond (implied_port (setf (node-port node) port))
+                 (cond (implied-port (setf (node-port node) port))
                        (peer-port (setf (node-port node) peer-port))))
           (push (create-node :id id :ip ip :port port
                              :distance
@@ -120,8 +124,9 @@ accordingly."
                 *node-list*))
       ;; TODO: perform work based on response
       (when nodes
-        (mapc (lambda (pair) (send-message :ping (car pair) (cdr pair)))
-              (parse-nodes nodes)))
+        (ping-nodes (parse-nodes nodes)))
       (when values
-        (mapc (lambda (pair) (send-message :ping (car pair) (cdr pair)))
-              (parse-nodes values))))))
+        (ping-nodes (parse-nodes values)))
+      (when token
+        (setf (gethash (gethash "info_hash" arguments) *hashmap*)
+              token)))))

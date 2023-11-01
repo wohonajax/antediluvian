@@ -12,8 +12,8 @@
 (defstruct node
   (id nil :type string
           :read-only t)
-  (ip nil :read-only t)
-  (port nil :read-only t)
+  (ip nil)
+  (port nil)
   (distance nil :read-only t)
   (last-activity nil :type fixnum)
   (health)
