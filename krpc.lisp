@@ -10,7 +10,7 @@
 
 ;;; Queries
 
-(defun ping-node (node client-socket-stream)
+(defun ping-node (client-socket-stream)
   "Sends NODE a ping message."
   (let ((query-dict (make-hash-table))
         (query-arguments (make-hash-table)))
@@ -91,38 +91,23 @@
   (multiple-value-bind (buffer size host port)
       (receive-data 47)
     (bencode:decode buffer)))
-;;; TODO: dht_error correctly
-(defun dht-error (client-socket-stream type dict)
-  "Sends a DHT error message."
-  (let ((error-dict (make-hash-table)))
-    (setf (gethash "t" error-dict) (gethash "t" dict)
-          (gethash "y" error-dict) "e"
-          (gethash "e" error-dict) (case type
-                                     (:generic (list 201 "Generic Error"))
-                                     (:server (list 202 "Server Error"))
-                                     (:protocol (list 203 "Protocol Error"))
-                                     (:method (list 204 "Method Unknown"))))
-    (bencode:encode error-dict client-socket-stream)
-    (force-output client-socket-stream)))
 
-(defun send-message (type node &key info-hash error-type)
+(defun send-message (type ip port &key id info-hash)
   "Sends NODE a TYPE message. TYPE should be a keyword like
 :PING or :FIND_NODE."
-  (multiple-value-bind (ip port)
-      (parse-node-ip (node-ip node))
-    (usocket:with-client-socket
-        (target-socket target-stream ip port
-                       :protocol :datagram
-                       :element-type '(unsigned-byte 8)
-                       :timeout 5)
-      (handler-case (case type
-                      (:ping (ping-node node target-stream))
-                      (:store)
-                      (:find_node (find-node node target-stream (node-id node)))
-                      (:find_value)
-                      (:get_peers (get-peers node target-stream info-hash))
-                      (:announce_peer (announce-peer target-stream info-hash)))
-        (simple-error () (invoke-restart :continue))))))
+  (usocket:with-client-socket
+      (target-socket target-stream ip port
+                     :protocol :datagram
+                     :element-type '(unsigned-byte 8)
+                     :timeout 5)
+    (handler-case (case type
+                    (:ping (ping-node target-stream))
+                    (:store)
+                    (:find_node (find-node target-stream id))
+                    (:find_value)
+                    (:get_peers (get-peers target-stream info-hash))
+                    (:announce_peer (announce-peer target-stream info-hash)))
+      (simple-error () (invoke-restart :continue)))))
 
 ;;; Responses to queries
 
@@ -176,8 +161,10 @@
     (if peers
         (setf (gethash "values" response-arguments)
               (mapcar #'compact-node-info peers))
-        (setf (gethash "nodes" response-arguments) ;; TODO: is a list correct?
-              (mapcar #'compact-node-info (find-closest-nodes hash))))
+        (setf (gethash "nodes" response-arguments)
+              (with-output-to-string (str)
+                (mapc (lambda (node) (princ (compact-node-info node) str))
+                      (find-closest-nodes hash)))))
     (setf (node-health node) :good)
     (bencode:encode response-dict client-socket-stream)
     (force-output client-socket-stream)))
@@ -218,7 +205,20 @@ sends a protocol error message."
                (force-output client-socket-stream))
         (dht-error client-socket-stream :protocol dict))))
 
-(defun send-response (type node dict)
+(defun dht-error (client-socket-stream type dict)
+  "Sends a DHT error message."
+  (let ((error-dict (make-hash-table)))
+    (setf (gethash "t" error-dict) (gethash "t" dict)
+          (gethash "y" error-dict) "e"
+          (gethash "e" error-dict) (case type
+                                     (:generic (list 201 "Generic Error"))
+                                     (:server (list 202 "Server Error"))
+                                     (:protocol (list 203 "Protocol Error"))
+                                     (:method (list 204 "Method Unknown"))))
+    (bencode:encode error-dict client-socket-stream)
+    (force-output client-socket-stream)))
+
+(defun send-response (type node dict &key error-type)
   (multiple-value-bind (ip port)
       (parse-node-ip (node-ip node))
     (usocket:with-client-socket
@@ -230,11 +230,10 @@ sends a protocol error message."
                       (:ping
                        (respond-to-ping target-stream dict node))
                       (:find_node
-                       (respond-to-find-node target-stream dict node))
+                       (respond-to-find-node target-stream dict))
                       (:get_peers
                        (respond-to-get-peers target-stream dict node))
                       (:announce_peer
-                       (respond-to-announce-peer target-stream
-                                                 dict
-                                                 target-socket)))
+                       (respond-to-announce-peer target-stream dict))
+                      (:dht_error (dht-error target-stream error-type dict)))
         (simple-error () (invoke-restart :continue))))))

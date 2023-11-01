@@ -78,27 +78,50 @@ accordingly."
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
-  (let* ((transaction-id (gethash "t" dict))
-         (arguments (gethash "a" dict))
-         (id (gethash "id" arguments))
-         (token (gethash "token" arguments))
-         (nodes (gethash "nodes" arguments))
-         (values (gethash "values" arguments))
-         (implied-port (gethash "implied_port" arguments))
-         (peer-port (gethash "port" arguments))
-         (node (car (member id *node-list* :key #'node-id :test #'string=))))
-    (if node
-        (progn (setf (node-last-activity node) (get-universal-time)
-                     (node-health node) :good)
-               (pushnew (gethash "info_hash" arguments)
-                        (node-hashes node)
-                        :test #'equalp)
-               (cond (implied_port (setf (node-port node) port))
-                     (peer-port (setf (node-port node) peer-port))))
-        (push (create-node :id id :ip ip :port port
-                           :distance
-                           (calculate-distance (convert-id-to-int id)
-                                               (convert-id-to-int +my-id+))
-                           :last-activity (get-universal-time)
-                           :health :good)
-              *node-list*))))
+  (flet ((parse-nodes (str)
+           (handler-case
+               (let (nodes)
+                 (dotimes (i +k+)
+                   (let ((index (* i 6)))
+                     (multiple-value-bind (parsed-ip parsed-port)
+                         (parse-node-ip str index (+ index 6))
+                       (push (cons parsed-ip parsed-port)))))
+                 nodes)
+             ;; when we get an array index error, we're done
+             (error () (return-from parse-nodes nodes)))))
+    (let* ((transaction-id (gethash "t" dict))
+           (arguments (gethash "a" dict))
+           (id (gethash "id" arguments))
+           ;; TOKEN comes from a get_peers response, needed for announce_peer
+           (token (gethash "token" arguments))
+           ;; NODES comes from a find_node or get_peers response
+           (nodes (gethash "nodes" arguments))
+           ;; VALUES is a list of strings which are compact node info
+           ;; Comes from a get_peers response
+           (values (gethash "values" arguments))
+           (implied-port (gethash "implied_port" arguments))
+           (peer-port (gethash "port" arguments))
+           (node (car (member id *node-list* :key #'node-id :test #'string=))))
+      ;; handle bookkeeping of the node
+      (if node
+          (progn (setf (node-last-activity node) (get-universal-time)
+                       (node-health node) :good)
+                 (pushnew (gethash "info_hash" arguments)
+                          (node-hashes node)
+                          :test #'equalp)
+                 (cond (implied_port (setf (node-port node) port))
+                       (peer-port (setf (node-port node) peer-port))))
+          (push (create-node :id id :ip ip :port port
+                             :distance
+                             (calculate-distance (convert-id-to-int id)
+                                                 (convert-id-to-int +my-id+))
+                             :last-activity (get-universal-time)
+                             :health :good)
+                *node-list*))
+      ;; TODO: perform work based on response
+      (when nodes
+        (mapc (lambda (pair) (send-message :ping (car pair) (cdr pair)))
+              (parse-nodes nodes)))
+      (when values
+        (mapc (lambda (pair) (send-message :ping (car pair) (cdr pair)))
+              (parse-nodes values))))))
