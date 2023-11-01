@@ -4,89 +4,93 @@
 
 (defvar *use-implied-port-p* nil)
 
-(defun receive-data (socket length)
+(defun receive-data (length)
   (let ((buffer (make-array length :element-type '(unsigned-byte 8))))
-    (map 'string #'code-char (usocket:socket-receive socket buffer length))))
+    (usocket:socket-receive *listening-socket* buffer length)))
 
 ;;; Queries
 
 (defun ping-node (node client-socket-stream)
   "Sends NODE a ping message."
-  (with-listening-usocket socket
-    (let ((query-dict (make-hash-table))
-          (query-arguments (make-hash-table)))
-      (setf (gethash "id" query-arguments) +my-id+
+  (let ((query-dict (make-hash-table))
+        (query-arguments (make-hash-table)))
+    (setf (gethash "id" query-arguments) +my-id+
 
-            (gethash "t" query-dict) (generate-transaction-id)
-            (gethash "y" query-dict) "q"
-            (gethash "q" query-dict) "ping"
-            (gethash "a" query-dict) query-arguments)
-      (bencode:encode query-dict client-socket-stream)
-      (force-output client-socket-stream))
-    (bencode:decode (receive-data socket 47))))
+          (gethash "t" query-dict) (generate-transaction-id)
+          (gethash "y" query-dict) "q"
+          (gethash "q" query-dict) "ping"
+          (gethash "a" query-dict) query-arguments)
+    (bencode:encode query-dict client-socket-stream)
+    (force-output client-socket-stream))
+  (multiple-value-bind (buffer size host port)
+      (receive-data 47)
+    (bencode:decode buffer)))
 
 (defun find-node (client-socket-stream node-id)
   "Asks a peer for a node's contact information."
-  (with-listening-usocket socket
-    (let ((query-dict (make-hash-table))
-          (query-arguments (make-hash-table)))
-      (setf (gethash "id" query-arguments) +my-id+
-            (gethash "target" query-arguments) node-id
+  (let ((query-dict (make-hash-table))
+        (query-arguments (make-hash-table)))
+    (setf (gethash "id" query-arguments) +my-id+
+          (gethash "target" query-arguments) node-id
 
-            (gethash "t" query-dict) (generate-transaction-id)
-            (gethash "y" query-dict) "q"
-            (gethash "q" query-dict) "find_node"
-            (gethash "a" query-dict) query-arguments)
-      (bencode:encode query-dict client-socket-stream)
-      (force-output client-socket-stream))
-    ;; TODO: figure out the right length for RECEIVE-DATA here
-    ;; parse the result of RECEIVE-DATA and return a vector of proper length
-    ;; parsing should look at the value for "nodes" key's length
-    ;; length is 60 + (x * 6), where x is either 1 or k
-    (let* ((x (if :k-nodes +k+ 1))
-           (buffer-length (+ 60 (* x 6))))
-      (bencode:decode (receive-data socket buffer-length)))))
+          (gethash "t" query-dict) (generate-transaction-id)
+          (gethash "y" query-dict) "q"
+          (gethash "q" query-dict) "find_node"
+          (gethash "a" query-dict) query-arguments)
+    (bencode:encode query-dict client-socket-stream)
+    (force-output client-socket-stream))
+  ;; TODO: figure out the right length for RECEIVE-DATA here
+  ;; parse the result of RECEIVE-DATA and return a vector of proper length
+  ;; parsing should look at the value for "nodes" key's length
+  ;; length is 60 + (x * 6), where x is either 1 or k
+  (let* ((x (if :k-nodes +k+ 1))
+         (buffer-length (+ 60 (* x 6))))
+    (multiple-value-bind (buffer size host port)
+        (receive-data buffer-length)
+      (bencode:decode buffer))))
 
 (defun get-peers (client-socket-stream info-hash)
   "Asks for peers under INFO-HASH."
-  (with-listening-usocket socket
-    (let ((query-dict (make-hash-table))
-          (query-arguments (make-hash-table)))
-      (setf (gethash "id" query-arguments) +my-id+
-            (gethash "info_hash" query-arguments) (ensure-hash info-hash)
+  (let ((query-dict (make-hash-table))
+        (query-arguments (make-hash-table)))
+    (setf (gethash "id" query-arguments) +my-id+
+          (gethash "info_hash" query-arguments) (ensure-hash info-hash)
 
-            (gethash "t" query-dict) (generate-transaction-id)
-            (gethash "y" query-dict) "q"
-            (gethash "q" query-dict) "get_peers"
-            (gethash "a" query-dict) query-arguments)
-      (bencode:encode query-dict client-socket-stream)
-      (force-output client-socket-stream))
-    ;; TODO: figure out the right length for a buffer here
-    ;; if there's a "nodes" key the length is x + (k * 6)
-    ;; if there's a "values" key the length is potentially unbounded...
-    (let ((buffer-length 1000)) ; FIXME: filler value here
-      (bencode:decode (receive-data socket buffer-length)))))
+          (gethash "t" query-dict) (generate-transaction-id)
+          (gethash "y" query-dict) "q"
+          (gethash "q" query-dict) "get_peers"
+          (gethash "a" query-dict) query-arguments)
+    (bencode:encode query-dict client-socket-stream)
+    (force-output client-socket-stream))
+  ;; TODO: figure out the right length for a buffer here
+  ;; if there's a "nodes" key the length is x + (k * 6)
+  ;; if there's a "values" key the length is potentially unbounded...
+  (let ((buffer-length 1000)) ; FIXME: filler value here
+    (multiple-value-bind (buffer size host port)
+        (receive-data buffer-length)
+      (bencode:decode buffer))))
 
 (defun announce-peer (client-socket-stream info-hash)
   "Announces peer status under INFO-HASH."
-  (with-listening-usocket socket
-    (let* ((query-dict (make-hash-table))
-           (query-arguments (make-hash-table))
-           (surely-hash (ensure-hash info-hash))
-           (token (recall-token surely-hash)))
-      (setf (gethash "id" query-arguments) +my-id+
-            (gethash "implied_port" query-arguments) (if *use-implied-port-p* 1 0)
-            (gethash "info_hash" query-arguments) surely-hash
-            (gethash "port" query-arguments) *default-port*
-            (gethash "token" query-arguments) token
+  (let* ((query-dict (make-hash-table))
+         (query-arguments (make-hash-table))
+         (surely-hash (ensure-hash info-hash))
+         (token (recall-token surely-hash)))
+    (setf (gethash "id" query-arguments) +my-id+
+          (gethash "implied_port" query-arguments) (if *use-implied-port-p* 1 0)
+          (gethash "info_hash" query-arguments) surely-hash
+          (gethash "port" query-arguments) *default-port*
+          (gethash "token" query-arguments) token
 
-            (gethash "t" query-dict) (generate-transaction-id)
-            (gethash "y" query-dict) "q"
-            (gethash "q" query-dict) "announce_peer"
-            (gethash "a" query-dict) query-arguments)
-      (bencode:encode query-dict client-socket-stream)
-      (force-output client-socket-stream))
-    (bencode:decode (receive-data socket 47))))
+          (gethash "t" query-dict) (generate-transaction-id)
+          (gethash "y" query-dict) "q"
+          (gethash "q" query-dict) "announce_peer"
+          (gethash "a" query-dict) query-arguments)
+    (bencode:encode query-dict client-socket-stream)
+    (force-output client-socket-stream))
+  (multiple-value-bind (buffer size host port)
+      (receive-data 47)
+    (bencode:decode buffer)))
 ;;; TODO: dht_error correctly
 (defun dht-error (client-socket-stream type dict)
   "Sends a DHT error message."
@@ -178,7 +182,7 @@
     (bencode:encode response-dict client-socket-stream)
     (force-output client-socket-stream)))
 
-(defun respond-to-announce-peer (client-socket-stream dict client-socket)
+(defun respond-to-announce-peer (client-socket-stream dict)
   "Responds to an announce_peer query. If the received token isn't valid,
 sends a protocol error message."
   (let* ((response-dict (make-hash-table))
@@ -188,7 +192,7 @@ sends a protocol error message."
          (implied-port-p (gethash "implied_port" argument-dict))
          (port (if (and implied-port-p (= implied-port-p 1))
                    ;; if implied_port is 1, use the source port
-                   (usocket:get-peer-port client-socket) ; FIXME: actually get a new port
+                   (usocket:get-peer-port *listening-socket*)
                    ;; otherwise use the supplied port
                    (gethash "port" argument-dict)))
          (token (gethash "token" argument-dict))

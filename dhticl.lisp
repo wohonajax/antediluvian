@@ -29,13 +29,23 @@
 (define-condition peer-request () ())
 (define-condition kill-signal () ())
 
+(defvar *listening-socket*)
+
 (defun main-loop ()
   (handler-bind ((peer-requested (lambda (c) c))
                  (peer-request (lambda (c) c))
                  (kill-signal (lambda (c) (declare (ignore c))
                                 (return-from main-loop))))
     (with-listening-usocket socket
-      (loop))))
+      (setf *listening-socket* socket)
+      (loop :do (multiple-value-bind (buffer size host port)
+                    (receive-data 65507) ; max UDP packet payload size
+                  (let* ((packet (subseq buffer 0 size))
+                         (dict (bencode:decode packet)))
+                    (alexandria:switch ((gethash "y" dict) :test #'string=)
+                      ("q" )
+                      ("r" )
+                      ("e" ))))))))
 
 (defun dht ()
   "Initiates the distributed hash table."
