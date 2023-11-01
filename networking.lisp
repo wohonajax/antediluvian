@@ -122,11 +122,11 @@ accordingly."
                              :last-activity (get-universal-time)
                              :health :good)
                 *node-list*))
-      ;; TODO: perform work based on response
       (when nodes
         (ping-nodes (parse-nodes nodes)))
       (when values
         (ping-nodes (parse-nodes values)))
+      ;; TODO: associate with info-hash instead of with node
       (when token
         (setf (gethash (gethash "info_hash" arguments) *hashmap*)
               token)))))
