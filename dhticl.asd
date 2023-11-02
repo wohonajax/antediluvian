@@ -1,7 +1,7 @@
 (asdf:defsystem #:dhticl
   :name "DHTiCL"
   :author "Hunter Chandler <wohonajax@gmail.com>"
-  :version "20231031"
+  :version "20231102"
   :maintainer "Hunter Chandler <wohonajax@gmail.com>"
   :license "MIT"
   :description "DHTiCL"
@@ -15,4 +15,4 @@
                (:file "networking")
                (:file "dhticl"))
   :serial t
-  :depends-on (usocket bordeaux-threads bencode alexandria ironclad))
+  :depends-on (usocket bencode alexandria ironclad))
