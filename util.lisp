@@ -25,18 +25,9 @@
   (declare (ignore x))
   (random 256))
 
-(defun make-string-from-bytes (byte-vector)
-  "Returns a string of characters made by using BYTE-VECTOR as an array of
-character codes."
-  (map 'string #'code-char byte-vector))
-
-(defun make-bytes-from-string (string)
-  "Returns a byte vector representation of STRING."
-  (map '(vector (unsigned-byte 8)) #'char-code string))
-
 (defun convert-id-to-int (id)
   "Converts a node ID from an ID string to a decimal integer."
-  (reduce #'+ (make-bytes-from-string id)))
+  (ironclad:octets-to-integer (ironclad:ascii-string-to-byte-array id)))
 
 (defmacro with-listening-usocket (socket-var &body body)
   "Creates a listening UDP socket and binds it to SOCKET-VAR."

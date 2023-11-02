@@ -113,7 +113,8 @@ accordingly."
                  (pushnew (gethash "info_hash" arguments)
                           (node-hashes node)
                           :test #'equalp)
-                 (cond (implied-port (setf (node-port node) port))
+                 (cond ((and implied-port (= implied-port 1))
+                        (setf (node-port node) port))
                        (peer-port (setf (node-port node) peer-port))))
           (push (create-node :id id :ip ip :port port
                              :distance

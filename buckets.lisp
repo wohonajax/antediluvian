@@ -137,9 +137,7 @@ closest to furthest."
   (sort-bucket-by-distance seed)
   (dotimes (i +k+)
     (let ((current-node (svref (bucket-nodes seed) i)))
-      (if (<= (ironclad:octets-to-integer
-               (ironclad:ascii-string-to-byte-array
-                (node-id current-node)))
+      (if (<= (convert-id-to-int (node-id current-node))
               (bucket-max first))
           (setf (svref (bucket-nodes first) (first-empty-slot first))
                 current-node)
@@ -154,15 +152,16 @@ closest to furthest."
         (b (make-new-bucket (1+ mid) max)))
     (seed-buckets a b bucket)))
 
-(defun bucket-splitp (bucket &aux (id (convert-id-to-int +my-id+))
-                               (nodes (bucket-nodes bucket)))
+(defun bucket-splitp (bucket)
   "Splits BUCKET if our ID is in its range, otherwise pings from oldest to
 newest."
-  (if (within id
-              (reduce #'min nodes)
-              (reduce #'max nodes))
-      (bucket-split bucket)
-      (ping-old-nodes bucket))
+  (let ((id (convert-id-to-int +my-id+))
+        (nodes (bucket-nodes bucket)))
+    (if (within id
+                (reduce #'min nodes)
+                (reduce #'max nodes))
+        (bucket-split bucket)
+        (ping-old-nodes bucket)))
   (update-bucket bucket))
 
 (defun add-to-bucket (node &aux (bucket (correct-bucket (node-id node))))
@@ -182,15 +181,15 @@ newest."
   (dotimes (i (length (bucket-nodes bucket)))
     (funcall action (svref (bucket-nodes bucket) i))))
 
-(defun iterate-table (action &key (nodely nil)
-                      &aux (limit (length *routing-table*)))
+(defun iterate-table (action &key (nodely nil))
   "Funcalls ACTION on each bucket in the routing table, or on each node
 if NODELY is non-NIL."
-  (dotimes (i limit)
-    (let ((current-bucket (svref *routing-table* i)))
-      (if nodely
-          (iterate-bucket current-bucket action)
-          (funcall action current-bucket)))))
+  (let ((limit (length *routing-table*)))
+    (dotimes (i limit)
+      (let ((current-bucket (svref *routing-table* i)))
+        (if nodely
+            (iterate-bucket current-bucket action)
+            (funcall action current-bucket))))))
 
 (defmacro find-in-table (criteria &body body)
   "Attempts to find a node in the routing table that satisfies CRITERIA. If
@@ -214,43 +213,46 @@ none is found, executes BODY, otherwise returns the node."
               (lambda (x y)
                 (< (bucket-min x) (bucket-min y))))))
 
-(defun find-closest-nodes (id &aux (goal (convert-id-to-int id)) (worst '())
-                                (winners '()) (ticker 0))
+(defun find-closest-nodes (id)
   "Returns a list of the K closest nodes to ID."
-  (flet ((sorter (x y)
-           (cond ((and x y) (< x y))
-                 (x t)
-                 (t nil)))
-         (list-sorter (x y)
-           (let ((xid (when x (node-id x)))
-                 (yid (when y (node-id y))))
-             (cond ((and xid yid)
-                    (< (calculate-distance xid goal)
-                       (calculate-distance yid goal)))
-                   (xid t)
-                   (yid nil)
+  (let ((goal (convert-id-to-int id))
+        (worst '())
+        (winners '())
+        (ticker 0))
+    (flet ((sorter (x y)
+             (cond ((and x y) (< x y))
                    (x t)
-                   (y nil)
-                   (t t)))))
-    (tagbody
-       (iterate-table
-        (lambda (node)
-          (when node
-            (let ((distance (calculate-distance (node-id node) goal))
-                  (len (length winners)))
-              (cond ((sorter distance worst)
-                     (push node winners)
-                     (setf winners (sort winners #'list-sorter)
-                           worst distance)
-                     (when (> len +k+)
-                       (setf winners (butlast winners))))
-                    (t (unless (< len +k+)
-                         (incf ticker))
-                       (when (> ticker 1)
-                         (go away)))))))
-        :nodely t)
-     away))
-  winners)
+                   (t nil)))
+           (list-sorter (x y)
+             (let ((xid (when x (node-id x)))
+                   (yid (when y (node-id y))))
+               (cond ((and xid yid)
+                      (< (calculate-distance xid goal)
+                         (calculate-distance yid goal)))
+                     (xid t)
+                     (yid nil)
+                     (x t)
+                     (y nil)
+                     (t t)))))
+      (tagbody
+         (iterate-table
+          (lambda (node)
+            (when node
+              (let ((distance (calculate-distance (node-id node) goal))
+                    (len (length winners)))
+                (cond ((sorter distance worst)
+                       (push node winners)
+                       (setf winners (sort winners #'list-sorter)
+                             worst distance)
+                       (when (> len +k+)
+                         (setf winners (butlast winners))))
+                      (t (unless (< len +k+)
+                           (incf ticker))
+                         (when (> ticker 1)
+                           (go away)))))))
+          :nodely t)
+       away))
+    winners))
 
 (defun find-node-in-table (id)
   "Tries to find a node in the routing table based on its ID. Otherwise, returns
@@ -261,8 +263,5 @@ none is found, executes BODY, otherwise returns the node."
 (defun have-peers (info-hash)
   "Returns a list of peers for INFO-HASH from the routing table."
   (let ((bag '()))
-    (iterate-table (lambda (node)
-                     (when (member info-hash (node-hashes node) :test #'equal)
-                       (push node bag)))
-                   :nodely t)
+    (mapc (lambda (x) (push x bag)) (gethash info-hash *hashmap*))
     bag))

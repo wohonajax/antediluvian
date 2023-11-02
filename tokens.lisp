@@ -13,33 +13,36 @@
   "Hashes BYTE-VECTOR using the SHA1 algorithm."
   (ironclad:digest-sequence :sha1 byte-vector))
 
-(defun generate-transaction-id (&aux (array (make-array 2)))
+(defun generate-transaction-id ()
   "Creates a transaction ID and returns it as a string."
-  (format nil "~a"
-          (make-string-from-bytes (map '(vector (unsigned-byte 8))
-                                       #'random-byte array))))
+  (let ((array (make-array 2)))
+    (format nil "~a"
+            (map 'string #'code-char
+                 (map '(vector (unsigned-byte 8))
+                      #'random-byte array)))))
 
-(defun parse-node-ip (ip &aux (ip-vector (make-array 4 :element-type
-                                                     '(unsigned-byte 8)))
-                           (port-vector (make-array 2 :element-type
-                                                    '(unsigned-byte 8))))
+(defun parse-node-ip (ip)
   "Returns a node's IP address and port as multiple values."
-  (flet ((parse-char (char)
-           (char-code (char ip char))))
-    (setf (aref ip-vector 0) (parse-char 0)
-          (aref ip-vector 1) (parse-char 1)
-          (aref ip-vector 2) (parse-char 2)
-          (aref ip-vector 3) (parse-char 3)
-          (aref port-vector 0) (parse-char 4)
-          (aref port-vector 1) (parse-char 5))
-    (values ip-vector (usocket:port-from-octet-buffer port-vector))))
+  (let ((ip-vector (make-array 4 :element-type '(unsigned-byte 8)))
+        (port-vector (make-array 2 :element-type '(unsigned-byte 8))))
+    (flet ((parse-char (char)
+             (char-code (char ip char))))
+      (setf (aref ip-vector 0) (parse-char 0)
+            (aref ip-vector 1) (parse-char 1)
+            (aref ip-vector 2) (parse-char 2)
+            (aref ip-vector 3) (parse-char 3)
+            (aref port-vector 0) (parse-char 4)
+            (aref port-vector 1) (parse-char 5))
+      (values ip-vector (usocket:port-from-octet-buffer port-vector)))))
 
-(defun make-secret (&aux (vec (make-array 5 :element-type '(unsigned-byte 8))))
+(defun make-secret ()
   "Makes a secret."
-  (map-into vec (lambda (x) (declare (ignore x)) (random 160)) #(0 0 0 0 0))
-  (setf *previous-secret* *current-secret*
-        *current-secret* (cons vec (get-universal-time)))
-  vec)
+  (let ((vec (make-array 5 :element-type '(unsigned-byte 8))))
+    (dotimes (i 5)
+      (setf (aref vec i) (random 160)))
+    (setf *previous-secret* *current-secret*
+          *current-secret* (cons vec (get-universal-time)))
+    vec))
 
 (defun ensure-secret ()
   "Makes sure the current secret isn't stale. If it is, returns a fresh secret."
