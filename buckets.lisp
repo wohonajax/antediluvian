@@ -73,7 +73,7 @@ routing table."
 (defun first-empty-slot (bucket)
   "Returns the index of the first empty slot in BUCKET."
   (dotimes (i +k+)
-    (unless (aref (bucket-nodes bucket) i)
+    (unless (svref (bucket-nodes bucket) i)
       (return i))))
 
 (defun bucket-emptyp (bucket)
@@ -91,17 +91,17 @@ routing table."
 
 (defun first-node-in-bucket (bucket)
   "Returns the first node in BUCKET."
-  (aref (bucket-nodes bucket) 0))
+  (svref (bucket-nodes bucket) 0))
 
 (defun last-node-in-bucket (bucket)
   "Returns the last node in BUCKET."
   (let ((len (1- +k+))
         (nodes (bucket-nodes bucket)))
     (cond ((bucket-emptyp bucket) (first-node-in-bucket bucket))
-          ((bucket-fullp bucket) (aref nodes len))
+          ((bucket-fullp bucket) (svref nodes len))
           (t (dotimes (i +k+)
-               (when (null (aref nodes (1+ i)))
-                 (return (aref nodes i))))))))
+               (when (null (svref nodes (1+ i)))
+                 (return (svref nodes i))))))))
 
 (flet ((node-sorter (x y field pred)
          (let ((xfield (when x
@@ -136,11 +136,11 @@ closest to furthest."
   "Seeds the values of a bucket into 2 fresh buckets."
   (sort-bucket-by-distance seed)
   (dotimes (i +k+)
-    (let ((current-node (aref (bucket-nodes seed) i)))
+    (let ((current-node (svref (bucket-nodes seed) i)))
       (if (<= i (bucket-max first))
-          (setf (aref (bucket-nodes first) (first-empty-slot first))
+          (setf (svref (bucket-nodes first) (first-empty-slot first))
                 current-node)
-          (setf (aref (bucket-nodes second) (first-empty-slot second))
+          (setf (svref (bucket-nodes second) (first-empty-slot second))
                 current-node)))))
 
 (defun bucket-split (bucket &aux (min (bucket-min bucket))
@@ -167,8 +167,8 @@ newest."
   (if (bucket-fullp bucket)
       (bucket-splitp bucket)
       (dotimes (i +k+)
-        (when (null (aref (bucket-nodes bucket) i))
-          (setf (aref (bucket-nodes bucket) i)
+        (when (null (svref (bucket-nodes bucket) i))
+          (setf (svref (bucket-nodes bucket) i)
                 node)
           (sort-bucket-by-distance bucket)
           (update-bucket bucket)
@@ -177,14 +177,14 @@ newest."
 (defun iterate-bucket (bucket action)
   "Funcalls ACTION on each node in BUCKET."
   (dotimes (i (length (bucket-nodes bucket)))
-    (funcall action (aref (bucket-nodes bucket) i))))
+    (funcall action (svref (bucket-nodes bucket) i))))
 
 (defun iterate-table (action &key (nodely nil)
                       &aux (limit (length *routing-table*)))
   "Funcalls ACTION on each bucket in the routing table, or on each node
 if NODELY is non-NIL."
   (dotimes (i limit)
-    (let ((current-bucket (aref *routing-table* i)))
+    (let ((current-bucket (svref *routing-table* i)))
       (if nodely
           (iterate-bucket current-bucket action)
           (funcall action current-bucket)))))
@@ -263,23 +263,3 @@ none is found, executes BODY, otherwise returns the node."
                        (push node bag)))
                    :nodely t)
     bag))
-
-#| TODO: this is pseudocode of what happens
-(defun closest-nodes ()                 ; ;
-(min (logxor (infohash torrent)         ; ;
-(ids nodes-in-routing-table))))         ; ;
-                                        ; ;
-(when (finding node)                    ; ;
-(ask-for-peers (closest-nodes))         ; ;
-(when (exhausted nodes-in-routing-table) ; ;
-(send +my-id+)))                        ; ;
-                                        ; ;
-(when (asked-for-peers)                 ; ;
-(if (have-peers)                        ; ;
-(send peer-info)                        ; ;
-(send closest-nodes)))                  ; ;
-                                        ; ;
-(let* ((secret (change-every-five-minutes)) ; ;
-(token (concat (sha1 ip)                ; ;
-secret)))                               ; ;
-(maintain previous-secret)) |#
