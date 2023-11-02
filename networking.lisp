@@ -79,14 +79,16 @@ accordingly."
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
   (flet ((parse-nodes (str)
-           (let (nodes)
+           (let (nodes
+                 ;; TODO: error handling for out-of-bounds
+                 ;; (node's health is bad)
+                 (len (/ (length str) 6)))
              (handler-case
-                 (dotimes (i +k+ nodes)
+                 (dotimes (i len nodes)
                    (let ((index (* i 6)))
                      (multiple-value-bind (parsed-ip parsed-port)
                          (parse-node-ip (subseq str index (+ index 6)))
                        (push (cons parsed-ip parsed-port) nodes))))
-               ;; when we get an array index error, we're done
                (error () (return-from parse-nodes nodes)))))
          (ping-nodes (node-list)
            (mapc (lambda (pair) (send-message :ping (car pair) (cdr pair)))

@@ -137,7 +137,10 @@ closest to furthest."
   (sort-bucket-by-distance seed)
   (dotimes (i +k+)
     (let ((current-node (svref (bucket-nodes seed) i)))
-      (if (<= i (bucket-max first))
+      (if (<= (ironclad:octets-to-integer
+               (ironclad:ascii-string-to-byte-array
+                (node-id current-node)))
+              (bucket-max first))
           (setf (svref (bucket-nodes first) (first-empty-slot first))
                 current-node)
           (setf (svref (bucket-nodes second) (first-empty-slot second))
