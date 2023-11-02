@@ -1,7 +1,5 @@
 (in-package #:dhticl)
 
-(defvar *hashmap* (make-hash-table :test #'equalp))
-
 (defun listen-closely ()
   "Creates a temporary listening socket to receive responses."
   (usocket:with-connected-socket
@@ -127,6 +125,9 @@ accordingly."
       (when values
         (ping-nodes (parse-nodes values)))
       ;; TODO: associate with info-hash instead of with node
-      (when token
-        (setf (gethash (gethash "info_hash" arguments) *hashmap*)
-              token)))))
+      (when token ;; CURRENT-INFO-HASH-VALUE will be (node . token)
+        (let ((current-info-hash-value (gethash (gethash "info_hash" arguments)
+                                                *hashmap*)))
+          (unless (equalp (cdr current-info-hash-value) token)
+            (setf (gethash (gethash "info_hash" arguments) *hashmap*)
+                  (cons node token))))))))

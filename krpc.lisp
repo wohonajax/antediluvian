@@ -54,7 +54,7 @@
   (let ((query-dict (make-hash-table))
         (query-arguments (make-hash-table)))
     (setf (gethash "id" query-arguments) +my-id+
-          (gethash "info_hash" query-arguments) (ensure-hash info-hash)
+          (gethash "info_hash" query-arguments) info-hash
 
           (gethash "t" query-dict) (generate-transaction-id)
           (gethash "y" query-dict) "q"
@@ -74,11 +74,10 @@
   "Announces peer status under INFO-HASH."
   (let* ((query-dict (make-hash-table))
          (query-arguments (make-hash-table))
-         (surely-hash (ensure-hash info-hash))
          (token (recall-token surely-hash)))
     (setf (gethash "id" query-arguments) +my-id+
           (gethash "implied_port" query-arguments) (if *use-implied-port-p* 1 0)
-          (gethash "info_hash" query-arguments) surely-hash
+          (gethash "info_hash" query-arguments) info-hash
           (gethash "port" query-arguments) *default-port*
           (gethash "token" query-arguments) token
 
@@ -169,7 +168,7 @@
     (bencode:encode response-dict client-socket-stream)
     (force-output client-socket-stream)))
 
-(defun respond-to-announce-peer (client-socket-stream dict)
+(defun respond-to-announce-peer (client-socket-stream dict client-socket)
   "Responds to an announce_peer query. If the received token isn't valid,
 sends a protocol error message."
   (let* ((response-dict (make-hash-table))
@@ -190,10 +189,7 @@ sends a protocol error message."
                             (calculate-distance (convert-id-to-int id)
                                                 (convert-id-to-int +my-id+))
                             :last-activity (get-universal-time)
-                            :health :good
-                            ;; TODO: associate a node with multiple hashes
-                            :hashes (list (gethash "info_hash"
-                                                   argument-dict)))))
+                            :health :good)))
     (if (consider-token node token)
         (progn (add-to-bucket node)
                (setf (gethash "id" response-arguments) +my-id+
@@ -234,6 +230,6 @@ sends a protocol error message."
                       (:get_peers
                        (respond-to-get-peers target-stream dict node))
                       (:announce_peer
-                       (respond-to-announce-peer target-stream dict))
+                       (respond-to-announce-peer target-stream dict target-socket))
                       (:dht_error (dht-error target-stream error-type dict)))
         (simple-error () (invoke-restart :continue))))))

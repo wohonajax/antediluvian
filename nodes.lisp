@@ -12,12 +12,11 @@
 (defstruct node
   (id nil :type string
           :read-only t)
-  (ip nil)
-  (port nil)
+  (ip)
+  (port)
   (distance nil :read-only t)
   (last-activity nil :type fixnum)
-  (health)
-  (hashes nil :type list))
+  (health))
 
 (defun create-node (&key (id nil) (ip nil) (port nil) (distance nil)
                       (last-activity nil)

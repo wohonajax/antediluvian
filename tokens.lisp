@@ -1,26 +1,17 @@
 (in-package #:dhticl)
 
-(defvar *token-history* (list))
+(defvar *token-births* (make-hash-table :test #'equalp)
+  "A hash table mapping tokens to their creation times.")
+
+(defvar *hashmap* (make-hash-table :test #'equalp)
+  "A hash table containing info_hashes as keys and (node . token) as values.")
+
 (defvar *current-secret*)
 (defvar *previous-secret*)
-
-(defstruct token
-  (birth nil :type fixnum :read-only t)
-  (value)
-  (hash)
-  (node))
 
 (defun make-hash (byte-vector)
   "Hashes BYTE-VECTOR using the SHA1 algorithm."
   (ironclad:digest-sequence :sha1 byte-vector))
-
-(defun ensure-hash (vague-hash)
-  "Ensures VAGUE-HASH is really an SHA1 hash. If it is, return it, otherwise
-hash it and return the hash."
-  (if (equal '(simple-array (unsigned-byte 8) (20))
-             (type-of vague-hash))
-      vague-hash
-      (make-hash vague-hash)))
 
 (defun generate-transaction-id (&aux (array (make-array 2)))
   "Creates a transaction ID and returns it as a string."
@@ -57,8 +48,10 @@ hash it and return the hash."
       (make-secret)
       (car *current-secret*)))
 
-(defun consider-token (node token)
-  "Checks whether TOKEN received from NODE is valid or not."
+(defun consider-token (hash token)
+  "Checks whether TOKEN is valid for HASH or not."
+  (equalp (cdr (gethash hash *hashmap*)) token)
+  #|
   (let* ((node-ip-hash (make-array 20 :element-type '(unsigned-byte 8)))
          (token-value (token-value token))
          (token-hash (subseq token-value 0 20))
@@ -68,43 +61,39 @@ hash it and return the hash."
     (ensure-secret)
     (and (equal node-ip-hash token-hash)
          (or (equal token-secret (car *previous-secret*))
-             (equal token-secret (car *current-secret*))))))
+             (equal token-secret (car *current-secret*))))) |#
+  )
 
-(defun invent-token (hash node)
-  "Creates a token associated with HASH and NODE."
+(defun invent-token (info-hash node)
+  "Creates a token associated with INFO-HASH and NODE."
   (let* ((ip-vec (parse-node-ip (node-ip node)))
-         (token (make-token :birth (get-universal-time)
-                            :value (concatenate '(vector (unsigned-byte 8))
-                                                (make-hash ip-vec)
-                                                (ensure-secret))
-                            :hash (ensure-hash hash)
-                            :node node)))
-    (push token *token-history*)
-    (first *token-history*)))
+         (token (concatenate '(vector (unsigned-byte 8))
+                             (make-hash ip-vec)
+                             (ensure-secret))))
+    (setf (gethash info-hash *hashmap*) (cons node token))
+    (setf (gethash token *token-births*) (get-universal-time))))
 
 (defun valid-token-p (token)
   "Determines whether TOKEN is valid or not."
-  (when token ; FIXME: handle NILs
-    (< (minutes-since (token-birth token)) 10)))
+  (let ((token-birth (gethash token *token-births*)))
+    (when token-birth
+      (< (minutes-since token-birth) 10))))
 
 (defun recall-token (hash)
   "Retrieves the token value associated with HASH. If a recent enough token
 isn't found, returns NIL."
-  (dolist (x *token-history*)
-    (let ((validp (valid-token-p x))
-          (really-hash (ensure-hash hash)))
-      (cond ((and validp (equal really-hash (token-hash x)))
-             (return x))
-            ((not validp)
-             (return))
-            (t nil)))))
+  (let ((token (cdr (gethash hash *hashmap*))))
+    (and token (valid-token-p token) token)))
 
 (defun refresh-tokens ()
   "Deletes every token more than 10 minutes old."
-  (labels ((recur (list)
-             (if (valid-token-p (second list))
-                 (recur (rest list))
-                 (setf (rest list) nil))))
-    (if (valid-token-p (first *token-history*))
-        (recur *token-history*)
-        (setf *token-history* nil))))
+  (maphash (lambda (key value)
+             (declare (ignore key))
+             (unless (valid-token-p (cdr value))
+               (setf (cdr value) nil)))
+           *hashmap*)
+  (maphash (lambda (key value)
+             (declare (ignore value))
+             (unless (valid-token-p key)
+               (remhash key *token-births*)))
+           *token-births*))
