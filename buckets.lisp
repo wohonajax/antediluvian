@@ -39,7 +39,7 @@ routing table."
       (let ((empty-node (list nil)))
         (map-into *routing-table*
                   (lambda (bucket)
-                    (map 'vector
+                    (map 'simple-vector
                          (lambda (node)
                            (unless (equal node empty-node)
                              (create-node :id (first node)
@@ -149,7 +149,12 @@ closest to furthest."
   "Splits BUCKET into two new buckets."
   (let ((a (make-new-bucket min mid))
         (b (make-new-bucket (1+ mid) max)))
-    (seed-buckets a b bucket)))
+    (push a *routing-table*)
+    (push b *routing-table*)
+    (setf *routing-table*
+          (remove-if (lambda (bkt) (eq bucket bkt)) *routing-table*))
+    (seed-buckets a b bucket)
+    (sort-table)))
 
 (defun bucket-splitp (bucket)
   "Splits BUCKET if our ID is in its range, otherwise pings from oldest to
@@ -165,15 +170,18 @@ newest."
 
 (defun add-to-bucket (node &aux (bucket (correct-bucket (node-id node))))
   "Adds NODE to the correct bucket, per its ID."
-  (if (bucket-fullp bucket)
-      (bucket-splitp bucket)
-      (dotimes (i +k+)
-        (when (null (svref (bucket-nodes bucket) i))
-          (setf (svref (bucket-nodes bucket) i)
-                node)
-          (sort-bucket-by-distance bucket)
-          (update-bucket bucket)
-          (return t)))))
+  (unless (dotimes (i +k+)
+            (when (null (svref (bucket-nodes bucket) i))
+              (setf (svref (bucket-nodes bucket) i)
+                    node)
+              (sort-bucket-by-distance bucket)
+              (update-bucket bucket)
+              ;; unless this RETURN form is evaluated
+              ;; (i.e., unless we update the bucket)
+              (return t)))
+    ;; BUCKET-SPLITP only gets evaluated if
+    ;; there are no NIL elements in the bucket
+    (bucket-splitp bucket)))
 
 (defun iterate-bucket (bucket action)
   "Funcalls ACTION on each node in BUCKET."
@@ -185,7 +193,7 @@ newest."
 if NODELY is non-NIL."
   (let ((limit (length *routing-table*)))
     (dotimes (i limit)
-      (let ((current-bucket (svref *routing-table* i)))
+      (let ((current-bucket (nth i *routing-table*)))
         (if nodely
             (iterate-bucket current-bucket action)
             (funcall action current-bucket))))))
@@ -255,8 +263,8 @@ none is found, executes BODY, otherwise returns the node."
 
 (defun find-node-in-table (id)
   "Tries to find a node in the routing table based on its ID. Otherwise, returns
-  a list of the K closest nodes."
-  (find-in-table (lambda (x) (string-equal id (node-id x)))
+a list of the K closest nodes."
+  (find-in-table (lambda (x) (string= id (node-id x)))
     (find-closest-nodes id)))
 
 (defun have-peers (info-hash)

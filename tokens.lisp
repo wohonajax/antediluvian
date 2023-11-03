@@ -52,8 +52,8 @@
 
 (defun consider-token (hash token)
   "Checks whether TOKEN is valid for HASH or not."
-  (equalp (cdr (gethash hash *hashmap*)) token)
-  #|
+  (equalp (first (gethash hash *hashmap*)) token)
+  #| this old code checked to see if TOKEN came from our INVENT-TOKEN
   (let* ((node-ip-hash (make-array 20 :element-type '(unsigned-byte 8)))
          (token-value (token-value token))
          (token-hash (subseq token-value 0 20))
@@ -86,15 +86,15 @@
 (defun recall-token (hash)
   "Retrieves the token value associated with HASH. If a recent enough token
 isn't found, returns NIL."
-  (let ((token (cdr (gethash hash *hashmap*))))
+  (let ((token (first (gethash hash *hashmap*))))
     (and token (valid-token-p token) token)))
 
 (defun refresh-tokens ()
   "Deletes every token more than 10 minutes old."
   (maphash (lambda (key value)
              (declare (ignore key))
-             (unless (valid-token-p (cdr value))
-               (setf (cdr value) nil)))
+             (unless (valid-token-p (first value))
+               (setf (first value) nil)))
            *hashmap*)
   (maphash (lambda (key value)
              (declare (ignore value))

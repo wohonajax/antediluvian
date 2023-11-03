@@ -43,13 +43,10 @@
                   (let* ((packet (subseq buffer 0 size))
                          (dict (bencode:decode packet)))
                     (alexandria:switch ((gethash "y" dict) :test #'string=)
-                      ("q" (alexandria:switch ((gethash "q" dict) :test #'string=)
-                             ("ping")
-                             ("find_node")
-                             ("get_peers")
-                             ("announce_peer")))
-                      ("r" )
-                      ("e" ))))))))
+                      ("q" (parse-query dict host port))
+                      ("r" (parse-response dict host port))
+                      ("e" ;; TODO handle errors
+                       ))))))))
 
 (defun dht ()
   "Initiates the distributed hash table."

@@ -1,20 +1,6 @@
 (in-package #:dhticl)
 
-(defun listen-closely ()
-  "Creates a temporary listening socket to receive responses."
-  (usocket:with-connected-socket
-      (socket (usocket:socket-connect
-               nil nil
-               :protocol :datagram
-               :element-type '(unsigned-byte 8)
-               :timeout 5
-               :local-host usocket:*wildcard-host*
-               :local-port *default-port*))
-    (usocket:socket-receive socket nil 2048)))
-
-(defun ping-then-listen (node)
-  (progn (send-message :ping node)
-         (listen-closely)))
+(defvar *transactions* (make-hash-table :test #'equal))
 
 ;;;; TODO: make another layer of abstraction
 (defun calculate-elapsed-inactivity (node)
@@ -46,7 +32,9 @@ accordingly."
 (defun ping-old-nodes (bucket)
   "Pings the nodes in a bucket from oldest to newest."
   (sort-bucket-by-age bucket)
-  (iterate-bucket bucket #'ping-then-listen)
+  (iterate-bucket bucket
+                  (lambda (node)
+                    (send-message :ping (node-ip node) (node-port node))))
   (sort-bucket-by-distance bucket)
   (update-bucket bucket))
 
@@ -75,6 +63,14 @@ accordingly."
                     (when (eql :questionable (node-health node))
                       (handle-questionable-node node))))
   (update-bucket bucket))
+
+(defun parse-query (dict ip port)
+  "Parses a Bencoded query dictionary."
+  (alexandria:switch ((gethash "q" dict) :test #'string=)
+    ("ping" )
+    ("find_node" )
+    ("get_peers" )
+    ("announce_peer" )))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
