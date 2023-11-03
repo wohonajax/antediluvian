@@ -4,7 +4,7 @@
   "A hash table mapping tokens to their creation times.")
 
 (defvar *hashmap* (make-hash-table :test #'equalp)
-  "A hash table containing info_hashes as keys and (node . token) as values.")
+  "A hash table containing info_hashes as keys and (token . nodes) as values.")
 
 (defvar *current-secret*)
 (defvar *previous-secret*)
@@ -15,11 +15,10 @@
 
 (defun generate-transaction-id ()
   "Creates a transaction ID and returns it as a string."
-  (let ((array (make-array 2)))
-    (format nil "~a"
-            (map 'string #'code-char
-                 (map '(vector (unsigned-byte 8))
-                      #'random-byte array)))))
+  (let ((array (make-array 2 :element-type '(unsigned-byte 8))))
+    (setf (aref array 0) (random 256)
+          (aref array 1) (random 256))
+    (octets-to-string array)))
 
 (defun parse-node-ip (ip)
   "Returns a node's IP address and port as multiple values."
@@ -73,7 +72,9 @@
          (token (concatenate '(vector (unsigned-byte 8))
                              (make-hash ip-vec)
                              (ensure-secret))))
-    (setf (gethash info-hash *hashmap*) (cons node token))
+    (unless (node-p (first (gethash info-hash *hashmap*)))
+      (pop (gethash info-hash *hashmap*)))
+    (push token (gethash info-hash *hashmap*))
     (setf (gethash token *token-births*) (get-universal-time))))
 
 (defun valid-token-p (token)

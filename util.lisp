@@ -20,10 +20,9 @@
   "Returns the distance between A and B."
   (logxor a b))
 
-(defun random-byte (x)
-  "MAPpable function for seeding random bytes."
-  (declare (ignore x))
-  (random 256))
+(defun octets-to-string (byte-vector)
+  "Coerces BYTE-VECTOR to an ASCII string."
+  (map 'string #'code-char byte-vector))
 
 (defun convert-id-to-int (id)
   "Converts a node ID from an ID string to a decimal integer."

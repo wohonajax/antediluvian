@@ -1,4 +1,3 @@
-;;; TODO: fix the routing table to organize by info_hash
 (in-package #:dhticl)
 
 (defvar *routing-table-location*
@@ -22,9 +21,9 @@
                               "(~S ~S ~S ~S ~S)"
                               (node-id node)
                               (node-ip node)
+                              (node-port node)
                               (node-distance node)
-                              (node-last-activity node)
-                              (node-hashes node))
+                              (node-last-activity node))
                       (format file "(~S)" nil)))
                 bucket)
            (format file ")"))
@@ -45,9 +44,9 @@ routing table."
                            (unless (equal node empty-node)
                              (create-node :id (first node)
                                           :ip (second node)
-                                          :distance (third node)
-                                          :last-activity (fourth node)
-                                          :hashes (fifth node))))
+                                          :port (third node)
+                                          :distance (fourth node)
+                                          :last-activity (fifth node))))
                          bucket))
                   (read file))))))
 
@@ -119,7 +118,7 @@ routing table."
     "Sorts BUCKET so the nodes it contains are ordered from oldest to newest."
     (setf (bucket-nodes bucket)
           (sort (bucket-nodes bucket) (lambda (x y)
-                                        (node-sorter x y                               
+                                        (node-sorter x y
                                                      #'node-last-activity
                                                      #'>)))))
 
