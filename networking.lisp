@@ -66,11 +66,19 @@ accordingly."
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
-  (alexandria:switch ((gethash "q" dict) :test #'string=)
-    ("ping" )
-    ("find_node" )
-    ("get_peers" )
-    ("announce_peer" )))
+  (let* ((arguments (gethash "a" dict))
+         (id (gethash "id" arguments))
+         (distance (calculate-distance (convert-id-to-int +my-id+)
+                                       (convert-id-to-int id)))
+         (node (create-node :id id :ip ip :port port :distance distance
+                            :last-activity (get-universal-time) :health :good)))
+    (pushnew node *node-list* :test #'equalp)
+    (add-to-bucket node)
+    (alexandria:switch ((gethash "q" dict) :test #'string=)
+      ("ping" (send-response :ping node dict))
+      ("find_node" (send-response :find_node node dict))
+      ("get_peers" (send-response :get_peers node dict))
+      ("announce_peer" (send-response :announce_peer node dict)))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."

@@ -96,11 +96,12 @@ routing table."
   "Returns the last node in BUCKET."
   (let ((len (1- +k+))
         (nodes (bucket-nodes bucket)))
-    (cond ((bucket-emptyp bucket) (first-node-in-bucket bucket))
-          ((bucket-fullp bucket) (svref nodes len))
-          (t (dotimes (i +k+)
-               (when (null (svref nodes (1+ i)))
-                 (return (svref nodes i))))))))
+    (if (bucket-fullp bucket)
+        (svref bucket len)
+        ;; TODO: we traverse the bucket twice, in BUCKET-FULLP and the DOTIMES
+        (dotimes (i +k+)
+          (when (null (svref nodes (1+ i)))
+            (return (svref nodes i)))))))
 
 (flet ((node-sorter (x y field pred)
          (let ((xfield (when x
@@ -178,10 +179,14 @@ newest."
               (update-bucket bucket)
               ;; unless this RETURN form is evaluated
               ;; (i.e., unless we update the bucket)
-              (return t)))
+              (return t))
+            (when (equalp node (svref (bucket-nodes bucket) i))
+              ;; the node is already in the bucket
+              (return)))
     ;; BUCKET-SPLITP only gets evaluated if
     ;; there are no NIL elements in the bucket
-    (bucket-splitp bucket)))
+    (bucket-splitp bucket)
+    (add-to-bucket node)))
 
 (defun iterate-bucket (bucket action)
   "Funcalls ACTION on each node in BUCKET."
@@ -191,24 +196,22 @@ newest."
 (defun iterate-table (action &key (nodely nil))
   "Funcalls ACTION on each bucket in the routing table, or on each node
 if NODELY is non-NIL."
-  (let ((limit (length *routing-table*)))
-    (dotimes (i limit)
-      (let ((current-bucket (nth i *routing-table*)))
-        (if nodely
-            (iterate-bucket current-bucket action)
-            (funcall action current-bucket))))))
+  (dolist (x *routing-table*)
+    (if nodely
+        (iterate-bucket x action)
+        (funcall action x))))
 
 (defmacro find-in-table (criteria &body body)
   "Attempts to find a node in the routing table that satisfies CRITERIA. If
 none is found, executes BODY, otherwise returns the node."
-  (alexandria:with-unique-names (target node)
+  (alexandria:with-unique-names (target node away)
     `(let ((,target nil))
        (tagbody (iterate-table (lambda (,node)
                                  (when (funcall ,criteria ,node)
                                    (setf ,target ,node)
-                                   (go away)))
+                                   (go ,away)))
                                :nodely t)
-        away)
+        ,away)
        (if ,target
            ,target
            ,@body))))
@@ -270,5 +273,6 @@ a list of the K closest nodes."
 (defun have-peers (info-hash)
   "Returns a list of peers for INFO-HASH from the routing table."
   (let ((bag '()))
-    (mapc (lambda (x) (push x bag)) (gethash info-hash *hashmap*))
-    bag))
+    (dolist (x (gethash info-hash *hashmap*) bag)
+      (when (node-p x)
+        (push x bag)))))

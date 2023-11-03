@@ -25,16 +25,12 @@
                                   (make-setting *default-port*)
                                   (make-setting *ipv6p*))))))
 
-(define-condition peer-requested () ())
-(define-condition peer-request () ())
 (define-condition kill-signal () ())
 
 (defvar *listening-socket*)
 
 (defun main-loop ()
-  (handler-bind ((peer-requested (lambda (c) c))
-                 (peer-request (lambda (c) c))
-                 (kill-signal (lambda (c) (declare (ignore c))
+  (handler-bind ((kill-signal (lambda (c) (declare (ignore c))
                                 (return-from main-loop))))
     (with-listening-usocket socket
       (setf *listening-socket* socket)
