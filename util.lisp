@@ -16,6 +16,7 @@
              time))
      60))
 
+(declaim (inline calculate-distance))
 (defun calculate-distance (a b)
   "Returns the distance between A and B."
   (logxor a b))

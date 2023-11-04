@@ -4,13 +4,22 @@
 
 (defvar *use-implied-port-p* nil)
 
-(defun receive-data (length)
-  (let ((buffer (make-array length :element-type '(unsigned-byte 8))))
+(defun receive-data ()
+  (let* ((length 65507) ; maximum UDP packet payload size
+         (buffer (make-array length :element-type '(unsigned-byte 8))))
+    ;; FIXME: SOCKET-RECEIVE doesn't accept a datagram socket
     (usocket:socket-receive *listening-socket* buffer length)))
+
+(defun send-bencoded-data (socket data)
+  (let* ((buffer (make-array 65507 :element-type '(unsigned-byte 8)))
+         (bencoded-data (bencode:encode data buffer)))
+    (usocket:socket-send socket bencoded-data (length bencoded-data)
+                         :port (usocket:get-peer-port socket)
+                         :host (usocket:get-peer-address socket))))
 
 ;;; Queries
 
-(defun ping-node (client-socket-stream)
+(defun ping-node (socket)
   "Sends NODE a ping message."
   (let ((query-dict (make-hash-table))
         (query-arguments (make-hash-table)))
@@ -20,13 +29,12 @@
           (gethash "y" query-dict) "q"
           (gethash "q" query-dict) "ping"
           (gethash "a" query-dict) query-arguments)
-    (bencode:encode query-dict client-socket-stream)
-    (force-output client-socket-stream))
+    (send-bencoded-data socket query-dict))
   (multiple-value-bind (buffer size host port)
-      (receive-data 47)
-    (bencode:decode buffer)))
+      (receive-data)
+    (bencode:decode (subseq buffer 0 size))))
 
-(defun find-node (client-socket-stream node-id)
+(defun find-node (socket node-id)
   "Asks a peer for a node's contact information."
   (let ((query-dict (make-hash-table))
         (query-arguments (make-hash-table)))
@@ -37,19 +45,12 @@
           (gethash "y" query-dict) "q"
           (gethash "q" query-dict) "find_node"
           (gethash "a" query-dict) query-arguments)
-    (bencode:encode query-dict client-socket-stream)
-    (force-output client-socket-stream))
-  ;; TODO: figure out the right length for RECEIVE-DATA here
-  ;; parse the result of RECEIVE-DATA and return a vector of proper length
-  ;; parsing should look at the value for "nodes" key's length
-  ;; length is 60 + (x * 6), where x is either 1 or k
-  (let* ((x (if :k-nodes +k+ 1))
-         (buffer-length (+ 60 (* x 6))))
-    (multiple-value-bind (buffer size host port)
-        (receive-data buffer-length)
-      (bencode:decode buffer))))
+    (send-bencoded-data socket query-dict))
+  (multiple-value-bind (buffer size host port)
+      (receive-data)
+    (bencode:decode (subseq buffer 0 size))))
 
-(defun get-peers (client-socket-stream info-hash)
+(defun get-peers (socket info-hash)
   "Asks for peers under INFO-HASH."
   (let ((query-dict (make-hash-table))
         (query-arguments (make-hash-table)))
@@ -60,21 +61,16 @@
           (gethash "y" query-dict) "q"
           (gethash "q" query-dict) "get_peers"
           (gethash "a" query-dict) query-arguments)
-    (bencode:encode query-dict client-socket-stream)
-    (force-output client-socket-stream))
-  ;; TODO: figure out the right length for a buffer here
-  ;; if there's a "nodes" key the length is x + (k * 6)
-  ;; if there's a "values" key the length is potentially unbounded...
-  (let ((buffer-length 1000)) ; FIXME: filler value here
-    (multiple-value-bind (buffer size host port)
-        (receive-data buffer-length)
-      (bencode:decode buffer))))
+    (send-bencoded-data socket query-dict))
+  (multiple-value-bind (buffer size host port)
+      (receive-data)
+    (bencode:decode (subseq buffer 0 size))))
 
-(defun announce-peer (client-socket-stream info-hash)
+(defun announce-peer (socket info-hash)
   "Announces peer status under INFO-HASH."
   (let* ((query-dict (make-hash-table))
          (query-arguments (make-hash-table))
-         (token (recall-token surely-hash)))
+         (token (recall-token info-hash)))
     (setf (gethash "id" query-arguments) +my-id+
           (gethash "implied_port" query-arguments) (if *use-implied-port-p* 1 0)
           (gethash "info_hash" query-arguments) info-hash
@@ -85,32 +81,32 @@
           (gethash "y" query-dict) "q"
           (gethash "q" query-dict) "announce_peer"
           (gethash "a" query-dict) query-arguments)
-    (bencode:encode query-dict client-socket-stream)
-    (force-output client-socket-stream))
+    (send-bencoded-data socket query-dict))
   (multiple-value-bind (buffer size host port)
-      (receive-data 47)
-    (bencode:decode buffer)))
+      (receive-data)
+    (bencode:decode (subseq buffer 0 size))))
 
 (defun send-message (type ip port &key id info-hash)
   "Sends NODE a TYPE message. TYPE should be a keyword like
 :PING or :FIND_NODE."
-  (usocket:with-client-socket
-      (target-socket target-stream ip port
-                     :protocol :datagram
-                     :element-type '(unsigned-byte 8)
-                     :timeout 5)
+  (usocket:with-connected-socket
+      (target-socket (usocket:socket-connect
+                      ip port
+                      :protocol :datagram
+                      :element-type '(unsigned-byte 8)
+                      :timeout 5))
     (handler-case (case type
-                    (:ping (ping-node target-stream))
+                    (:ping (ping-node target-socket))
                     (:store)
-                    (:find_node (find-node target-stream id))
+                    (:find_node (find-node target-socket id))
                     (:find_value)
-                    (:get_peers (get-peers target-stream info-hash))
-                    (:announce_peer (announce-peer target-stream info-hash)))
+                    (:get_peers (get-peers target-socket info-hash))
+                    (:announce_peer (announce-peer target-socket info-hash)))
       (simple-error () (invoke-restart :continue)))))
 
 ;;; Responses to queries
 
-(defun respond-to-ping (client-socket-stream dict node)
+(defun respond-to-ping (socket dict node)
   "Responds to a ping query."
   (let ((response-dict (make-hash-table))
         (response-arguments (make-hash-table)))
@@ -120,10 +116,9 @@
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-arguments)
     (setf (node-health node) :good)
-    (bencode:encode response-dict client-socket-stream)
-    (force-output client-socket-stream)))
+    (send-bencoded-data socket response-dict)))
 
-(defun respond-to-find-node (client-socket-stream dict)
+(defun respond-to-find-node (socket dict node)
   "Responds to a find_node query."
   (let ((response-dict (make-hash-table))
         (response-arguments (make-hash-table)))
@@ -132,7 +127,8 @@
           (let* ((target (gethash "target" dict))
                  (have-target-p (member target *node-list*)))
             (if have-target-p
-                (compact-node-info (car have-target-p)) ; MEMBER returns a list
+                 ;; MEMBER returns a list
+                (compact-node-info (first have-target-p))
                 (with-output-to-string (str)
                   (mapc (lambda (peer) (princ (compact-node-info peer) str))
                         (find-closest-nodes target)))))
@@ -141,10 +137,9 @@
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-arguments)
     (setf (node-health node) :good)
-    (bencode:encode response-dict client-socket-stream)
-    (force-output client-socket-stream)))
+    (send-bencoded-data socket response-dict)))
 
-(defun respond-to-get-peers (client-socket-stream dict node)
+(defun respond-to-get-peers (socket dict node)
   "Responds to a get_peers query."
   (let* ((arguments-dict (gethash "a" dict))
          (hash (gethash "info_hash" arguments-dict))
@@ -165,10 +160,9 @@
                 (mapc (lambda (node) (princ (compact-node-info node) str))
                       (find-closest-nodes hash)))))
     (setf (node-health node) :good)
-    (bencode:encode response-dict client-socket-stream)
-    (force-output client-socket-stream)))
+    (send-bencoded-data socket response-dict)))
 
-(defun respond-to-announce-peer (client-socket-stream dict client-socket)
+(defun respond-to-announce-peer (socket dict node source-port)
   "Responds to an announce_peer query. If the received token isn't valid,
 sends a protocol error message."
   (let* ((response-dict (make-hash-table))
@@ -178,18 +172,11 @@ sends a protocol error message."
          (implied-port-p (gethash "implied_port" argument-dict))
          (port (if (and implied-port-p (= implied-port-p 1))
                    ;; if implied_port is 1, use the source port
-                   (usocket:get-peer-port *listening-socket*)
+                   source-port
                    ;; otherwise use the supplied port
                    (gethash "port" argument-dict)))
-         (token (gethash "token" argument-dict))
-         (node (create-node :id id
-                            :ip (usocket:get-peer-address client-socket)
-                            :port port
-                            :distance
-                            (calculate-distance (convert-id-to-int id)
-                                                (convert-id-to-int +my-id+))
-                            :last-activity (get-universal-time)
-                            :health :good)))
+         (token (gethash "token" argument-dict)))
+    (setf (node-port node) port)
     (if (consider-token node token)
         (progn (add-to-bucket node)
                (setf (gethash "id" response-arguments) +my-id+
@@ -197,11 +184,10 @@ sends a protocol error message."
                      (gethash "t" response-dict) (gethash "t" dict)
                      (gethash "y" response-dict) "r"
                      (gethash "r" response-dict) response-arguments)
-               (bencode:encode response-dict client-socket-stream)
-               (force-output client-socket-stream))
-        (dht-error client-socket-stream :protocol dict))))
+               (send-bencoded-data socket response-dict))
+        (dht-error socket :protocol dict))))
 
-(defun dht-error (client-socket-stream type dict)
+(defun dht-error (socket type dict)
   "Sends a DHT error message."
   (let ((error-dict (make-hash-table)))
     (setf (gethash "t" error-dict) (gethash "t" dict)
@@ -211,25 +197,28 @@ sends a protocol error message."
                                      (:server (list 202 "Server Error"))
                                      (:protocol (list 203 "Protocol Error"))
                                      (:method (list 204 "Method Unknown"))))
-    (bencode:encode error-dict client-socket-stream)
-    (force-output client-socket-stream)))
+    (send-bencoded-data socket error-dict)))
 
-(defun send-response (type node dict &key error-type)
+(defun send-response (type node dict &key error-type source-port)
   (multiple-value-bind (ip port)
       (parse-node-ip (node-ip node))
-    (usocket:with-client-socket
-        (target-socket target-stream ip port
-                       :protocol :datagram
-                       :element-type '(unsigned-byte 8)
-                       :timeout 5)
+    (usocket:with-connected-socket
+        (target-socket (usocket:socket-connect
+                        ip port
+                        :protocol :datagram
+                        :element-type '(unsigned-byte 8)
+                        :timeout 5))
       (handler-case (case type
                       (:ping
-                       (respond-to-ping target-stream dict node))
+                       (respond-to-ping target-socket dict node))
                       (:find_node
-                       (respond-to-find-node target-stream dict))
+                       (respond-to-find-node target-socket dict node))
                       (:get_peers
-                       (respond-to-get-peers target-stream dict node))
+                       (respond-to-get-peers target-socket dict node))
                       (:announce_peer
-                       (respond-to-announce-peer target-stream dict target-socket))
-                      (:dht_error (dht-error target-stream error-type dict)))
+                       (respond-to-announce-peer target-socket
+                                                 dict
+                                                 node
+                                                 source-port))
+                      (:dht_error (dht-error target-socket error-type dict)))
         (simple-error () (invoke-restart :continue))))))

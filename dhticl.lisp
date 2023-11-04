@@ -4,7 +4,7 @@
 (defvar *settings-location*
   (merge-pathnames ".dhticlrc" (user-homedir-pathname)))
 
-(defvar *ipv6p* nil)
+(defvar *hashes* (list) "The list of info_hashes the DHT program will use.")
 
 ;;; TODO: sanitize settings
 (defun load-settings ()
@@ -34,15 +34,20 @@
                                 (return-from main-loop))))
     (with-listening-usocket socket
       (setf *listening-socket* socket)
-      (loop :do (multiple-value-bind (buffer size host port)
-                    (receive-data 65507) ; max UDP packet payload size
-                  (let* ((packet (subseq buffer 0 size))
-                         (dict (bencode:decode packet)))
-                    (alexandria:switch ((gethash "y" dict) :test #'string=)
-                      ("q" (parse-query dict host port))
-                      ("r" (parse-response dict host port))
-                      ("e" ;; TODO handle errors
-                       ))))))))
+      (unless *hashes*
+        (error "No hashes set in *HASHES* variable."))
+      (mapc (lambda (hash)
+              (send-message :get_peers "router.utorrent.com" 6881 :info-hash hash))
+            *hashes*)
+      (loop do (multiple-value-bind (buffer size host port)
+                   (receive-data)
+                 (let* ((packet (subseq buffer 0 size))
+                        (dict (bencode:decode packet)))
+                   (alexandria:switch ((gethash "y" dict) :test #'string=)
+                     ("q" (parse-query dict host port))
+                     ("r" (parse-response dict host port))
+                     ("e" ;; TODO handle errors
+                      ))))))))
 
 (defun dht ()
   "Initiates the distributed hash table."

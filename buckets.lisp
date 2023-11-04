@@ -61,7 +61,9 @@ routing table."
 
 (defun make-new-bucket (min max)
   "Adds a bucket to the routing table with a range from MIN to MAX."
-  (push (make-bucket :min min :max max) *routing-table*))
+  (let ((new-bucket (make-bucket :min min :max max)))
+    (push new-bucket *routing-table*)
+    new-bucket))
 
 (defun correct-bucket (id)
   "Returns the proper bucket for ID."
@@ -75,33 +77,18 @@ routing table."
     (unless (svref (bucket-nodes bucket) i)
       (return i))))
 
-(defun bucket-emptyp (bucket)
-  (every #'null (bucket-nodes bucket)))
-
-(defun bucket-fullp (bucket)
-  (notany #'null (bucket-nodes bucket)))
-
-(defun bucket-freshness (bucket)
-  "Returns the number of minutes since the last change was made to BUCKET."
-  (minutes-since (bucket-last-changed bucket)))
-
 (defun update-bucket (bucket)
   (setf (bucket-last-changed bucket) (get-universal-time)))
 
-(defun first-node-in-bucket (bucket)
-  "Returns the first node in BUCKET."
-  (svref (bucket-nodes bucket) 0))
-
-(defun last-node-in-bucket (bucket)
+(defun last-node-in-bucket (bucket &aux (nodes (bucket-nodes bucket)))
   "Returns the last node in BUCKET."
-  (let ((len (1- +k+))
-        (nodes (bucket-nodes bucket)))
-    (if (bucket-fullp bucket)
-        (svref bucket len)
-        ;; TODO: we traverse the bucket twice, in BUCKET-FULLP and the DOTIMES
-        (dotimes (i +k+)
-          (when (null (svref nodes (1+ i)))
-            (return (svref nodes i)))))))
+  (dotimes (i +k+ (svref nodes i))
+    ;; buckets start out holding NIL until filled with nodes
+    ;; sorting pushes the NILs to the back
+    (when (null (svref nodes i))
+      (if (zerop i)
+          (return (svref nodes i))
+          (return (svref nodes (1- i)))))))
 
 (flet ((node-sorter (x y field pred)
          (let ((xfield (when x
@@ -157,36 +144,38 @@ closest to furthest."
     (seed-buckets a b bucket)
     (sort-table)))
 
-(defun bucket-splitp (bucket)
-  "Splits BUCKET if our ID is in its range, otherwise pings from oldest to
+(defun bucket-splitp (bucket id)
+  "Splits BUCKET if ID is in its range, otherwise pings from oldest to
 newest."
-  (let ((id (convert-id-to-int +my-id+))
+  (let ((target-id (convert-id-to-int id))
         (nodes (bucket-nodes bucket)))
-    (if (within id
+    (if (within target-id
                 (reduce #'min nodes)
                 (reduce #'max nodes))
         (bucket-split bucket)
-        (ping-old-nodes bucket)))
-  (update-bucket bucket))
+        (progn (ping-old-nodes bucket)
+               (update-bucket bucket)))))
 
-(defun add-to-bucket (node &aux (bucket (correct-bucket (node-id node))))
+(defun add-to-bucket (node)
   "Adds NODE to the correct bucket, per its ID."
-  (unless (dotimes (i +k+)
-            (when (null (svref (bucket-nodes bucket) i))
-              (setf (svref (bucket-nodes bucket) i)
-                    node)
-              (sort-bucket-by-distance bucket)
-              (update-bucket bucket)
-              ;; unless this RETURN form is evaluated
-              ;; (i.e., unless we update the bucket)
-              (return t))
-            (when (equalp node (svref (bucket-nodes bucket) i))
-              ;; the node is already in the bucket
-              (return)))
-    ;; BUCKET-SPLITP only gets evaluated if
-    ;; there are no NIL elements in the bucket
-    (bucket-splitp bucket)
-    (add-to-bucket node)))
+  (let* ((id (node-id node))
+         (bucket (correct-bucket id)))
+    (unless (dotimes (i +k+)
+              (when (null (svref (bucket-nodes bucket) i))
+                (setf (svref (bucket-nodes bucket) i)
+                      node)
+                (sort-bucket-by-distance bucket)
+                (update-bucket bucket)
+                ;; unless this RETURN form is evaluated
+                ;; (i.e., unless we update the bucket)
+                (return t))
+              (when (equalp node (svref (bucket-nodes bucket) i))
+                ;; the node is already in the bucket
+                (return)))
+      ;; BUCKET-SPLITP only gets evaluated if
+      ;; there are no NIL elements in the bucket
+      (bucket-splitp bucket id)
+      (add-to-bucket node))))
 
 (defun iterate-bucket (bucket action)
   "Funcalls ACTION on each node in BUCKET."
@@ -201,20 +190,17 @@ if NODELY is non-NIL."
         (iterate-bucket x action)
         (funcall action x))))
 
-(defmacro find-in-table (criteria &body body)
-  "Attempts to find a node in the routing table that satisfies CRITERIA. If
-none is found, executes BODY, otherwise returns the node."
-  (alexandria:with-unique-names (target node away)
-    `(let ((,target nil))
-       (tagbody (iterate-table (lambda (,node)
-                                 (when (funcall ,criteria ,node)
-                                   (setf ,target ,node)
-                                   (go ,away)))
-                               :nodely t)
-        ,away)
-       (if ,target
-           ,target
-           ,@body))))
+(defun find-in-table (criteria)
+  "Attempts to find a node in the routing table that satisfies CRITERIA. Returns
+the node if found, NIL otherwise."
+  (let (target)
+    (tagbody (iterate-table (lambda (node)
+                              (when (funcall criteria node)
+                                (setf target node)
+                                (go away)))
+                            :nodely t)
+     away)
+    target))
 
 (defun sort-table ()
   "Ensures the buckets of the routing table are sorted."
@@ -265,10 +251,8 @@ none is found, executes BODY, otherwise returns the node."
     winners))
 
 (defun find-node-in-table (id)
-  "Tries to find a node in the routing table based on its ID. Otherwise, returns
-a list of the K closest nodes."
-  (find-in-table (lambda (x) (string= id (node-id x)))
-    (find-closest-nodes id)))
+  "Tries to find a node in the routing table based on its ID."
+  (find-in-table (lambda (x) (string= id (node-id x)))))
 
 (defun have-peers (info-hash)
   "Returns a list of peers for INFO-HASH from the routing table."

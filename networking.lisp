@@ -2,32 +2,18 @@
 
 (defvar *transactions* (make-hash-table :test #'equal))
 
-;;;; TODO: make another layer of abstraction
 (defun calculate-elapsed-inactivity (node)
   "Returns the time in minutes since NODE's last seen activity."
-  (let ((last-activity (node-last-activity node)))
-    (and last-activity (minutes-since last-activity))))
-
-(defun calculate-last-activity (node)
-  "Returns the universal timestamp of NODE's last seen activity."
-  (let ((time-inactive (calculate-elapsed-inactivity node)))
-    (cond (time-inactive time-inactive)
-          ((ping-then-listen node) (get-universal-time))
-          (t nil))))
+  (and (node-last-activity node) (minutes-since last-activity)))
 
 (defun calculate-node-health (node)
-  "Returns the node's health as a keyword, either :GOOD, :QUESTIONABLE, or :BAD."
+  "Returns the node's health as a keyword, either :GOOD, :QUESTIONABLE,
+or :BAD."
   (let ((time-inactive (calculate-elapsed-inactivity node)))
     (cond ((null time-inactive) :questionable)
           ((< time-inactive 15) :good)
           ((ping-then-listen node) :good)
           (t :bad))))
-
-(defun update-node (node)
-  "Recalculates the time since NODE's last activity and updates its health
-accordingly."
-  (setf (node-last-activity node) (calculate-last-activity node)
-        (node-health node) (calculate-node-health node)))
 
 (defun ping-old-nodes (bucket)
   "Pings the nodes in a bucket from oldest to newest."
@@ -47,7 +33,7 @@ accordingly."
             (bucket-nodes bucket))
   (sort-bucket-by-distance bucket)
   (update-bucket bucket))
-
+;;; FIXME
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
   (setf (node-health node)
@@ -66,26 +52,31 @@ accordingly."
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
-  (let* ((arguments (gethash "a" dict))
+  (let* ((now (get-universal-time))
+         (arguments (gethash "a" dict))
          (id (gethash "id" arguments))
          (distance (calculate-distance (convert-id-to-int +my-id+)
                                        (convert-id-to-int id)))
-         (node (create-node :id id :ip ip :port port :distance distance
-                            :last-activity (get-universal-time) :health :good)))
-    (pushnew node *node-list* :test #'equalp)
-    (add-to-bucket node)
+         (maybe-node (find-node-in-table id)))
+    (if maybe-node
+        (setf (node-last-activity maybe-node) now
+              (node-health maybe-node) :good)
+        (let ((node (create-node :id id :ip ip :port port
+                                 :distance distance
+                                 :last-activity now
+                                 :health :good)))
+          (push node *node-list*)
+          (add-to-bucket node)))
     (alexandria:switch ((gethash "q" dict) :test #'string=)
       ("ping" (send-response :ping node dict))
       ("find_node" (send-response :find_node node dict))
       ("get_peers" (send-response :get_peers node dict))
-      ("announce_peer" (send-response :announce_peer node dict)))))
+      ("announce_peer" (send-response :announce_peer node dict port)))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
   (flet ((parse-nodes (str)
            (let (nodes
-                 ;; TODO: error handling for out-of-bounds
-                 ;; (node's health is bad)
                  (len (/ (length str) 6)))
              (handler-case
                  (dotimes (i len nodes)
@@ -93,6 +84,8 @@ accordingly."
                      (multiple-value-bind (parsed-ip parsed-port)
                          (parse-node-ip (subseq str index (+ index 6)))
                        (push (cons parsed-ip parsed-port) nodes))))
+               ;; TODO: error handling for out-of-bounds
+               ;; (node's health is bad)
                (error () (return-from parse-nodes nodes)))))
          (ping-nodes (node-list)
            (mapc (lambda (pair) (send-message :ping (car pair) (cdr pair)))
