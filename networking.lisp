@@ -30,14 +30,10 @@ or :BAD."
             (bucket-nodes bucket))
   (update-bucket bucket)
   (sort-bucket-by-distance bucket))
-;;; FIXME
+;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
-  (setf (node-health node)
-        (cond ((ping-then-listen node) :good)
-              ((ping-then-listen node) :good)
-              (t :bad)))
-  (update-bucket (correct-bucket (node-id node))))
+  (send-message :ping (node-ip node) (node-port node)))
 
 (defun handle-questionable-nodes (bucket)
   "Handles all nodes in BUCKET that are of questionable health."
