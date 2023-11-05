@@ -3,8 +3,11 @@
 (defvar *token-births* (make-hash-table :test #'equalp)
   "A hash table mapping tokens to their creation times.")
 
-(defvar *hashmap* (make-hash-table :test #'equalp)
-  "A hash table containing info_hashes as keys and (token . nodes) as values.")
+(defvar *token-nodes* (make-hash-table :test #'equalp)
+  "A hash table mapping tokens to nodes each token is valid for.")
+
+(defvar *token-hashes* (make-hash-table :test #'equalp)
+  "A hash table mapping info_hashes to tokens valid for them.")
 
 (defvar *current-secret*)
 (defvar *previous-secret*)
@@ -51,9 +54,10 @@
       (make-secret)
       (car *current-secret*)))
 
-(defun consider-token (hash token)
-  "Checks whether TOKEN is valid for HASH or not."
-  (equalp (first (gethash hash *hashmap*)) token)
+(defun consider-token (token info-hash node)
+  "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
+  (and (member node (gethash token *token-nodes*) :test #'equalp)
+       (member info-hash (gethash token *token-hashes*) :test #'equalp))
   #| this old code checked to see if TOKEN came from our INVENT-TOKEN
   (let* ((node-ip-hash (make-array 20 :element-type '(unsigned-byte 8)))
          (token-value (token-value token))
@@ -73,9 +77,8 @@
          (token (concatenate '(vector (unsigned-byte 8))
                              (make-hash ip-vec)
                              (ensure-secret))))
-    (unless (node-p (first (gethash info-hash *hashmap*)))
-      (pop (gethash info-hash *hashmap*)))
-    (push token (gethash info-hash *hashmap*))
+    (pushnew info-hash (gethash token *token-hashes*) :test #'equalp)
+    (pushnew node (gethash token *token-nodes) :test #'equalp)
     (setf (gethash token *token-births*) (get-universal-time))))
 
 (defun valid-token-p (token)
@@ -84,17 +87,20 @@
     (when token-birth
       (< (minutes-since token-birth) 10))))
 
-(defun recall-token (hash)
-  "Retrieves the token value associated with HASH. If a recent enough token
+(defun recall-token (info-hash)
+  "Retrieves the token value associated with INFO-HASH. If a recent enough token
 isn't found, returns NIL."
-  (let ((token (first (gethash hash *hashmap*))))
-    (and token (valid-token-p token) token)))
+  (let ((tokens (gethash info-hash *token-hashes*)))
+    (car (remove-if-not #'valid-token-p tokens))))
 
 (defun refresh-tokens ()
   "Deletes every token more than 10 minutes old."
-  (maphash (lambda (key value)
-             (let ((token (first value)))
-               (unless (valid-token-p token)
-                 (setf (gethash key *hashmap*) (rest value))
-                 (remhash token *token-births*))))
-           *hashmap*))
+  (maphash (lambda (info-hash tokens)
+             (mapc (lambda (token)
+                     (unless (valid-token-p token)
+                       (setf (gethash info-hash *token-hashes*)
+                             (delete token tokens :test #'equalp))
+                       (remhash token *token-births*)
+                       (remhash token *token-nodes*)))
+                   tokens))
+           *token-hashes*))

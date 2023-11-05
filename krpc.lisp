@@ -170,6 +170,7 @@ sends a protocol error message."
          (argument-dict (gethash "a" dict))
          (id (gethash "id" argument-dict))
          (implied-port-p (gethash "implied_port" argument-dict))
+         (info-hash (gethash "info_hash" argument-dict))
          (port (if (and implied-port-p (= implied-port-p 1))
                    ;; if implied_port is 1, use the source port
                    source-port
@@ -177,7 +178,7 @@ sends a protocol error message."
                    (gethash "port" argument-dict)))
          (token (gethash "token" argument-dict)))
     (setf (node-port node) port)
-    (if (consider-token node token)
+    (if (consider-token token info-hash node)
         (progn (add-to-bucket node)
                (setf (gethash "id" response-arguments) +my-id+
 

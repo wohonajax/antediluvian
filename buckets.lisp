@@ -4,6 +4,9 @@
   (merge-pathnames ".dhticltable" (user-homedir-pathname)))
 (defvar *routing-table* (list))
 
+(defvar *peer-list* (make-hash-table :test #'equalp)
+  "A hash table containing info_hashes as keys and a list of nodes as values.")
+
 (defun save-table ()
   "Saves the routing table to a file."
   (with-open-file (file *routing-table-location*
@@ -250,9 +253,7 @@ the node if found, NIL otherwise."
        away))
     winners))
 
+(declaim (inline have-peers))
 (defun have-peers (info-hash)
   "Returns a list of peers for INFO-HASH from the routing table."
-  (let ((bag '()))
-    (dolist (x (gethash info-hash *hashmap*) bag)
-      (when (node-p x)
-        (push x bag)))))
+  (gethash info-hash *peer-list*))

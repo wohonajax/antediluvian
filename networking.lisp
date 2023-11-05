@@ -50,22 +50,23 @@ or :BAD."
          (id (gethash "id" arguments))
          (distance (calculate-distance (convert-id-to-int +my-id+)
                                        (convert-id-to-int id)))
-         (maybe-node (find-node-in-table id)))
-    (if maybe-node
-        (setf (node-last-activity maybe-node) now
-              (node-health maybe-node) :good)
-        (let ((node (create-node :id id :ip ip :port port
-                                 :distance distance
-                                 :last-activity now
-                                 :health :good)))
-          (push node *node-list*)
-          (add-to-bucket node)
-          (setf (gethash (gethash "t" dict) *transactions*)) t))
+         (node (find-node-in-table id)))
+    (if node
+        (setf (node-last-activity node) now
+              (node-health node) :good)
+        (progn (setf node (create-node :id id :ip ip :port port
+                                       :distance distance
+                                       :last-activity now
+                                       :health :good))
+               (push node *node-list*)
+               (add-to-bucket node)
+               (setf (gethash (gethash "t" dict) *transactions*) t)))
     (alexandria:switch ((gethash "q" dict) :test #'string=)
       ("ping" (send-response :ping node dict))
       ("find_node" (send-response :find_node node dict))
       ("get_peers" (send-response :get_peers node dict))
-      ("announce_peer" (send-response :announce_peer node dict port)))))
+      ("announce_peer" (send-response :announce_peer node dict
+                                      :source-port port)))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
@@ -88,6 +89,7 @@ or :BAD."
     (let* ((transaction-id (gethash "t" dict))
            (arguments (gethash "a" dict))
            (id (gethash "id" arguments))
+           (info-hash (gethash "info_hash" arguments))
            ;; TOKEN comes from a get_peers response, needed for announce_peer
            (token (gethash "token" arguments))
            ;; NODES comes from a find_node or get_peers response
@@ -102,19 +104,19 @@ or :BAD."
       (if node
           (progn (setf (node-last-activity node) (get-universal-time)
                        (node-health node) :good)
-                 (pushnew (gethash "info_hash" arguments)
-                          (node-hashes node)
-                          :test #'equalp)
                  (cond ((and implied-port (= implied-port 1))
                         (setf (node-port node) port))
                        (peer-port (setf (node-port node) peer-port))))
-          (push (create-node :id id :ip ip :port port
-                             :distance
-                             (calculate-distance (convert-id-to-int id)
-                                                 (convert-id-to-int +my-id+))
-                             :last-activity (get-universal-time)
-                             :health :good)
-                *node-list*))
+          (progn (setf node (create-node :id id :ip ip :port port
+                                         :distance
+                                         (calculate-distance
+                                          (convert-id-to-int id)
+                                          (convert-id-to-int +my-id+))
+                                         :last-activity (get-universal-time)
+                                         :health :good))
+                 (push node *node-list*)
+                 (add-to-bucket node)))
+      ;; bad transaction ID
       (unless (gethash transaction-id *transactions*)
         (send-response :dht_error node dict :error-type :protocol)
         (setf (node-health node) :bad))
@@ -122,10 +124,7 @@ or :BAD."
         (ping-nodes (parse-nodes nodes)))
       (when values
         (ping-nodes (parse-nodes values)))
-      ;; TODO: associate with info-hash instead of with node
-      (when token ;; CURRENT-INFO-HASH-VALUE will be (token . nodes)
-        (let ((current-info-hash-value (gethash (gethash "info_hash" arguments)
-                                                *hashmap*)))
-          (unless (equalp (first current-info-hash-value) token)
-            (setf (gethash (gethash "info_hash" arguments) *hashmap*)
-                  (cons node token))))))))
+      (when token
+        (unless (and (valid-token-p token)
+                     (consider-token token info-hash node))
+          (send-response :dht_error node dict :error-type :protocol))))))
