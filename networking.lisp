@@ -48,6 +48,7 @@ or :BAD."
   (let* ((now (get-universal-time))
          (arguments (gethash "a" dict))
          (id (gethash "id" arguments))
+         (info-hash (gethash "info_hash" arguments))
          (distance (calculate-distance (convert-id-to-int +my-id+)
                                        (convert-id-to-int id)))
          (node (find-node-in-table id)))
@@ -65,7 +66,8 @@ or :BAD."
       ("ping" (send-response :ping node dict))
       ("find_node" (send-response :find_node node dict))
       ("get_peers" (send-response :get_peers node dict))
-      ("announce_peer" (send-response :announce_peer node dict
+      ("announce_peer" (push node (gethash info-hash *peer-list*))
+                       (send-response :announce_peer node dict
                                       :source-port port)))))
 
 (defun parse-response (dict ip port)
