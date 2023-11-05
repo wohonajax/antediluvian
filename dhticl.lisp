@@ -41,14 +41,14 @@
             *hashes*)
       ;; TODO: routing table upkeep
       (loop do (multiple-value-bind (buffer size host port)
-                                    (receive-data)
-                                    (let* ((packet (subseq buffer 0 size))
-                                           (dict (bencode:decode packet)))
-                                      (alexandria:switch ((gethash "y" dict) :test #'string=)
-                                                         ("q" (parse-query dict host port))
-                                                         ("r" (parse-response dict host port))
-                                                         ("e" ;; TODO handle errors
-                                                          ))))))))
+                   (receive-data)
+                 (let* ((packet (subseq buffer 0 size))
+                        (dict (bencode:decode packet)))
+                   (alexandria:switch ((gethash "y" dict) :test #'string=)
+                                      ("q" (parse-query dict host port))
+                                      ("r" (parse-response dict host port))
+                                      ("e" ;; TODO handle errors
+                                       ))))))))
 
 (defun dht ()
   "Initiates the distributed hash table."
