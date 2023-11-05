@@ -1,7 +1,5 @@
 (in-package #:dhticl)
 
-(defvar *transactions* (make-hash-table :test #'equal))
-
 (defun calculate-elapsed-inactivity (node)
   "Returns the time in minutes since NODE's last seen activity."
   (and (node-last-activity node) (minutes-since last-activity)))
@@ -12,7 +10,6 @@ or :BAD."
   (let ((time-inactive (calculate-elapsed-inactivity node)))
     (cond ((null time-inactive) :questionable)
           ((< time-inactive 15) :good)
-          ((ping-then-listen node) :good)
           (t :bad))))
 
 (defun ping-old-nodes (bucket)
@@ -21,8 +18,8 @@ or :BAD."
   (iterate-bucket bucket
                   (lambda (node)
                     (send-message :ping (node-ip node) (node-port node))))
-  (sort-bucket-by-distance bucket)
-  (update-bucket bucket))
+  (update-bucket bucket)
+  (sort-bucket-by-distance bucket))
 
 (defun purge-bad-nodes (bucket)
   "Removes all nodes of bad health from BUCKET."
@@ -31,8 +28,8 @@ or :BAD."
               (unless (eql :bad (node-health node))
                 node))
             (bucket-nodes bucket))
-  (sort-bucket-by-distance bucket)
-  (update-bucket bucket))
+  (update-bucket bucket)
+  (sort-bucket-by-distance bucket))
 ;;; FIXME
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
@@ -66,7 +63,8 @@ or :BAD."
                                  :last-activity now
                                  :health :good)))
           (push node *node-list*)
-          (add-to-bucket node)))
+          (add-to-bucket node)
+          (setf (gethash (gethash "t" dict) *transactions*)) t))
     (alexandria:switch ((gethash "q" dict) :test #'string=)
       ("ping" (send-response :ping node dict))
       ("find_node" (send-response :find_node node dict))
@@ -80,9 +78,10 @@ or :BAD."
                  (len (/ (length str) 6)))
              (handler-case
                  (dotimes (i len nodes)
-                   (let ((index (* i 6)))
+                   ;; operate on substrings of length 26 (compact node info)
+                   (let ((index (* i 26)))
                      (multiple-value-bind (parsed-ip parsed-port)
-                         (parse-node-ip (subseq str index (+ index 6)))
+                         (parse-node-ip (subseq str index (+ index 26)))
                        (push (cons parsed-ip parsed-port) nodes))))
                ;; TODO: error handling for out-of-bounds
                ;; (node's health is bad)
@@ -120,14 +119,17 @@ or :BAD."
                              :last-activity (get-universal-time)
                              :health :good)
                 *node-list*))
+      (unless (gethash transaction-id *transactions*)
+        (send-response :dht_error node dict :error-type :protocol)
+        (setf (node-health node) :bad))
       (when nodes
         (ping-nodes (parse-nodes nodes)))
       (when values
         (ping-nodes (parse-nodes values)))
       ;; TODO: associate with info-hash instead of with node
-      (when token ;; CURRENT-INFO-HASH-VALUE will be (node . token)
+      (when token ;; CURRENT-INFO-HASH-VALUE will be (token . nodes)
         (let ((current-info-hash-value (gethash (gethash "info_hash" arguments)
                                                 *hashmap*)))
-          (unless (equalp (cdr current-info-hash-value) token)
+          (unless (equalp (first current-info-hash-value) token)
             (setf (gethash (gethash "info_hash" arguments) *hashmap*)
                   (cons node token))))))))

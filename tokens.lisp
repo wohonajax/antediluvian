@@ -36,8 +36,9 @@
 
 (defun make-secret ()
   "Makes a secret."
-  (let ((vec (make-array 5 :element-type '(unsigned-byte 8))))
-    (dotimes (i 5)
+  (let* ((secret-length 5)
+         (vec (make-array secret-length :element-type '(unsigned-byte 8))))
+    (dotimes (i secret-length)
       (setf (aref vec i) (random 160)))
     (setf *previous-secret* *current-secret*
           *current-secret* (cons vec (get-universal-time)))
@@ -68,7 +69,7 @@
 
 (defun invent-token (info-hash node)
   "Creates a token associated with INFO-HASH and NODE."
-  (let* ((ip-vec (parse-node-ip (node-ip node)))
+  (let* ((ip-vec (node-ip node))
          (token (concatenate '(vector (unsigned-byte 8))
                              (make-hash ip-vec)
                              (ensure-secret))))
@@ -92,12 +93,8 @@ isn't found, returns NIL."
 (defun refresh-tokens ()
   "Deletes every token more than 10 minutes old."
   (maphash (lambda (key value)
-             (declare (ignore key))
-             (unless (valid-token-p (first value))
-               (setf (first value) nil)))
-           *hashmap*)
-  (maphash (lambda (key value)
-             (declare (ignore value))
-             (unless (valid-token-p key)
-               (remhash key *token-births*)))
-           *token-births*))
+             (let ((token (first value)))
+               (unless (valid-token-p token)
+                 (setf (gethash key *hashmap*) (rest value))
+                 (remhash token *token-births*))))
+           *hashmap*))
