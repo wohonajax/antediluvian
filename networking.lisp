@@ -75,7 +75,7 @@ or :BAD."
   "Parses a Bencoded response dictionary."
   (flet ((parse-nodes (str)
            (let (nodes
-                 (len (/ (length str) 6)))
+                 (len (/ (length str) 26)))
              (handler-case
                  (dotimes (i len nodes)
                    ;; operate on substrings of length 26 (compact node info)
