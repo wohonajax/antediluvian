@@ -155,7 +155,7 @@
           (gethash "r" response-dict) response-arguments)
     (if peers
         (setf (gethash "values" response-arguments)
-              (mapcar #'compact-node-info peers))
+              (mapcar #'compact-peer-info peers))
         (setf (gethash "nodes" response-arguments)
               (with-output-to-string (str)
                 (mapc (lambda (node) (princ (compact-node-info node) str))

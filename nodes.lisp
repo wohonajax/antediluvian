@@ -44,8 +44,12 @@ to *NODE-LIST*."
     (< (calculate-distance (convert-id-to-int id1) goal)
        (calculate-distance (convert-id-to-int id2) goal))))
 
-(defun compact-node-info (node)
+(defun compact-peer-info (node)
   "Translates NODE's IP and port into compact format."
   (format nil "~a~a"
           (octets-to-string (node-ip node))
           (octets-to-string (ironclad:integer-to-octets (node-port node)))))
+
+(defun compact-node-info (node)
+  "Translate's NODE's ID, IP, and port into compact peer format."
+  (format nil "~a~a" (node-id node) (compact-peer-info node)))
