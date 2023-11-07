@@ -4,7 +4,8 @@
 (defvar *settings-location*
   (merge-pathnames ".dhticlrc" (user-homedir-pathname)))
 
-(defvar *hashes* (list) "The list of info_hashes the DHT program will use.")
+(defvar *hashes* (list)
+  "The list of info_hashes the DHT program will use.")
 
 ;;; TODO: sanitize settings
 (defun load-settings ()
@@ -36,19 +37,26 @@
       (unless *hashes*
         (error "No hashes set in *HASHES* variable."))
       (mapc (lambda (hash)
+              ;; bootstrap the DHT with a known node
               (send-message :get_peers "router.utorrent.com" 6881
                             :info-hash hash))
             *hashes*)
-      ;; TODO: routing table upkeep
-      (loop do (multiple-value-bind (buffer size host port)
-                   (receive-data)
-                 (let* ((packet (subseq buffer 0 size))
-                        (dict (bencode:decode packet)))
-                   (alexandria:switch ((gethash "y" dict) :test #'string=)
-                     ("q" (parse-query dict host port))
-                     ("r" (parse-response dict host port))
-                     ("e" ;; TODO handle errors
-                      ))))))))
+      (let ((start-time (get-universal-time)))
+        (loop (multiple-value-bind (buffer size host port)
+                  (receive-data)
+                (let* ((packet (subseq buffer 0 size))
+                       (dict (bencode:decode packet)))
+                  (alexandria:switch ((gethash "y" dict) :test #'string=)
+                    ("q" (parse-query dict host port))
+                    ("r" (parse-response dict host port))
+                    ("e" ;; TODO handle errors
+                     ))))
+              ;; TODO: routing table upkeep
+              (when (= 0 (mod (minutes-since start-time) 10))
+                (iterate-table (lambda (bucket)
+                                 (purge-bad-nodes bucket)
+                                 (handle-questionable-nodes bucket)
+                                 (ping-old-nodes bucket)))))))))
 
 (defun dht ()
   "Initiates the distributed hash table."
