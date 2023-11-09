@@ -38,7 +38,7 @@
         (error "No hashes set in *HASHES* variable."))
       (mapc (lambda (hash)
               ;; bootstrap the DHT with a known node
-              (send-message :get_peers "router.utorrent.com" 6881
+              (send-message :find_node "router.utorrent.com" 6881
                             :info-hash hash))
             *hashes*)
       (let ((start-time (get-universal-time)))
