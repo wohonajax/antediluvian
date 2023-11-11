@@ -255,5 +255,5 @@ the node if found, NIL otherwise."
 
 (declaim (inline have-peers))
 (defun have-peers (info-hash)
-  "Returns a list of peers for INFO-HASH from the routing table."
+  "Returns a list of peers for INFO-HASH."
   (gethash info-hash *peer-list*))

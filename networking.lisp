@@ -73,21 +73,29 @@ or :BAD."
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
   (flet ((parse-nodes (str)
-           (let (nodes
-                 (len (/ (length str) 26)))
+           (let (nodes)
              (handler-case
-                 (dotimes (i len nodes)
-                   ;; operate on substrings of length 26 (compact node info)
-                   (let ((index (* i 26)))
-                     (multiple-value-bind (parsed-ip parsed-port)
-                         (parse-node-ip (subseq str index (+ index 26)))
-                       (push (cons parsed-ip parsed-port) nodes))))
+                 (do ((i 0 (* i 26))) ; operate on compact node info substrings
+                     ((= i (length str)) nodes)
+                   (multiple-value-bind (parsed-ip parsed-port)
+                       (parse-node-ip (subseq str (+ i 20) (+ i 26)))
+                     ;; (list node-id node-ip node-port)
+                     (push (list (subseq str i (+ i 20)) parsed-ip parsed-port)
+                           nodes)))
                ;; TODO: error handling for out-of-bounds
-               ;; (node's health is bad)
+               ;; (node's health is bad--malformed response sent)
                (error () (return-from parse-nodes nodes)))))
-         (ping-nodes (node-list)
-           (mapc (lambda (pair) (send-message :ping (car pair) (cdr pair)))
-                 node-list)))
+         (parse-peers (str)
+           (let (peers)
+            (handler-case
+                (do ((i 0 (* i 6))) ; operate on compact peer info substrings
+                    ((= i (length str)) peers)
+                  (multiple-value-bind (parsed-ip parsed-port)
+                      (parse-node-ip (subseq str i (+ i 6)))
+                    (push (cons parsed-ip parsed-port) peers)))
+              ;; TODO: error handling for out-of-bounds
+              ;; (node's health is bad--malformed response sent)
+              (error () (return-from parse-peers peers))))))
     (let* ((transaction-id (gethash "t" dict))
            (arguments (gethash "a" dict))
            (id (gethash "id" arguments))
@@ -123,9 +131,20 @@ or :BAD."
         (send-response :dht_error node dict :error-type :protocol)
         (setf (node-health node) :bad))
       (when nodes
-        (ping-nodes (parse-nodes nodes)))
+        (let ((node-list (parse-nodes nodes)))
+          (loop for (node-id node-ip node-port) in node-list
+                for node = (create-node
+                            :id node-id :ip node-ip :port node-port
+                            :distance (calculate-distance
+                                       (convert-id-to-int +my-id+)
+                                       (convert-id-to-int node-id)))
+                do (push node *node-list*)
+                (add-to-bucket node)
+                (send-message :ping node-ip node-port))))
       (when values
-        (ping-nodes (parse-nodes values)))
+        (let ((peer-list (parse-peers values)))
+          (loop for (peer-ip . peer-port) in peer-list
+                do (send-message :ping peer-ip peer-port))))
       (when token
         (unless (and (valid-token-p token)
                      (consider-token token info-hash node))

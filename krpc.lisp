@@ -13,10 +13,8 @@
     (usocket:socket-receive *listening-socket* buffer length)))
 
 (defun send-bencoded-data (socket data)
-  (let* ((length 65507) ; FIXME: send the right amount of data
-         (buffer (make-array length :element-type '(unsigned-byte 8)))
-         (bencoded-data (bencode:encode data buffer)))
-    (usocket:socket-send socket bencoded-data length
+  (let ((bencoded-data (bencode:encode data nil)))
+    (usocket:socket-send socket bencoded-data (length bencoded-data)
                          :port (usocket:get-peer-port socket)
                          :host (usocket:get-peer-address socket))))
 
