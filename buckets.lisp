@@ -1,3 +1,5 @@
+;;;; Code related to Kademlia kbuckets
+
 (in-package #:dhticl)
 
 (defvar *routing-table-location*

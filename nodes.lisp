@@ -1,3 +1,5 @@
+;;;; Code related to nodes
+
 (in-package #:dhticl)
 
 (alexandria:define-constant +my-id+

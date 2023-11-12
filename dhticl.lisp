@@ -28,7 +28,7 @@
 (define-condition kill-signal () ())
 
 (defvar *listening-socket*)
-
+;;; TODO: find_node each found node for nodes near the hash
 (defun main-loop ()
   (handler-bind ((kill-signal (lambda (c) (declare (ignore c))
                                 (return-from main-loop))))
@@ -58,10 +58,13 @@
                                  (handle-questionable-nodes bucket)
                                  (ping-old-nodes bucket)))))))))
 
-(defun dht ()
+(defun dht (&rest hashes)
   "Initiates the distributed hash table."
   (load-settings)
   (load-table)
+  (when hashes
+    (mapc (lambda (hash) (push hash *hashes*))
+          hashes))
   (unwind-protect
        (main-loop)
     (progn (save-settings)

@@ -1,3 +1,6 @@
+;;;; Code related to communicating
+;;;; with nodes over the network
+
 (in-package #:dhticl)
 
 (defun calculate-elapsed-inactivity (node)

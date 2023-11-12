@@ -1,3 +1,8 @@
+;;;; KRPC--Kademlia Remote Procedure Call
+;;;; This file contains messages to be sent
+;;;; over the network, including queries,
+;;;; responses, and error messages.
+
 (in-package #:dhticl)
 
 (defvar *default-port* 6881)
