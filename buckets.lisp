@@ -227,7 +227,7 @@ the node if found, NIL otherwise."
 (defun find-closest-nodes (id)
   "Returns a list of the K closest nodes to ID."
   (let ((goal (convert-id-to-int id))
-        (worst '())
+        (worst nil)
         (winners '()))
     (flet ((sorter (x y)
              (cond ((and x y) (< x y))

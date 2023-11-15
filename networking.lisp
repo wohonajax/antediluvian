@@ -3,17 +3,12 @@
 
 (in-package #:dhticl)
 
-(defun calculate-elapsed-inactivity (node)
-  "Returns the time in minutes since NODE's last seen activity."
-  (and (node-last-activity node) (minutes-since last-activity)))
+(defvar *listening-socket*)
+(defvar *results-list* '()
+  "A list containing nodes received from find_node queries.")
 
-(defun calculate-node-health (node)
-  "Returns the node's health as a keyword, either :GOOD, :QUESTIONABLE,
-or :BAD."
-  (let ((time-inactive (calculate-elapsed-inactivity node)))
-    (cond ((null time-inactive) :questionable)
-          ((< time-inactive 15) :good)
-          (t :bad))))
+(defconstant +alpha+ 3
+  "The number of simultaneous lookups to perform.")
 
 (defun ping-old-nodes (bucket)
   "Pings the nodes in a bucket from oldest to newest."
@@ -45,6 +40,13 @@ or :BAD."
                     (when (eql :questionable (node-health node))
                       (handle-questionable-node node))))
   (update-bucket bucket))
+
+(defun ping-oldest-node (bucket)
+  "Pings the oldest node in BUCKET."
+  (sort-bucket-by-age bucket)
+  (let ((node (svref bucket 0)))
+    (send-message :ping (node-ip node) (node-port node)))
+  (sort-bucket-by-distance bucket))
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
@@ -107,7 +109,7 @@ or :BAD."
            (token (gethash "token" arguments))
            ;; NODES comes from a find_node or get_peers response
            (nodes (gethash "nodes" arguments))
-           ;; VALUES is a list of strings which are compact node info
+           ;; VALUES is a list of strings which are compact peer info
            ;; Comes from a get_peers response
            (values (gethash "values" arguments))
            (implied-port (gethash "implied_port" arguments))
@@ -141,9 +143,11 @@ or :BAD."
                             :distance (calculate-distance
                                        (convert-id-to-int +my-id+)
                                        (convert-id-to-int node-id)))
-                do (push node *node-list*)
-                (add-to-bucket node)
-                (send-message :ping node-ip node-port))))
+                do (push node *results-list*)))
+        (dolist (node *results-list*)
+          (send-message :ping (node-ip node) (node-port node))
+          ;; TODO: keep the k closest nodes that respond to pings
+          ))
       (when values
         (let ((peer-list (parse-peers values)))
           (loop for (peer-ip . peer-port) in peer-list
@@ -152,3 +156,15 @@ or :BAD."
         (unless (and (valid-token-p token)
                      (consider-token token info-hash node))
           (send-response :dht_error node dict :error-type :protocol))))))
+
+(defun parse-message ()
+  "Parses a KRPC message."
+  (multiple-value-bind (data size host port)
+      (receive-data)
+    (let* ((packet (subseq data 0 size))
+           (dict (bencode:decode packet)))
+      (alexandria:eswitch ((gethash "y" dict) :test #'string=)
+        ("q" (parse-query dict host port))
+        ("r" (parse-response dict host port))
+        ("e" ;; TODO: handle errors
+         )))))

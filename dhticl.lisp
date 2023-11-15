@@ -27,30 +27,25 @@
 
 (define-condition kill-signal () ())
 
-(defvar *listening-socket*)
 ;;; TODO: find_node each found node for nodes near the hash
 (defun main-loop ()
   (handler-bind ((kill-signal (lambda (c) (declare (ignore c))
                                 (return-from main-loop))))
     (with-listening-usocket socket
       (setf *listening-socket* socket)
-      (unless *hashes*
-        (error "No hashes set in *HASHES* variable."))
+      ;; bootstrap the DHT with a known node
+      (send-message :find_node "router.utorrent.com" 6881
+                    :info-hash +my-id+)
+      (parse-message)
       (mapc (lambda (hash)
-              ;; bootstrap the DHT with a known node
-              (send-message :find_node "router.utorrent.com" 6881
-                            :info-hash hash))
+              (let ((node-list (find-closest-nodes hash)))
+                (dotimes (i +alpha+)
+                  (let ((node (nth i node-list)))
+                    (send-message :find_node (node-ip node) (node-port node)
+                                  :info-hash hash)))))
             *hashes*)
       (let ((start-time (get-universal-time)))
-        (loop (multiple-value-bind (buffer size host port)
-                  (receive-data)
-                (let* ((packet (subseq buffer 0 size))
-                       (dict (bencode:decode packet)))
-                  (alexandria:switch ((gethash "y" dict) :test #'string=)
-                    ("q" (parse-query dict host port))
-                    ("r" (parse-response dict host port))
-                    ("e" ;; TODO handle errors
-                     ))))
+        (loop (parse-message)
               ;; TODO: routing table upkeep
               (when (= 0 (mod (minutes-since start-time) 10))
                 (iterate-table (lambda (bucket)

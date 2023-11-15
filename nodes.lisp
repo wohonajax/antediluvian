@@ -39,6 +39,18 @@ to *NODE-LIST*."
   (calculate-distance (convert-id-to-int +my-id+)
                       (convert-id-to-int (node-id node))))
 
+(defun calculate-elapsed-inactivity (node)
+  "Returns the time in minutes since NODE's last seen activity."
+  (and (node-last-activity node) (minutes-since last-activity)))
+
+(defun calculate-node-health (node)
+  "Returns the node's health as a keyword, either :GOOD, :QUESTIONABLE,
+or :BAD."
+  (let ((time-inactive (calculate-elapsed-inactivity node)))
+    (cond ((null time-inactive) :questionable)
+          ((< time-inactive 15) :good)
+          (t :bad))))
+
 (defun node-closer-p (goal node1 node2)
   "Returns T if NODE1 is closer to GOAL than NODE2, NIL otherwise."
   (let ((id1 (node-id node1))
