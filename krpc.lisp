@@ -25,11 +25,10 @@
 
 ;;; Queries
 
-(defun ping-node (socket)
+(defun ping-node (socket transaction-id)
   "Sends a ping message."
   (let ((query-dict (make-hash-table))
-        (query-arguments (make-hash-table))
-        (transaction-id (generate-transaction-id)))
+        (query-arguments (make-hash-table)))
     (setf (gethash "id" query-arguments) +my-id+
 
           (gethash "t" query-dict) transaction-id
@@ -40,11 +39,10 @@
           (gethash transaction-id *transactions*) t)
     (send-bencoded-data socket query-dict)))
 
-(defun find-node (socket node-id)
+(defun find-node (socket node-id transaction-id)
   "Asks for a node's contact information."
   (let ((query-dict (make-hash-table))
-        (query-arguments (make-hash-table))
-        (transaction-id (generate-transaction-id)))
+        (query-arguments (make-hash-table)))
     (setf (gethash "id" query-arguments) +my-id+
           (gethash "target" query-arguments) node-id
 
@@ -56,11 +54,10 @@
           (gethash transaction-id *transactions*) t)
     (send-bencoded-data socket query-dict)))
 
-(defun get-peers (socket info-hash)
+(defun get-peers (socket info-hash transaction-id)
   "Asks for peers under INFO-HASH."
   (let ((query-dict (make-hash-table))
-        (query-arguments (make-hash-table))
-        (transaction-id (generate-transaction-id)))
+        (query-arguments (make-hash-table)))
     (setf (gethash "id" query-arguments) +my-id+
           (gethash "info_hash" query-arguments) info-hash
 
@@ -72,12 +69,11 @@
           (gethash transaction-id *transactions*) t)
     (send-bencoded-data socket query-dict)))
 
-(defun announce-peer (socket info-hash)
+(defun announce-peer (socket info-hash transaction-id)
   "Announces peer status under INFO-HASH."
   (let* ((query-dict (make-hash-table))
          (query-arguments (make-hash-table))
-         (token (recall-token info-hash))
-         (transaction-id (generate-transaction-id)))
+         (token (recall-token info-hash)))
     (setf (gethash "id" query-arguments) +my-id+
           (gethash "implied_port" query-arguments) (if *use-implied-port-p* 1 0)
           (gethash "info_hash" query-arguments) info-hash
@@ -92,7 +88,7 @@
           (gethash transaction-id *transactions*) t)
     (send-bencoded-data socket query-dict)))
 
-(defun send-message (type ip port &key id info-hash)
+(defun send-message (type ip port transaction-id &key id info-hash)
   "Sends NODE a TYPE message. TYPE should be a keyword like
 :PING or :FIND_NODE."
   (usocket:with-connected-socket
@@ -102,12 +98,13 @@
                       :element-type '(unsigned-byte 8)
                       :timeout 5))
     (handler-case (case type
-                    (:ping (ping-node socket))
+                    (:ping (ping-node socket transaction-id))
                     (:store)
-                    (:find_node (find-node socket id))
+                    (:find_node (find-node socket id transaction-id))
                     (:find_value)
-                    (:get_peers (get-peers socket info-hash))
-                    (:announce_peer (announce-peer socket info-hash)))
+                    (:get_peers (get-peers socket info-hash transaction-id))
+                    (:announce_peer (announce-peer socket info-hash
+                                                   transaction-id)))
       (simple-error () (invoke-restart :continue)))))
 
 ;;; Responses to queries

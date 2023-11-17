@@ -4,8 +4,10 @@
 (in-package #:dhticl)
 
 (defvar *listening-socket*)
-(defvar *results-list* '()
+(defvar *results-list* (list)
   "A list containing nodes received from find_node queries.")
+(defvar *active-lookups* (make-hash-table :test #'equal)
+  "A hash table containing currently active lookups.")
 
 (defconstant +alpha+ 3
   "The number of simultaneous lookups to perform.")
@@ -15,7 +17,8 @@
   (sort-bucket-by-age bucket)
   (iterate-bucket bucket
                   (lambda (node)
-                    (send-message :ping (node-ip node) (node-port node))))
+                    (send-message :ping (node-ip node) (node-port node)
+                                  (generate-transaction-id))))
   (update-bucket bucket)
   (sort-bucket-by-distance bucket))
 
@@ -31,7 +34,8 @@
 ;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
-  (send-message :ping (node-ip node) (node-port node)))
+  (send-message :ping (node-ip node) (node-port node)
+                (generate-transaction-id)))
 
 (defun handle-questionable-nodes (bucket)
   "Handles all nodes in BUCKET that are of questionable health."
@@ -45,8 +49,22 @@
   "Pings the oldest node in BUCKET."
   (sort-bucket-by-age bucket)
   (let ((node (svref bucket 0)))
-    (send-message :ping (node-ip node) (node-port node)))
+    (send-message :ping (node-ip node) (node-port node)
+                  (generate-transaction-id)))
   (sort-bucket-by-distance bucket))
+
+(defun ping-results ()
+  (flet ((lookup (node)
+           (let ((transaction-id (generate-transaction-id)))
+             (send-message :ping (node-ip node) (node-port node)
+                           transaction-id)
+             (setf (gethash transaction-id *active-lookups*)
+                   node))))
+    (do ((i 0 (+ i +alpha+))
+         (j +alpha+ (+ j +alpha+)))
+        ((> i (length *results-list*)))
+      ;; TODO: keep the k closest nodes that respond to pings
+      (mapc #'lookup (subseq *results-list* i j))))
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
@@ -68,12 +86,12 @@
                (add-to-bucket node)
                (setf (gethash (gethash "t" dict) *transactions*) t)))
     (alexandria:switch ((gethash "q" dict) :test #'string=)
-      ("ping" (send-response :ping node dict))
-      ("find_node" (send-response :find_node node dict))
-      ("get_peers" (send-response :get_peers node dict))
-      ("announce_peer" (push node (gethash info-hash *peer-list*))
-                       (send-response :announce_peer node dict
-                                      :source-port port)))))
+                       ("ping" (send-response :ping node dict))
+                       ("find_node" (send-response :find_node node dict))
+                       ("get_peers" (send-response :get_peers node dict))
+                       ("announce_peer" (push node (gethash info-hash *peer-list*))
+                                        (send-response :announce_peer node dict
+                                                       :source-port port)))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
@@ -144,10 +162,7 @@
                                        (convert-id-to-int +my-id+)
                                        (convert-id-to-int node-id)))
                 do (push node *results-list*)))
-        (dolist (node *results-list*)
-          (send-message :ping (node-ip node) (node-port node))
-          ;; TODO: keep the k closest nodes that respond to pings
-          ))
+        (ping-results))
       (when values
         (let ((peer-list (parse-peers values)))
           (loop for (peer-ip . peer-port) in peer-list
