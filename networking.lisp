@@ -4,8 +4,10 @@
 (in-package #:dhticl)
 
 (defvar *listening-socket*)
+
 (defvar *results-list* (list)
   "A list containing nodes received from find_node queries.")
+
 (defvar *active-lookups* (make-hash-table :test #'equal)
   "A hash table containing currently active lookups.")
 
@@ -64,7 +66,7 @@
          (j +alpha+ (+ j +alpha+)))
         ((> i (length *results-list*)))
       ;; TODO: keep the k closest nodes that respond to pings
-      (mapc #'lookup (subseq *results-list* i j))))
+      (mapc #'lookup (subseq *results-list* i j)))))
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
@@ -153,6 +155,9 @@
       (unless (gethash transaction-id *transactions*)
         (send-response :dht_error node dict :error-type :protocol)
         (setf (node-health node) :bad))
+      ;; find_node lookup response
+      (when (gethash transaction-id *active-lookups*)
+        (add-to-bucket node)) ;; FIXME: k closest nodes, start new lookup
       (when nodes
         (let ((node-list (parse-nodes nodes)))
           (loop for (node-id node-ip node-port) in node-list
