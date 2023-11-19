@@ -19,9 +19,7 @@
 
 (defun send-bencoded-data (socket data)
   (let ((bencoded-data (bencode:encode data nil)))
-    (usocket:socket-send socket bencoded-data (length bencoded-data)
-                         :port (usocket:get-peer-port socket)
-                         :host (usocket:get-peer-address socket))))
+    (usocket:socket-send socket bencoded-data (length bencoded-data))))
 
 ;;; Queries
 

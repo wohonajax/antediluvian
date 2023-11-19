@@ -62,11 +62,9 @@
                            transaction-id)
              (setf (gethash transaction-id *active-lookups*)
                    node))))
-    (do ((i 0 (+ i +alpha+))
-         (j +alpha+ (+ j +alpha+)))
-        ((> i (length *results-list*)))
-      ;; TODO: keep the k closest nodes that respond to pings
-      (mapc #'lookup (subseq *results-list* i j)))))
+    (loop for node in *results-list*
+          while (< (hash-table-count *active-lookups*) +alpha+)
+          do (lookup node))))
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
@@ -88,12 +86,12 @@
                (add-to-bucket node)
                (setf (gethash (gethash "t" dict) *transactions*) t)))
     (alexandria:switch ((gethash "q" dict) :test #'string=)
-                       ("ping" (send-response :ping node dict))
-                       ("find_node" (send-response :find_node node dict))
-                       ("get_peers" (send-response :get_peers node dict))
-                       ("announce_peer" (push node (gethash info-hash *peer-list*))
-                                        (send-response :announce_peer node dict
-                                                       :source-port port)))))
+      ("ping" (send-response :ping node dict))
+      ("find_node" (send-response :find_node node dict))
+      ("get_peers" (send-response :get_peers node dict))
+      ("announce_peer" (push node (gethash info-hash *peer-list*))
+                       (send-response :announce_peer node dict
+                                      :source-port port)))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
