@@ -64,7 +64,8 @@
                    node))))
     (loop for node in *results-list*
           while (< (hash-table-count *active-lookups*) +alpha+)
-          do (lookup node))))
+          do (lookup node)
+          (delete node *results-list*))))
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."

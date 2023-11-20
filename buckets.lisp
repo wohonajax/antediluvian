@@ -137,7 +137,7 @@ closest to furthest."
           (setf (svref (bucket-nodes second) (first-empty-slot second))
                 current-node)))))
 
-(defun bucket-split (bucket &aux (min (bucket-min bucket))
+(defun split-bucket (bucket &aux (min (bucket-min bucket))
                               (max (bucket-max bucket))
                               (mid (truncate max 2)))
   "Splits BUCKET into two new buckets."
@@ -150,7 +150,7 @@ closest to furthest."
     (seed-buckets a b bucket)
     (sort-table)))
 
-(defun bucket-splitp (bucket id)
+(defun maybe-split-bucket (bucket id)
   "Splits BUCKET if ID is in its range, otherwise pings from oldest to
 newest."
   (let ((target-id (convert-id-to-int id))
@@ -160,7 +160,7 @@ newest."
       (if (within target-id
                   (reduce #'min nodes :key #'node-id-as-number)
                   (reduce #'max nodes :key #'node-id-as-number))
-          (bucket-split bucket)
+          (split-bucket bucket)
           (progn (ping-old-nodes bucket)
                  (update-bucket bucket))))))
 
@@ -181,9 +181,9 @@ newest."
               (when (equalp node (svref (bucket-nodes bucket) i))
                 ;; the node is already in the bucket
                 (return)))
-      ;; BUCKET-SPLITP only gets evaluated if
+      ;; MAYBE-SPLIT-BUCKET only gets evaluated if
       ;; there are no NIL elements in the bucket
-      (bucket-splitp bucket id)
+      (maybe-split-bucket bucket id)
       (add-to-bucket node))))
 
 (defun iterate-bucket (bucket action &aux (nodes (bucket-nodes bucket)))
@@ -255,7 +255,6 @@ the node if found, NIL otherwise."
        away))
     winners))
 
-(declaim (inline have-peers))
 (defun have-peers (info-hash)
   "Returns a list of peers for INFO-HASH."
   (gethash info-hash *peer-list*))

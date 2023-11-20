@@ -48,7 +48,7 @@
     vec))
 
 (defun ensure-secret ()
-  "Makes sure the current secret isn't stale. If it is, returns a fresh secret."
+  "Makes sure the current secret isn't stale. If it is, makes a fresh secret."
   (if (> (minutes-since (cdr *current-secret*))
          5)
       (make-secret)
@@ -91,7 +91,7 @@
   "Retrieves the token values associated with INFO-HASH. If a recent enough
 token isn't found, returns NIL."
   (let ((tokens (gethash info-hash *token-hashes*)))
-    (remove-if-not #'valid-token-p tokens)))
+    (remove-if (complement #'valid-token-p) tokens)))
 
 (defun refresh-tokens ()
   "Deletes every token more than 10 minutes old."
