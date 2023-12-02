@@ -176,7 +176,7 @@
         (if *results-list* ; if *results-list* isn't empty
             (progn (lookup (first *results-list*))
                    (pop *results-list*))
-            (mapc (lambda (node)
+            (mapc (lambda (node) ; TODO: stop recursion
                     (send-message :find_node
                                   (node-ip node)
                                   (node-port node)
