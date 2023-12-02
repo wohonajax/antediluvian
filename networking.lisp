@@ -8,6 +8,9 @@
 (defvar *results-list* (list)
   "A list containing nodes received from find_node queries.")
 
+(defvar *best-results* (list)
+  "A list containing the k best results from a find_node lookup.")
+
 (defvar *active-lookups* (make-hash-table :test #'equal)
   "A hash table containing currently active lookups.")
 
@@ -55,17 +58,22 @@
                   (generate-transaction-id)))
   (sort-bucket-by-distance bucket))
 
-(defun ping-results ()
-  (flet ((lookup (node)
-           (let ((transaction-id (generate-transaction-id)))
-             (send-message :ping (node-ip node) (node-port node)
-                           transaction-id)
-             (setf (gethash transaction-id *active-lookups*)
-                   node))))
-    (loop for node in *results-list*
-          while (< (hash-table-count *active-lookups*) +alpha+)
-          do (lookup node)
-          (delete node *results-list*))))
+(defun lookup (node)
+  "Begins a lookup of NODE."
+  (let ((transaction-id (generate-transaction-id)))
+    (send-message :ping (node-ip node) (node-port node) transaction-id)
+    (setf (gethash transaction-id *active-lookups*) node)))
+
+(defun ping-results! ()
+  "Begins looking up nodes in the intermediary results list."
+  (loop for node in *results-list*
+        while (< (hash-table-count *active-lookups*) +alpha+)
+        do (lookup node)
+           (pop *results-list*)))
+
+(defun sort-best-results! ()
+  (setf *best-results*
+        (sort *best-results* #'< :key #'node-distance)))
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
@@ -156,7 +164,24 @@
         (setf (node-health node) :bad))
       ;; find_node lookup response
       (when (gethash transaction-id *active-lookups*)
-        (add-to-bucket node)) ;; FIXME: k closest nodes, start new lookup
+        (if (= (length *best-results*) +k+)
+            ;; we only want the k closest nodes
+            (unless (< (node-distance (last *best-results*))
+                       (node-distance node))
+              (setf *best-results* (cons node (butlast *best-results*)))
+              (sort-best-results!))
+            (progn (push node *best-results*)
+                   (sort-best-results!)))
+        (remhash transaction-id *active-lookups*)
+        (if *results-list* ; if *results-list* isn't empty
+            (progn (lookup (first *results-list*))
+                   (pop *results-list*))
+            (mapc (lambda (node)
+                    (send-message :find_node
+                                  (node-ip node)
+                                  (node-port node)
+                                  (generate-transaction-id)))
+                  *best-results*)))
       (when nodes
         (let ((node-list (parse-nodes nodes)))
           (loop for (node-id node-ip node-port) in node-list
@@ -166,7 +191,7 @@
                                        (convert-id-to-int +my-id+)
                                        (convert-id-to-int node-id)))
                 do (push node *results-list*)))
-        (ping-results))
+        (ping-results!))
       (when values
         (let ((peer-list (parse-peers values)))
           (loop for (peer-ip . peer-port) in peer-list
