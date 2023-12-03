@@ -8,6 +8,8 @@
 (defvar *results-list* (list)
   "A list containing nodes received from find_node queries.")
 
+(defvar *previous-best-results* (list))
+
 (defvar *best-results* (list)
   "A list containing the k best results from a find_node lookup.")
 
@@ -173,15 +175,18 @@
             (progn (push node *best-results*)
                    (sort-best-results!)))
         (remhash transaction-id *active-lookups*)
-        (if *results-list* ; if *results-list* isn't empty
-            (progn (lookup (first *results-list*))
-                   (pop *results-list*))
-            (mapc (lambda (node) ; TODO: stop recursion
-                    (send-message :find_node
-                                  (node-ip node)
-                                  (node-port node)
-                                  (generate-transaction-id)))
-                  *best-results*)))
+        (cond (*results-list* ; if *RESULTS-LIST* isn't empty
+               (lookup (first *results-list*))
+               (pop *results-list*))
+              ((equalp *best-results* *previous-best-results*)) ; stop recursion
+              (t
+               (setf *previous-best-results* *best-results*)
+               (mapc (lambda (node)
+                       (send-message :find_node
+                                     (node-ip node)
+                                     (node-port node)
+                                     (generate-transaction-id)))
+                     *best-results*))))
       (when nodes
         (let ((node-list (parse-nodes nodes)))
           (loop for (node-id node-ip node-port) in node-list
