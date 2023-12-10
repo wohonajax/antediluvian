@@ -109,7 +109,7 @@
   (flet ((parse-nodes (str)
            (let (nodes)
              (handler-case
-                 (do ((i 0 (* i 26))) ; operate on compact node info substrings
+                 (do ((i 0 (+ i 26))) ; operate on compact node info substrings
                      ((= i (length str)) nodes)
                    (multiple-value-bind (parsed-ip parsed-port)
                        (parse-node-ip (subseq str (+ i 20) (+ i 26)))
@@ -122,7 +122,7 @@
          (parse-peers (str)
            (let (peers)
             (handler-case
-                (do ((i 0 (* i 6))) ; operate on compact peer info substrings
+                (do ((i 0 (+ i 6))) ; operate on compact peer info substrings
                     ((= i (length str)) peers)
                   (multiple-value-bind (parsed-ip parsed-port)
                       (parse-node-ip (subseq str i (+ i 6)))
@@ -201,10 +201,14 @@
         (let ((peer-list (parse-peers values)))
           (loop for (peer-ip . peer-port) in peer-list
                 do (send-message :ping peer-ip peer-port))))
+      ;; store received token
       (when token
-        (unless (and (valid-token-p token)
-                     (consider-token token info-hash node))
-          (send-response :dht_error node dict :error-type :protocol))))))
+        (setf (gethash token *token-births*) (get-universal-time)
+
+              (gethash (gethash transaction-id *transactions*) *token-hashes*)
+              token
+
+              (gethash token *token-nodes*) node)))))
 
 (defun parse-message ()
   "Parses a KRPC message."

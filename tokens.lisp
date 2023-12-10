@@ -77,9 +77,10 @@
          (token (concatenate '(vector (unsigned-byte 8))
                              (make-hash ip-vec)
                              (ensure-secret))))
+    (setf (gethash token *token-births*) (get-universal-time))
     (pushnew info-hash (gethash token *token-hashes*) :test #'equalp)
     (pushnew node (gethash token *token-nodes) :test #'equalp)
-    (setf (gethash token *token-births*) (get-universal-time))))
+    token))
 
 (defun valid-token-p (token)
   "Determines whether TOKEN is valid or not."

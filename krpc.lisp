@@ -10,7 +10,8 @@
 (defvar *use-implied-port-p* nil)
 
 (defvar *transactions* (make-hash-table :test #'equal)
-  "A hash table storing valid transaction IDs we've generated.")
+  "A hash table storing valid transaction IDs we've generated.
+Maps to info_hash when applicable.")
 
 (defun receive-data ()
   (let* ((length 65507) ; maximum UDP packet payload size
@@ -64,7 +65,7 @@
           (gethash "q" query-dict) "get_peers"
           (gethash "a" query-dict) query-arguments
 
-          (gethash transaction-id *transactions*) t)
+          (gethash transaction-id *transactions*) info-hash)
     (send-bencoded-data socket query-dict)))
 
 (defun announce-peer (socket info-hash transaction-id)
