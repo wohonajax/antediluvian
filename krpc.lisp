@@ -14,9 +14,7 @@
 Maps to info_hash when applicable.")
 
 (defun receive-data ()
-  (let* ((length 65507) ; maximum UDP packet payload size
-         (buffer (make-array length :element-type '(unsigned-byte 8))))
-    (usocket:socket-receive *listening-socket* buffer length)))
+  (usocket:socket-receive *listening-socket* nil nil))
 
 (defun send-bencoded-data (socket data)
   (let ((bencoded-data (bencode:encode data nil)))

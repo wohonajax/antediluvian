@@ -83,6 +83,7 @@
          (arguments (gethash "a" dict))
          (id (gethash "id" arguments))
          (info-hash (gethash "info_hash" arguments))
+         (token (gethash "token" arguments))
          (distance (calculate-distance (convert-id-to-int +my-id+)
                                        (convert-id-to-int id)))
          (node (find-node-in-table id)))
@@ -100,9 +101,13 @@
       ("ping" (send-response :ping node dict))
       ("find_node" (send-response :find_node node dict))
       ("get_peers" (send-response :get_peers node dict))
-      ("announce_peer" (push node (gethash info-hash *peer-list*))
-                       (send-response :announce_peer node dict
-                                      :source-port port)))))
+      ("announce_peer" (cond ((member token (recall-token info-hash)
+                                      :test #'equalp)
+                              (push node (gethash info-hash *peer-list*))
+                              (send-response :announce_peer node dict
+                                             :source-port port))
+                             (t (send-response :dht_error node dict
+                                               :error-type :protocol)))))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
@@ -130,7 +135,8 @@
               ;; TODO: error handling for out-of-bounds
               ;; (node's health is bad--malformed response sent)
               (error () (return-from parse-peers peers))))))
-    (let* ((transaction-id (gethash "t" dict))
+    (let* ((now (get-universal-time))
+           (transaction-id (gethash "t" dict))
            (arguments (gethash "a" dict))
            (id (gethash "id" arguments))
            (info-hash (gethash "info_hash" arguments))
@@ -203,7 +209,7 @@
                 do (send-message :ping peer-ip peer-port))))
       ;; store received token
       (when token
-        (setf (gethash token *token-births*) (get-universal-time)
+        (setf (gethash token *token-births*) now
 
               (gethash (gethash transaction-id *transactions*) *token-hashes*)
               token

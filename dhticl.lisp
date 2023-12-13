@@ -40,6 +40,7 @@
               (dotimes (i +alpha+)
                 (let ((node (nth i node-list)))
                   (send-message :find_node (node-ip node) (node-port node)
+                                (generate-transaction-id)
                                 :info-hash hash)))))
           *hashes*)
     (let ((start-time (get-universal-time)))
@@ -49,7 +50,8 @@
               (iterate-table (lambda (bucket)
                                (purge-bad-nodes bucket)
                                (handle-questionable-nodes bucket)
-                               (ping-old-nodes bucket))))))))
+                               (ping-old-nodes bucket)))
+              (refresh-tokens))))))
 
 (defun dht (&rest hashes)
   "Initiates the distributed hash table."

@@ -57,7 +57,7 @@
 (defun consider-token (token info-hash node)
   "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
   (and (member node (gethash token *token-nodes*) :test #'equalp)
-       (member info-hash (gethash token *token-hashes*) :test #'equalp))
+       (member token (gethash info-hash *token-hashes*) :test #'equalp))
   #| this old code checked to see if TOKEN came from our INVENT-TOKEN
   (let* ((node-ip-hash (make-array 20 :element-type '(unsigned-byte 8)))
          (token-value (token-value token))
@@ -78,8 +78,8 @@
                              (make-hash ip-vec)
                              (ensure-secret))))
     (setf (gethash token *token-births*) (get-universal-time))
-    (pushnew info-hash (gethash token *token-hashes*) :test #'equalp)
-    (pushnew node (gethash token *token-nodes) :test #'equalp)
+    (pushnew token (gethash info-hash *token-hashes*) :test #'equalp)
+    (pushnew node (gethash token *token-nodes*) :test #'equalp)
     token))
 
 (defun valid-token-p (token)

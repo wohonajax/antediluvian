@@ -34,8 +34,5 @@
   `(usocket:with-connected-socket
        (,socket-var (usocket:socket-connect nil nil
                                             :protocol :datagram
-                                            :element-type '(unsigned-byte 8)
-                                            :timeout 5
-                                            :local-host usocket:*wildcard-host*
                                             :local-port *default-port*))
      ,@body))
