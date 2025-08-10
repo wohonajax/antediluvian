@@ -78,8 +78,8 @@
                              (make-hash ip-vec)
                              (ensure-secret))))
     (setf (gethash token *token-births*) (get-universal-time))
-    (pushnew token (gethash info-hash *token-hashes*) :test #'equalp)
-    (pushnew node (gethash token *token-nodes*) :test #'equalp)
+    (push token (gethash info-hash *token-hashes*))
+    (push node (gethash token *token-nodes*))
     token))
 
 (defun valid-token-p (token)

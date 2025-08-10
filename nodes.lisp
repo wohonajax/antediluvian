@@ -2,12 +2,11 @@
 
 (in-package #:dhticl)
 
-(alexandria:define-constant +my-id+
-  (octets-to-string
+(defvar *my-id*
+  (octets-to-string ;; FIXME: bencode encodes this as a >20 length string
    (let ((array (make-array 20 :element-type '(unsigned-byte 8))))
      (dotimes (i 20 array)
-       (setf (aref array i) (random 256)))))
-  :test #'string=)
+       (setf (aref array i) (random 256))))))
 
 (defvar *node-list* (list))
 
@@ -36,7 +35,7 @@ to *NODE-LIST*."
 
 (defun calculate-node-distance (node)
   "Returns the distance between NODE and us."
-  (calculate-distance (convert-id-to-int +my-id+)
+  (calculate-distance (convert-id-to-int *my-id*)
                       (convert-id-to-int (node-id node))))
 
 (defun calculate-elapsed-inactivity (node)

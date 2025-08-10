@@ -14,7 +14,10 @@
 Maps to info_hash when applicable.")
 
 (defun receive-data ()
-  (usocket:socket-receive *listening-socket* nil nil))
+  (usocket:socket-receive
+   *listening-socket*
+   nil ;; FIXME: this just hangs waiting for a huge response
+   usocket:+max-datagram-packet-size+))
 
 (defun send-bencoded-data (socket data)
   (let ((bencoded-data (bencode:encode data nil)))
@@ -26,7 +29,7 @@ Maps to info_hash when applicable.")
   "Sends a ping message."
   (let ((query-dict (make-hash-table))
         (query-arguments (make-hash-table)))
-    (setf (gethash "id" query-arguments) +my-id+
+    (setf (gethash "id" query-arguments) *my-id*
 
           (gethash "t" query-dict) transaction-id
           (gethash "y" query-dict) "q"
@@ -40,7 +43,7 @@ Maps to info_hash when applicable.")
   "Asks for a node's contact information."
   (let ((query-dict (make-hash-table))
         (query-arguments (make-hash-table)))
-    (setf (gethash "id" query-arguments) +my-id+
+    (setf (gethash "id" query-arguments) *my-id*
           (gethash "target" query-arguments) node-id
 
           (gethash "t" query-dict) transaction-id
@@ -55,7 +58,7 @@ Maps to info_hash when applicable.")
   "Asks for peers under INFO-HASH."
   (let ((query-dict (make-hash-table))
         (query-arguments (make-hash-table)))
-    (setf (gethash "id" query-arguments) +my-id+
+    (setf (gethash "id" query-arguments) *my-id*
           (gethash "info_hash" query-arguments) info-hash
 
           (gethash "t" query-dict) transaction-id
@@ -71,7 +74,7 @@ Maps to info_hash when applicable.")
   (let* ((query-dict (make-hash-table))
          (query-arguments (make-hash-table))
          (token (recall-token info-hash)))
-    (setf (gethash "id" query-arguments) +my-id+
+    (setf (gethash "id" query-arguments) *my-id*
           (gethash "implied_port" query-arguments) (if *use-implied-port-p* 1 0)
           (gethash "info_hash" query-arguments) info-hash
           (gethash "port" query-arguments) *default-port*
@@ -110,7 +113,7 @@ Maps to info_hash when applicable.")
   "Responds to a ping query."
   (let ((response-dict (make-hash-table))
         (response-arguments (make-hash-table)))
-    (setf (gethash "id" response-arguments) +my-id+
+    (setf (gethash "id" response-arguments) *my-id*
 
           (gethash "t" response-dict) (gethash "t" dict)
           (gethash "y" response-dict) "r"
@@ -121,7 +124,7 @@ Maps to info_hash when applicable.")
   "Responds to a find_node query."
   (let ((response-dict (make-hash-table))
         (response-arguments (make-hash-table)))
-    (setf (gethash "id" response-arguments) +my-id+
+    (setf (gethash "id" response-arguments) *my-id*
           (gethash "nodes" response-arguments)
           (let* ((target (gethash "target" dict))
                  (have-target-p (member target *node-list*)))
@@ -144,7 +147,7 @@ Maps to info_hash when applicable.")
          (peers (have-peers hash))
          (response-dict (make-hash-table))
          (response-arguments (make-hash-table)))
-    (setf (gethash "id" response-arguments) +my-id+
+    (setf (gethash "id" response-arguments) *my-id*
           (gethash "token" response-arguments) (invent-token hash node)
 
           (gethash "t" response-dict) (gethash "t" dict)
@@ -177,7 +180,7 @@ sends a protocol error message."
     (setf (node-port node) port)
     (if (consider-token token info-hash node)
         (progn (add-to-bucket node)
-               (setf (gethash "id" response-arguments) +my-id+
+               (setf (gethash "id" response-arguments) *my-id*
 
                      (gethash "t" response-dict) (gethash "t" dict)
                      (gethash "y" response-dict) "r"

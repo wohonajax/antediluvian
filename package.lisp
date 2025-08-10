@@ -3,7 +3,7 @@
 (defpackage #:dhticl
   (:use #:cl)
   (:export #:dht
-           #:+my-id+
+           #:*my-id*
            #:*default-port*
            #:*use-implied-port-p*
            #:*routing-table*

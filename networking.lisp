@@ -84,7 +84,7 @@
          (id (gethash "id" arguments))
          (info-hash (gethash "info_hash" arguments))
          (token (gethash "token" arguments))
-         (distance (calculate-distance (convert-id-to-int +my-id+)
+         (distance (calculate-distance (convert-id-to-int *my-id*)
                                        (convert-id-to-int id)))
          (node (find-node-in-table id)))
     (if node
@@ -161,7 +161,7 @@
                                          :distance
                                          (calculate-distance
                                           (convert-id-to-int id)
-                                          (convert-id-to-int +my-id+))
+                                          (convert-id-to-int *my-id*))
                                          :last-activity (get-universal-time)
                                          :health :good))
                  (push node *node-list*)
@@ -170,7 +170,26 @@
       (unless (gethash transaction-id *transactions*)
         (send-response :dht_error node dict :error-type :protocol)
         (setf (node-health node) :bad))
-      ;; find_node lookup response
+      (remhash transaction-id *transactions*)
+      ;; list of nodes (not searched for)
+      (when nodes
+        (let ((node-list (parse-nodes nodes)))
+          (loop for (node-id node-ip node-port) in node-list
+                for node = (create-node
+                            :id node-id :ip node-ip :port node-port
+                            :distance (calculate-distance
+                                       (convert-id-to-int *my-id*)
+                                       (convert-id-to-int node-id)))
+                do (push node *results-list*)))
+        (ping-results!))
+      ;; list of peers (searched for)
+      ;; TODO: add to *PEER-LIST*
+      (when values
+        (let ((peer-list (parse-peers values)))
+          (loop for (peer-ip . peer-port) in peer-list
+                do (send-message :ping peer-ip peer-port
+                                 (generate-transaction-id)))))
+      ;; find_node lookup response   
       (when (gethash transaction-id *active-lookups*)
         (if (= (length *best-results*) +k+)
             ;; we only want the k closest nodes
@@ -193,20 +212,6 @@
                                      (node-port node)
                                      (generate-transaction-id)))
                      *best-results*))))
-      (when nodes
-        (let ((node-list (parse-nodes nodes)))
-          (loop for (node-id node-ip node-port) in node-list
-                for node = (create-node
-                            :id node-id :ip node-ip :port node-port
-                            :distance (calculate-distance
-                                       (convert-id-to-int +my-id+)
-                                       (convert-id-to-int node-id)))
-                do (push node *results-list*)))
-        (ping-results!))
-      (when values
-        (let ((peer-list (parse-peers values)))
-          (loop for (peer-ip . peer-port) in peer-list
-                do (send-message :ping peer-ip peer-port))))
       ;; store received token
       (when token
         (setf (gethash token *token-births*) now
