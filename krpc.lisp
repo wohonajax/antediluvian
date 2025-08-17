@@ -93,10 +93,10 @@ Maps to info_hash when applicable.")
 :PING or :FIND_NODE."
   (usocket:with-connected-socket
       (socket (usocket:socket-connect
-                      ip port
-                      :protocol :datagram
-                      :element-type '(unsigned-byte 8)
-                      :timeout 5))
+               ip port
+               :protocol :datagram
+               :element-type '(unsigned-byte 8)
+               :timeout 5))
     (handler-case (case type
                     (:ping (ping-node socket transaction-id))
                     (:store)
@@ -127,9 +127,11 @@ Maps to info_hash when applicable.")
     (setf (gethash "id" response-arguments) *my-id*
           (gethash "nodes" response-arguments)
           (let* ((target (gethash "target" dict))
-                 (have-target-p (member target *node-list*)))
+                 (have-target-p (member target *node-list*
+                                        :key #'node-id
+                                        :test #'string=)))
             (if have-target-p
-                 ;; MEMBER returns a list
+                ;; MEMBER returns a list
                 (compact-node-info (first have-target-p))
                 (with-output-to-string (str)
                   (mapc (lambda (peer) (princ (compact-node-info peer) str))

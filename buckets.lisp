@@ -137,17 +137,18 @@ closest to furthest."
           (setf (svref (bucket-nodes second) (first-empty-slot second))
                 current-node)))))
 
-(defun split-bucket (bucket &aux (min (bucket-min bucket))
-                              (max (bucket-max bucket))
-                              (mid (truncate max 2)))
+(defun split-bucket (bucket)
   "Splits BUCKET into two new buckets."
-  (let ((a (make-new-bucket min mid))
-        (b (make-new-bucket (1+ mid) max)))
+  (let* ((min (bucket-min bucket))
+         (max (bucket-max bucket))
+         (mid (truncate max 2))
+         (small-bucket (make-new-bucket min mid))
+         (large-bucket (make-new-bucket (1+ mid) max)))
     (setf *routing-table*
           (remove-if (lambda (bkt) (eq bucket bkt)) *routing-table*))
-    (push a *routing-table*)
-    (push b *routing-table*)
-    (seed-buckets a b bucket)
+    (push small-bucket *routing-table*)
+    (push large-bucket *routing-table*)
+    (seed-buckets small-bucket large-bucket bucket)
     (sort-table)))
 
 (defun maybe-split-bucket (bucket id)
@@ -186,14 +187,15 @@ newest."
       (maybe-split-bucket bucket id)
       (add-to-bucket node))))
 
-(defun iterate-bucket (bucket action &aux (nodes (bucket-nodes bucket)))
+(defun iterate-bucket (bucket action)
   "Funcalls ACTION on each node in BUCKET."
-  (dotimes (i (length nodes))
-    (let ((node (svref nodes i)))
-      (when node
-        (funcall action node)))))
+  (let ((nodes (bucket-nodes bucket)))
+    (dotimes (i (length nodes))
+      (let ((node (svref nodes i)))
+        (when node
+          (funcall action node))))))
 
-(defun iterate-table (action &key (nodely nil))
+(defun iterate-table (action &key nodely)
   "Funcalls ACTION on each bucket in the routing table, or on each node
 if NODELY is non-NIL."
   (dolist (x *routing-table*)
@@ -208,9 +210,9 @@ the node if found, NIL otherwise."
     (tagbody (iterate-table (lambda (node)
                               (when (funcall criteria node)
                                 (setf target node)
-                                (go away)))
+                                (go done)))
                             :nodely t)
-     away)
+     done)
     target))
 
 (defun find-node-in-table (id)
@@ -250,9 +252,9 @@ the node if found, NIL otherwise."
                      (when (> len +k+)
                        (setf winners (butlast winners))))
                     (t (unless (< len +k+)
-                         (go away))))))
+                         (go done))))))
           :nodely t)
-       away))
+       done))
     winners))
 
 (defun have-peers (info-hash)

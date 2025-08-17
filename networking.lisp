@@ -109,117 +109,120 @@
                              (t (send-response :dht_error node dict
                                                :error-type :protocol)))))))
 
+(defun parse-nodes (string)
+  "Parses a list of nodes out of a string of compact node info substrings."
+  (let (nodes)
+    (handler-case
+        (do ((i 0 (+ i 26))) ; operate on compact node info substrings
+            ((= i (length string)) nodes)
+          (multiple-value-bind (parsed-ip parsed-port)
+              (parse-node-ip (subseq string (+ i 20) (+ i 26)))
+            ;; (list node-id node-ip node-port)
+            (push (list (subseq string i (+ i 20)) parsed-ip parsed-port)
+                  nodes)))
+      ;; TODO: error handling for out-of-bounds
+      ;; (node's health is bad--malformed response sent)
+      (error () (return-from parse-nodes nodes)))))
+
+(defun parse-peers (string)
+  "Parses a list of peers out of a string of compact peer info substrings."
+  (let (peers)
+    (handler-case
+        (do ((i 0 (+ i 6))) ; operate on compact peer info substrings
+            ((= i (length string)) peers)
+          (multiple-value-bind (parsed-ip parsed-port)
+              (parse-node-ip (subseq string i (+ i 6)))
+            (push (cons parsed-ip parsed-port) peers)))
+      ;; TODO: error handling for out-of-bounds
+      ;; (node's health is bad--malformed response sent)
+      (error () (return-from parse-peers peers)))))
+
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
-  (flet ((parse-nodes (str)
-           (let (nodes)
-             (handler-case
-                 (do ((i 0 (+ i 26))) ; operate on compact node info substrings
-                     ((= i (length str)) nodes)
-                   (multiple-value-bind (parsed-ip parsed-port)
-                       (parse-node-ip (subseq str (+ i 20) (+ i 26)))
-                     ;; (list node-id node-ip node-port)
-                     (push (list (subseq str i (+ i 20)) parsed-ip parsed-port)
-                           nodes)))
-               ;; TODO: error handling for out-of-bounds
-               ;; (node's health is bad--malformed response sent)
-               (error () (return-from parse-nodes nodes)))))
-         (parse-peers (str)
-           (let (peers)
-            (handler-case
-                (do ((i 0 (+ i 6))) ; operate on compact peer info substrings
-                    ((= i (length str)) peers)
-                  (multiple-value-bind (parsed-ip parsed-port)
-                      (parse-node-ip (subseq str i (+ i 6)))
-                    (push (cons parsed-ip parsed-port) peers)))
-              ;; TODO: error handling for out-of-bounds
-              ;; (node's health is bad--malformed response sent)
-              (error () (return-from parse-peers peers))))))
-    (let* ((now (get-universal-time))
-           (transaction-id (gethash "t" dict))
-           (arguments (gethash "a" dict))
-           (id (gethash "id" arguments))
-           (info-hash (gethash "info_hash" arguments))
-           ;; TOKEN comes from a get_peers response, needed for announce_peer
-           (token (gethash "token" arguments))
-           ;; NODES comes from a find_node or get_peers response
-           (nodes (gethash "nodes" arguments))
-           ;; VALUES is a list of strings which are compact peer info
-           ;; Comes from a get_peers response
-           (values (gethash "values" arguments))
-           (implied-port (gethash "implied_port" arguments))
-           (peer-port (gethash "port" arguments))
-           (node (car (member id *node-list* :key #'node-id :test #'string=))))
-      ;; handle bookkeeping of the node
-      (if node
-          (progn (setf (node-last-activity node) (get-universal-time)
-                       (node-health node) :good)
-                 (cond ((and implied-port (= implied-port 1))
-                        (setf (node-port node) port))
-                       (peer-port (setf (node-port node) peer-port))))
-          (progn (setf node (create-node :id id :ip ip :port port
-                                         :distance
-                                         (calculate-distance
-                                          (convert-id-to-int id)
-                                          (convert-id-to-int *my-id*))
-                                         :last-activity (get-universal-time)
-                                         :health :good))
-                 (push node *node-list*)
-                 (add-to-bucket node)))
-      ;; bad transaction ID
-      (unless (gethash transaction-id *transactions*)
-        (send-response :dht_error node dict :error-type :protocol)
-        (setf (node-health node) :bad))
-      (remhash transaction-id *transactions*)
-      ;; list of nodes (not searched for)
-      (when nodes
-        (let ((node-list (parse-nodes nodes)))
-          (loop for (node-id node-ip node-port) in node-list
-                for node = (create-node
-                            :id node-id :ip node-ip :port node-port
-                            :distance (calculate-distance
-                                       (convert-id-to-int *my-id*)
-                                       (convert-id-to-int node-id)))
-                do (push node *results-list*)))
-        (ping-results!))
-      ;; list of peers (searched for)
-      ;; TODO: add to *PEER-LIST*
-      (when values
-        (let ((peer-list (parse-peers values)))
-          (loop for (peer-ip . peer-port) in peer-list
-                do (send-message :ping peer-ip peer-port
-                                 (generate-transaction-id)))))
-      ;; find_node lookup response   
-      (when (gethash transaction-id *active-lookups*)
-        (if (= (length *best-results*) +k+)
-            ;; we only want the k closest nodes
-            (unless (< (node-distance (last *best-results*))
-                       (node-distance node))
-              (setf *best-results* (cons node (butlast *best-results*)))
-              (sort-best-results!))
-            (progn (push node *best-results*)
-                   (sort-best-results!)))
-        (remhash transaction-id *active-lookups*)
-        (cond (*results-list* ; if *RESULTS-LIST* isn't empty
-               (lookup (first *results-list*))
-               (pop *results-list*))
-              ((equalp *best-results* *previous-best-results*)) ; stop recursion
-              (t
-               (setf *previous-best-results* *best-results*)
-               (mapc (lambda (node)
-                       (send-message :find_node
-                                     (node-ip node)
-                                     (node-port node)
-                                     (generate-transaction-id)))
-                     *best-results*))))
-      ;; store received token
-      (when token
-        (setf (gethash token *token-births*) now
+  (let* ((now (get-universal-time))
+         (transaction-id (gethash "t" dict))
+         (arguments (gethash "a" dict))
+         (id (gethash "id" arguments))
+         (info-hash (gethash "info_hash" arguments))
+         ;; TOKEN comes from a get_peers response, needed for announce_peer
+         (token (gethash "token" arguments))
+         ;; NODES comes from a find_node or get_peers response
+         (nodes (gethash "nodes" arguments))
+         ;; VALUES is a list of strings which are compact peer info
+         ;; Comes from a get_peers response
+         (values (gethash "values" arguments))
+         (implied-port (gethash "implied_port" arguments))
+         (peer-port (gethash "port" arguments))
+         (node (car (member id *node-list* :key #'node-id :test #'string=))))
+    ;; handle bookkeeping of the node
+    (cond (node (setf (node-last-activity node) (get-universal-time)
+                      (node-health node) :good)
+                (cond ((and implied-port (= implied-port 1))
+                       (setf (node-port node) port))
+                      (peer-port (setf (node-port node) peer-port))))
+          (t (setf node (create-node :id id :ip ip :port port
+                                     :distance
+                                     (calculate-distance
+                                      (convert-id-to-int id)
+                                      (convert-id-to-int *my-id*))
+                                      :last-activity (get-universal-time)
+                                      :health :good))
+             (push node *node-list*)
+             (add-to-bucket node)))
+    ;; bad transaction ID
+    (unless (gethash transaction-id *transactions*)
+      (send-response :dht_error node dict :error-type :protocol)
+      (setf (node-health node) :bad))
+    (remhash transaction-id *transactions*)
+    ;; list of nodes (not searched for)
+    (when nodes
+      (loop with node-list (parse-nodes nodes)
+            for (node-id node-ip node-port) in node-list
+            for node = (create-node
+                        :id node-id :ip node-ip :port node-port
+                        :distance (calculate-distance
+                                   (convert-id-to-int *my-id*)
+                                   (convert-id-to-int node-id)))
+            do (push node *results-list*))
+      (ping-results!))
+    ;; list of peers (searched for)
+    ;; TODO: add to *PEER-LIST*
+    (when values
+      (loop with peer-list = (parse-peers values)
+            for (peer-ip . peer-port) in peer-list
+            do (send-message :ping peer-ip peer-port
+                             (generate-transaction-id))))
+    ;; find_node lookup response
+    (when (gethash transaction-id *active-lookups*)
+      (if (= (length *best-results*) +k+)
+          ;; we only want the k closest nodes
+          (unless (< (node-distance (last *best-results*))
+                     (node-distance node))
+            (setf *best-results* (cons node (butlast *best-results*)))
+            (sort-best-results!))
+          (progn (push node *best-results*)
+                 (sort-best-results!)))
+      (remhash transaction-id *active-lookups*)
+      (cond (*results-list* ; if *RESULTS-LIST* isn't empty
+             (lookup (first *results-list*))
+             (pop *results-list*))
+            ((equalp *best-results* *previous-best-results*)) ; stop recursion
+            (t
+             (setf *previous-best-results* *best-results*)
+             (mapc (lambda (node)
+                     (send-message :find_node
+                                   (node-ip node)
+                                   (node-port node)
+                                   (generate-transaction-id)))
+                   *best-results*))))
+    ;; store received token
+    (when token
+      (setf (gethash token *token-births*) now
 
-              (gethash (gethash transaction-id *transactions*) *token-hashes*)
-              token
+            (gethash (gethash transaction-id *transactions*) *token-hashes*)
+            token
 
-              (gethash token *token-nodes*) node)))))
+            (gethash token *token-nodes*) node))))
 
 (defun parse-message ()
   "Parses a KRPC message."

@@ -19,9 +19,8 @@
   (last-activity nil :type fixnum)
   (health))
 
-(defun create-node (&key (id nil) (ip nil) (port nil) (distance nil)
-                      (last-activity nil)
-                      (health :questionable))
+(defun create-node (&key id ip port distance last-activity
+                         (health :questionable))
   "Creates a node object with the specified attributes and adds it
 to *NODE-LIST*."
   (let ((node (make-node :id id
@@ -40,7 +39,8 @@ to *NODE-LIST*."
 
 (defun calculate-elapsed-inactivity (node)
   "Returns the time in minutes since NODE's last seen activity."
-  (and (node-last-activity node) (minutes-since last-activity)))
+  (let ((last-activity (node-last-activity node))) 
+    (and last-activity (minutes-since last-activity))))
 
 (defun calculate-node-health (node)
   "Returns the node's health as a keyword, either :GOOD, :QUESTIONABLE,

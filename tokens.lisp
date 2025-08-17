@@ -92,7 +92,7 @@
   "Retrieves the token values associated with INFO-HASH. If a recent enough
 token isn't found, returns NIL."
   (let ((tokens (gethash info-hash *token-hashes*)))
-    (remove-if (complement #'valid-token-p) tokens)))
+    (remove-if-not #'valid-token-p tokens)))
 
 (defun refresh-tokens ()
   "Deletes every token more than 10 minutes old."
