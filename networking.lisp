@@ -155,7 +155,7 @@
          (peer-port (gethash "port" arguments))
          (node (first (member id *node-list* :key #'node-id :test #'string=))))
     ;; handle bookkeeping of the node
-    (cond (node (setf (node-last-activity node) (get-universal-time)
+    (cond (node (setf (node-last-activity node) now
                       (node-health node) :good)
                 (cond ((and implied-port (= implied-port 1))
                        (setf (node-port node) port))
@@ -165,7 +165,7 @@
                                      (calculate-distance
                                       (convert-id-to-int id)
                                       (convert-id-to-int *my-id*))
-                                      :last-activity (get-universal-time)
+                                      :last-activity now
                                       :health :good))
              (push node *node-list*)
              (add-to-bucket node)))
@@ -196,7 +196,7 @@
     (when (gethash transaction-id *active-lookups*)
       (if (= (length *best-results*) +k+)
           ;; we only want the k closest nodes
-          (unless (< (node-distance (last *best-results*))
+          (unless (< (node-distance (alexandria:lastcar *best-results*))
                      (node-distance node))
             (setf *best-results* (cons node (butlast *best-results*)))
             (sort-best-results!))
