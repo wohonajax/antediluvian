@@ -121,7 +121,7 @@
             (push (list (subseq string i (+ i 20)) parsed-ip parsed-port)
                   nodes)))
       ;; TODO: error handling for out-of-bounds
-      ;; (node's health is bad--malformed response sent)
+      ;; (node's health may be bad--malformed response sent?)
       (error () (return-from parse-nodes nodes)))))
 
 (defun parse-peers (string)
@@ -134,7 +134,7 @@
               (parse-node-ip (subseq string i (+ i 6)))
             (push (cons parsed-ip parsed-port) peers)))
       ;; TODO: error handling for out-of-bounds
-      ;; (node's health is bad--malformed response sent)
+      ;; (node's health may be bad--malformed response sent?)
       (error () (return-from parse-peers peers)))))
 
 (defun parse-response (dict ip port)
@@ -176,7 +176,7 @@
     (remhash transaction-id *transactions*)
     ;; list of nodes (not searched for)
     (when nodes
-      (loop with node-list (parse-nodes nodes)
+      (loop with node-list = (parse-nodes nodes)
             for (node-id node-ip node-port) in node-list
             for node = (create-node
                         :id node-id :ip node-ip :port node-port
