@@ -153,7 +153,7 @@
          (values (gethash "values" arguments))
          (implied-port (gethash "implied_port" arguments))
          (peer-port (gethash "port" arguments))
-         (node (car (member id *node-list* :key #'node-id :test #'string=))))
+         (node (first (member id *node-list* :key #'node-id :test #'string=))))
     ;; handle bookkeeping of the node
     (cond (node (setf (node-last-activity node) (get-universal-time)
                       (node-health node) :good)
