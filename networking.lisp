@@ -75,7 +75,7 @@
 
 (defun sort-best-results! ()
   (setf *best-results*
-        (sort *best-results* #'< :key #'node-distance)))
+        (sort *best-results* #'> :key #'node-distance)))
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
@@ -196,9 +196,9 @@
     (when (gethash transaction-id *active-lookups*)
       (if (= (length *best-results*) +k+)
           ;; we only want the k closest nodes
-          (unless (< (node-distance (alexandria:lastcar *best-results*))
+          (unless (< (node-distance (first *best-results*))
                      (node-distance node))
-            (setf *best-results* (cons node (butlast *best-results*)))
+            (setf *best-results* (cons node (rest *best-results*)))
             (sort-best-results!))
           (progn (push node *best-results*)
                  (sort-best-results!)))
