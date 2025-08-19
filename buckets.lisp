@@ -145,7 +145,7 @@ closest to furthest."
          (small-bucket (make-new-bucket min mid))
          (large-bucket (make-new-bucket (1+ mid) max)))
     (setf *routing-table*
-          (remove-if (lambda (bkt) (eq bucket bkt)) *routing-table*))
+          (remove bucket *routing-table* :test #'eq))
     (push small-bucket *routing-table*)
     (push large-bucket *routing-table*)
     (seed-buckets small-bucket large-bucket bucket)
@@ -170,21 +170,20 @@ newest."
   (let* ((id (node-id node))
          (bucket (correct-bucket id)))
     (unless (dotimes (i +k+)
-              (when (null (svref (bucket-nodes bucket) i))
-                (setf (svref (bucket-nodes bucket) i)
-                      node)
-                (sort-bucket-by-distance bucket)
-                (update-bucket bucket)
-                ;; unless this RETURN form is evaluated
-                ;; (i.e., unless we update the bucket
-                ;; (because a node was added))
-                (return t))
-              (when (equalp node (svref (bucket-nodes bucket) i))
-                ;; the node is already in the bucket
-                (return)))
-      ;; MAYBE-SPLIT-BUCKET only gets evaluated if
-      ;; there are no NIL elements in the bucket
+              (let ((current-bucket-index (svref (bucket-nodes bucket) i)))
+                (cond ((equalp node current-bucket-index)
+                       (return))
+                      ((null current-bucket-index)
+                       (setf (svref (bucket-nodes bucket) i)
+                             node)
+                        (sort-bucket-by-distance bucket)
+                        (update-bucket bucket)
+                        ;; unless this RETURN form is evaluated
+                        ;; i.e., unless we add NODE to the bucket
+                        (return t)))))
+      ;; MAYBE-SPLIT-BUCKET only gets evaluated if the bucket was already full
       (maybe-split-bucket bucket id)
+      ;; TODO: only call ADD-TO-BUCKET when MAYBE-SPLIT-BUCKET actually splits
       (add-to-bucket node))))
 
 (defun iterate-bucket (bucket action)
@@ -225,7 +224,7 @@ the node if found, NIL otherwise."
         (sort *routing-table*
               (lambda (x y)
                 (< (bucket-min x) (bucket-min y))))))
-
+;;; FIXME: yuck
 (defun find-closest-nodes (id)
   "Returns a list of the K closest nodes to ID."
   (let ((goal (convert-id-to-int id))
