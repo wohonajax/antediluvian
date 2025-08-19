@@ -31,10 +31,10 @@
 
 (defmacro with-listening-usocket (socket-var &body body)
   "Creates a listening UDP socket and binds it to SOCKET-VAR."
-  `(usocket:with-connected-socket
-       (,socket-var (usocket:socket-connect nil nil
-                                            :protocol :datagram
-                                            :local-port *default-port*))
+  `(with-connected-socket
+       (,socket-var (socket-connect nil nil
+                                    :protocol :datagram
+                                    :local-port *default-port*))
      ,@body))
 
 (defmacro insert (item list predicate &key key)

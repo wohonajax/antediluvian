@@ -35,7 +35,7 @@
             (aref ip-vector 3) (parse-char 3)
             (aref port-vector 0) (parse-char 4)
             (aref port-vector 1) (parse-char 5))
-      (values ip-vector (usocket:port-from-octet-buffer port-vector)))))
+      (values ip-vector (port-from-octet-buffer port-vector)))))
 
 (defun make-secret ()
   "Makes a secret."

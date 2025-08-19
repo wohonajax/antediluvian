@@ -14,14 +14,14 @@
 Maps to info_hash when applicable.")
 
 (defun receive-data ()
-  (usocket:socket-receive
+  (socket-receive
    *listening-socket*
    nil ;; FIXME: this just hangs waiting for a huge response
-   usocket:+max-datagram-packet-size+))
+   +max-datagram-packet-size+))
 
 (defun send-bencoded-data (socket data)
   (let ((bencoded-data (bencode:encode data nil)))
-    (usocket:socket-send socket bencoded-data (length bencoded-data))))
+    (socket-send socket bencoded-data (length bencoded-data))))
 
 ;;; Queries
 
@@ -91,8 +91,8 @@ Maps to info_hash when applicable.")
 (defun send-message (type ip port transaction-id &key id info-hash)
   "Sends NODE a TYPE message. TYPE should be a keyword like
 :PING or :FIND_NODE."
-  (usocket:with-connected-socket
-      (socket (usocket:socket-connect
+  (with-connected-socket
+      (socket (socket-connect
                ip port
                :protocol :datagram
                :element-type '(unsigned-byte 8)
@@ -205,8 +205,8 @@ sends a protocol error message."
 (defun send-response (type node dict &key error-type source-port)
   (let ((ip (node-ip node))
         (port (node-port node)))
-    (usocket:with-connected-socket
-        (target-socket (usocket:socket-connect
+    (with-connected-socket
+        (target-socket (socket-connect
                         ip port
                         :protocol :datagram
                         :element-type '(unsigned-byte 8)
