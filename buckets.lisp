@@ -53,6 +53,12 @@ routing table."
                          bucket))
                   (read file))))))
 
+(defun sort-table ()
+  "Ensures the buckets of the routing table are sorted."
+  (setf *routing-table*
+    (sort *routing-table*
+        (lambda (x y)
+          (< (bucket-min x) (bucket-min y))))))
 ;;; recommended bucket size limit is 8
 (defconstant +k+ 8 "Bucket size limit.")
 
@@ -224,30 +230,22 @@ the node if found, NIL otherwise."
 (defun find-node-in-table (id)
   "Tries to find a node in the routing table based on its ID."
   (find-in-table (lambda (x) (string= id (node-id x)))))
-
-(defun sort-table ()
-  "Ensures the buckets of the routing table are sorted."
-  (setf *routing-table*
-        (sort *routing-table*
-              (lambda (x y)
-                (< (bucket-min x) (bucket-min y))))))
 ;;; FIXME: yuck
 (defun find-closest-nodes (id)
   "Returns a list of the K closest nodes to ID."
-  (let ((goal (convert-id-to-int id))
-        (worst nil)
+  (let ((worst nil)
         (winners '()))
     (flet ((sorter (x y)
              (cond ((and x y) (< x y))
                    (x t)
                    (t nil)))
            (list-sorter (x y)
-             (cond ((and x y) (node-closer-p goal x y))
+             (cond ((and x y) (node-closer-p id x y))
                    (x t)
                    (y nil))))
       (iterate-table
        (lambda (node)
-         (let ((distance (calculate-node-distance node goal))
+         (let ((distance (calculate-node-distance node id))
                (len (length winners)))
            (cond ((sorter distance worst)
                   (insert item winners #'list-sorter)
