@@ -93,7 +93,6 @@
         (progn (setf node (create-node :id id :ip ip :port port
                                        :last-activity now
                                        :health :good))
-               (push node *node-list*)
                (add-to-bucket node)
                (setf (gethash (gethash "t" dict) *transactions*) t)))
     (alexandria:switch ((gethash "q" dict) :test #'string=)
