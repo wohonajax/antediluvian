@@ -3,7 +3,7 @@
 (in-package #:dhticl)
 
 (defvar *routing-table-location*
-  (merge-pathnames ".dhticltable" (user-homedir-pathname)))
+  (merge-pathnames ".dhticl/table.sexp" (user-homedir-pathname)))
 (defvar *routing-table* (list))
 
 (defvar *peer-list* (make-hash-table :test #'equalp)
@@ -86,15 +86,16 @@ routing table."
   "Updates BUCKET's LAST-CHANGED property."
   (setf (bucket-last-changed bucket) (get-universal-time)))
 
-(defun last-node-in-bucket (bucket &aux (nodes (bucket-nodes bucket)))
+(defun last-node-in-bucket (bucket)
   "Returns the last node in BUCKET."
-  (dotimes (i +k+ (svref nodes i))
-    ;; buckets start out holding NIL until filled with nodes
-    ;; sorting pushes the NILs to the back
-    (when (null (svref nodes i))
-      (if (zerop i)
-          (return (svref nodes i))
-          (return (svref nodes (1- i)))))))
+  (let ((nodes (bucket-nodes bucket)))
+    (dotimes (i +k+ (svref nodes i))
+      ;; buckets start out holding NIL until filled with nodes
+      ;; sorting pushes the NILs to the back
+      (when (null (svref nodes i))
+        (if (zerop i)
+            (return (svref nodes i))
+            (return (svref nodes (1- i))))))))
 
 (flet ((node-sorter (x y field pred)
          (let ((xfield (when x
@@ -158,12 +159,12 @@ newest."
         (nodes (bucket-nodes bucket)))
     (flet ((node-id-as-number (node)
              (convert-id-to-int (node-id node))))
-      (if (within target-id
-                  (reduce #'min nodes :key #'node-id-as-number)
-                  (reduce #'max nodes :key #'node-id-as-number))
-          (split-bucket bucket)
-          (progn (ping-old-nodes bucket)
-                 (update-bucket bucket))))))
+      (cond ((within target-id
+                     (reduce #'min nodes :key #'node-id-as-number)
+                     (reduce #'max nodes :key #'node-id-as-number))
+             (split-bucket bucket))
+            (t (ping-old-nodes bucket)
+               (update-bucket bucket))))))
 
 (defun add-to-bucket (node)
   "Adds NODE to the correct bucket, per its ID."
@@ -258,4 +259,7 @@ the node if found, NIL otherwise."
 
 (defun have-peers (info-hash)
   "Returns a list of peers for INFO-HASH."
-  (gethash info-hash *peer-list*))
+  (let ((peer-list (gethash info-hash *peer-list*)))
+    (unless peer-list
+      (remhash info-hash *peer-list*))
+    peer-list))

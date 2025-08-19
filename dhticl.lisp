@@ -2,7 +2,7 @@
 
 ;;;; TODO: general interface
 (defvar *settings-location*
-  (merge-pathnames ".dhticlrc" (user-homedir-pathname)))
+  (merge-pathnames ".dhticl/settings.sexp" (user-homedir-pathname)))
 
 (defvar *hashes* (list)
   "The list of info_hashes the DHT program will use.")
