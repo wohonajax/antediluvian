@@ -15,26 +15,23 @@
           :read-only t)
   (ip)
   (port)
-  (distance nil :read-only t)
   (last-activity nil :type fixnum)
   (health))
 
-(defun create-node (&key id ip port distance last-activity
-                         (health :questionable))
+(defun create-node (&key id ip port last-activity (health :questionable))
   "Creates a node object with the specified attributes and adds it
 to *NODE-LIST*."
   (let ((node (make-node :id id
                          :ip ip
                          :port port
-                         :distance distance
                          :last-activity last-activity
                          :health health)))
     (push node *node-list*)
     node))
 
-(defun calculate-node-distance (node)
-  "Returns the distance between NODE and us."
-  (calculate-distance (convert-id-to-int *my-id*)
+(defun calculate-node-distance (node target)
+  "Returns the distance between NODE and TARGET."
+  (calculate-distance (convert-id-to-int target)
                       (convert-id-to-int (node-id node))))
 
 (defun calculate-elapsed-inactivity (node)

@@ -23,11 +23,10 @@
                 (lambda (node)
                   (if node
                       (format file
-                              "(~S ~S ~S ~S ~S)"
+                              "(~S ~S ~S ~S)"
                               (node-id node)
                               (node-ip node)
                               (node-port node)
-                              (node-distance node)
                               (node-last-activity node))
                       (format file "(~S)" nil)))
                 bucket)
@@ -50,8 +49,7 @@ routing table."
                              (create-node :id (first node)
                                           :ip (second node)
                                           :port (third node)
-                                          :distance (fourth node)
-                                          :last-activity (fifth node))))
+                                          :last-activity (fourth node))))
                          bucket))
                   (read file))))))
 
@@ -112,19 +110,22 @@ routing table."
   (defun sort-bucket-by-age (bucket)
     "Sorts BUCKET so the nodes it contains are ordered from oldest to newest."
     (setf (bucket-nodes bucket)
-          (sort (bucket-nodes bucket) (lambda (x y)
-                                        (node-sorter x y
-                                                     #'node-last-activity
-                                                     #'>)))))
+          (sort (bucket-nodes bucket)
+                (lambda (x y)
+                  (node-sorter x y
+                               #'node-last-activity
+                               #'>)))))
 
-  (defun sort-bucket-by-distance (bucket)
+  (defun sort-bucket-by-distance (bucket target)
     "Sorts BUCKET so the nodes it contains are ordered by distance from
-closest to furthest."
+TARGET, closest to furthest."
     (setf (bucket-nodes bucket)
-          (sort (bucket-nodes bucket) (lambda (x y)
-                                        (node-sorter x y
-                                                     #'node-distance
-                                                     #'<))))))
+          (sort (bucket-nodes bucket)
+                (lambda (x y)
+                  (node-sorter x y
+                               (lambda (node)
+                                 (calculate-distance node target))
+                               #'<))))))
 
 (defun seed-buckets (first second seed)
   "Seeds the values of a bucket into 2 fresh buckets."
@@ -177,11 +178,11 @@ newest."
                       ((null current-bucket-index)
                        (setf (svref (bucket-nodes bucket) i)
                              node)
-                        (sort-bucket-by-distance bucket)
-                        (update-bucket bucket)
-                        ;; unless this RETURN form is evaluated
-                        ;; i.e., unless we add NODE to the bucket
-                        (return t)))))
+                       (sort-bucket-by-distance bucket)
+                       (update-bucket bucket)
+                       ;; unless this RETURN form is evaluated
+                       ;; i.e., unless we add NODE to the bucket
+                       (return t)))))
       ;; MAYBE-SPLIT-BUCKET only gets evaluated if the bucket was already full
       (maybe-split-bucket bucket id)
       ;; TODO: only call ADD-TO-BUCKET when MAYBE-SPLIT-BUCKET actually splits

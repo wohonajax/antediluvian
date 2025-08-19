@@ -27,7 +27,7 @@
                     (send-message :ping (node-ip node) (node-port node)
                                   (generate-transaction-id))))
   (update-bucket bucket)
-  (sort-bucket-by-distance bucket))
+  (sort-bucket-by-distance bucket *my-id*))
 
 (defun purge-bad-nodes (bucket)
   "Removes all nodes of bad health from BUCKET."
@@ -37,7 +37,7 @@
                 node))
             (bucket-nodes bucket))
   (update-bucket bucket)
-  (sort-bucket-by-distance bucket))
+  (sort-bucket-by-distance bucket *my-id*))
 ;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
@@ -58,7 +58,7 @@
   (let ((node (svref bucket 0)))
     (send-message :ping (node-ip node) (node-port node)
                   (generate-transaction-id)))
-  (sort-bucket-by-distance bucket))
+  (sort-bucket-by-distance bucket *my-id*))
 
 (defun lookup (node)
   "Begins a lookup of NODE."
@@ -73,9 +73,10 @@
         do (lookup node)
            (pop *results-list*)))
 
-(defun sort-best-results! ()
+(defun sort-best-results! (target)
   (setf *best-results*
-        (sort *best-results* #'> :key #'node-distance)))
+        (sort *best-results* #'>
+              :key (lambda (node) (calculate-node-distance node target)))))
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
@@ -84,14 +85,11 @@
          (id (gethash "id" arguments))
          (info-hash (gethash "info_hash" arguments))
          (token (gethash "token" arguments))
-         (distance (calculate-distance (convert-id-to-int *my-id*)
-                                       (convert-id-to-int id)))
          (node (find-node-in-table id)))
     (if node
         (setf (node-last-activity node) now
               (node-health node) :good)
         (progn (setf node (create-node :id id :ip ip :port port
-                                       :distance distance
                                        :last-activity now
                                        :health :good))
                (push node *node-list*)
@@ -146,10 +144,6 @@ Returns the node object."
                      (setf (node-port node) port))
                     (peer-port (setf (node-port node) peer-port))))
         (t (setf node (create-node :id id :ip ip :port port
-                                   :distance
-                                   (calculate-distance
-                                    (convert-id-to-int id)
-                                    (convert-id-to-int *my-id*))
                                    :last-activity time
                                    :health :good))
            (add-to-bucket node)))
@@ -161,11 +155,7 @@ node in the response."
   (when nodes
     (loop with node-list = (parse-nodes nodes)
           for (node-id node-ip node-port) in node-list
-          for node = (create-node
-                      :id node-id :ip node-ip :port node-port
-                      :distance (calculate-distance
-                                 (convert-id-to-int *my-id*)
-                                 (convert-id-to-int node-id)))
+          for node = (create-node :id node-id :ip node-ip :port node-port)
           do (push node *results-list*))
     (ping-results!)))
 
@@ -178,7 +168,7 @@ node in the response."
           do (send-message :ping peer-ip peer-port
                            (generate-transaction-id)))))
 
-(defun handle-lookup-response (transaction-id node)
+(defun handle-lookup-response (transaction-id node target)
   "Handles a find_node response. Recursively calls find_node until the best
 results are the same as the previous best results."
   (when (gethash transaction-id *active-lookups*)
@@ -188,9 +178,9 @@ results are the same as the previous best results."
            (unless (< (node-distance (first *best-results*))
                       (node-distance node))
              (setf *best-results* (cons node (rest *best-results*)))
-             (sort-best-results!)))
+             (sort-best-results! target)))
           (t (push node *best-results*)
-             (sort-best-results!)))
+             (sort-best-results! target)))
     (remhash transaction-id *active-lookups*)
     (cond (*results-list* ; if *RESULTS-LIST* isn't empty
            (lookup (first *results-list*))
@@ -241,7 +231,7 @@ results are the same as the previous best results."
       (return-from parse-response))
     (handle-nodes-response nodes)
     (handle-values-response values)
-    (handle-lookup-response transaction-id node)
+    (handle-lookup-response transaction-id node info-hash)
     (store-received-token token now transaction-id node)
     (remhash transaction-id *transactions*)))
 
