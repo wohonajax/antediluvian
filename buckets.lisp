@@ -52,13 +52,6 @@ routing table."
                                           :last-activity (fourth node))))
                          bucket))
                   (read file))))))
-
-(defun sort-table ()
-  "Ensures the buckets of the routing table are sorted."
-  (setf *routing-table*
-    (sort *routing-table*
-        (lambda (x y)
-          (< (bucket-min x) (bucket-min y))))))
 ;;; recommended bucket size limit is 8
 (defconstant +k+ 8 "Bucket size limit.")
 
@@ -67,6 +60,13 @@ routing table."
   (max (expt 2 160) :read-only t)
   (nodes (make-array +k+ :initial-element nil))
   (last-changed (get-universal-time)))
+
+(defun sort-table ()
+  "Ensures the buckets of the routing table are sorted."
+  (setf *routing-table*
+    (sort *routing-table*
+        (lambda (x y)
+          (< (bucket-min x) (bucket-min y))))))
 
 (defun make-new-bucket (min max)
   "Adds a bucket to the routing table with a range from MIN to MAX."
@@ -163,8 +163,6 @@ TARGET, closest to furthest."
          (large-bucket (make-new-bucket (1+ mid) max)))
     (setf *routing-table*
           (delete bucket *routing-table* :test #'eq))
-    (push small-bucket *routing-table*)
-    (push large-bucket *routing-table*)
     (seed-buckets small-bucket large-bucket bucket)
     (sort-table)))
 
