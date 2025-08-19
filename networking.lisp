@@ -27,17 +27,18 @@
                     (send-message :ping (node-ip node) (node-port node)
                                   (generate-transaction-id))))
   (update-bucket bucket)
-  (sort-bucket-by-distance bucket *my-id*))
+  (sort-bucket-by-id bucket))
 
 (defun purge-bad-nodes (bucket)
   "Removes all nodes of bad health from BUCKET."
   (map-into (bucket-nodes bucket)
             (lambda (node)
-              (unless (eql :bad (node-health node))
-                node))
+              (when node
+                (unless (eql :bad (node-health node))
+                  node)))
             (bucket-nodes bucket))
   (update-bucket bucket)
-  (sort-bucket-by-distance bucket *my-id*))
+  (sort-bucket-by-id bucket))
 ;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."

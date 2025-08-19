@@ -64,9 +64,9 @@ routing table."
 (defun sort-table ()
   "Ensures the buckets of the routing table are sorted."
   (setf *routing-table*
-    (sort *routing-table*
-        (lambda (x y)
-          (< (bucket-min x) (bucket-min y))))))
+        (sort *routing-table*
+              (lambda (x y)
+                (< (bucket-min x) (bucket-min y))))))
 
 (defun make-new-bucket (min max)
   "Adds a bucket to the routing table with a range from MIN to MAX."
@@ -77,7 +77,7 @@ routing table."
 (defun correct-bucket (id)
   "Returns the proper bucket for ID."
   (dolist (x *routing-table*)
-    (when (within id (bucket-min x) (bucket-max x))
+    (when (within (convert-id-to-int id) (bucket-min x) (bucket-max x))
       (return x))))
 
 (defun first-empty-slot (bucket)
@@ -92,14 +92,9 @@ routing table."
 
 (defun last-node-in-bucket (bucket)
   "Returns the last node in BUCKET."
-  (let ((nodes (bucket-nodes bucket)))
-    (dotimes (i +k+ (svref nodes i))
-      ;; buckets start out holding NIL until filled with nodes
-      ;; sorting pushes the NILs to the back
-      (when (null (svref nodes i))
-        (if (zerop i)
-            (return (svref nodes i))
-            (return (svref nodes (1- i))))))))
+  (let* ((bucket-contents (bucket-nodes bucket))
+         (nodes (remove-if-not #'identity bucket-contents)))
+    (alexandria:lastcar nodes)))
 
 (flet ((node-sorter (x y field pred)
          (let ((xfield (when x
@@ -142,16 +137,16 @@ TARGET, closest to furthest."
                                      (convert-id-to-int (node-id node)))
                                #'<))))))
 
-(defun seed-buckets (first second seed)
+(defun seed-buckets (smaller larger seed)
   "Seeds the values of a bucket into 2 fresh buckets."
   (sort-bucket-by-ids seed)
   (dotimes (i +k+)
     (let ((current-node (svref (bucket-nodes seed) i)))
       (if (<= (convert-id-to-int (node-id current-node))
-              (bucket-max first))
-          (setf (svref (bucket-nodes first) (first-empty-slot first))
+              (bucket-max smaller))
+          (setf (svref (bucket-nodes smaller) (first-empty-slot smaller))
                 current-node)
-          (setf (svref (bucket-nodes second) (first-empty-slot second))
+          (setf (svref (bucket-nodes larger) (first-empty-slot larger))
                 current-node)))))
 
 (defun split-bucket (bucket)
@@ -170,7 +165,7 @@ TARGET, closest to furthest."
   "Splits BUCKET if ID is in its range, otherwise pings from oldest to
 newest."
   (let ((target-id (convert-id-to-int id))
-        (nodes (bucket-nodes bucket)))
+        (nodes (remove-if-not #'identity (bucket-nodes bucket))))
     (flet ((node-id-as-number (node)
              (convert-id-to-int (node-id node))))
       (cond ((within target-id
