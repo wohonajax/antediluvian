@@ -4,9 +4,9 @@
   "Tests whether NUMBER is contained within the range bounded by FIRST-BOUND
   and END-BOUND."
   (= number
-     (alexandria:clamp number
-                       first-bound
-                       end-bound)))
+     (clamp number
+            first-bound
+            end-bound)))
 
 (defun minutes-since (time)
   "Returns the time in minutes that has elapsed since TIME."
@@ -27,7 +27,7 @@
 
 (defun convert-id-to-int (id)
   "Converts a node ID from an ID string to a decimal integer."
-  (ironclad:octets-to-integer (ironclad:ascii-string-to-byte-array id)))
+  (octets-to-integer (ascii-string-to-byte-array id)))
 
 (defmacro with-listening-usocket (socket-var &body body)
   "Creates a listening UDP socket and binds it to SOCKET-VAR."

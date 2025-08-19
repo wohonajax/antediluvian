@@ -58,7 +58,7 @@ or :BAD."
   "Translates NODE's IP and port into compact format."
   (format nil "~a~a"
           (octets-to-string (node-ip node))
-          (octets-to-string (ironclad:integer-to-octets (node-port node)))))
+          (octets-to-string (integer-to-octets (node-port node)))))
 
 (defun compact-node-info (node)
   "Translate's NODE's ID, IP, and port into compact peer format."

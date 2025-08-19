@@ -92,9 +92,10 @@ routing table."
 
 (defun last-node-in-bucket (bucket)
   "Returns the last node in BUCKET."
-  (let* ((bucket-contents (bucket-nodes bucket))
-         (nodes (remove-if-not #'identity bucket-contents)))
-    (alexandria:lastcar nodes)))
+  (->> bucket
+       bucket-nodes
+       (remove-if-not #'identity)
+       lastcar))
 
 (flet ((node-sorter (x y field pred)
          (let ((xfield (when x

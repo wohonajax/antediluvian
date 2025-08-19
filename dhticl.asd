@@ -15,4 +15,4 @@
                (:file "networking")
                (:file "dhticl"))
   :serial t
-  :depends-on (usocket bencode alexandria ironclad))
+  :depends-on (usocket bencode alexandria ironclad arrows))

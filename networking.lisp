@@ -95,7 +95,7 @@
                                        :health :good))
                (add-to-bucket node)
                (setf (gethash (gethash "t" dict) *transactions*) t)))
-    (alexandria:switch ((gethash "q" dict) :test #'string=)
+    (switch ((gethash "q" dict) :test #'string=)
       ("ping" (send-response :ping node dict))
       ("find_node" (send-response :find_node node dict))
       ("get_peers" (send-response :get_peers node dict))
@@ -242,7 +242,7 @@ results are the same as the previous best results."
       (receive-data)
     (let* ((packet (subseq data 0 size))
            (dict (bencode:decode packet)))
-      (alexandria:eswitch ((gethash "y" dict) :test #'string=)
+      (eswitch ((gethash "y" dict) :test #'string=)
         ("q" (parse-query dict host port))
         ("r" (parse-response dict host port))
         ("e" ;; TODO: handle errors

@@ -14,7 +14,7 @@
 
 (defun make-hash (byte-vector)
   "Hashes BYTE-VECTOR using the SHA1 algorithm."
-  (ironclad:digest-sequence :sha1 byte-vector))
+  (digest-sequence :sha1 byte-vector))
 
 (defun generate-transaction-id ()
   "Creates a transaction ID and returns it as a string."
