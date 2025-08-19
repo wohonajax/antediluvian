@@ -125,11 +125,20 @@ TARGET, closest to furthest."
                   (node-sorter x y
                                (lambda (node)
                                  (calculate-distance node target))
+                               #'<)))))
+
+  (defun sort-bucket-by-ids (bucket)
+    "Sorts BUCKET so the nodes it contains are ordered by ID."
+    (setf (bucket-nodes bucket)
+          (sort (bucket-nodes bucket)
+                (lambda (x y)
+                  (node-sorter x y (lambda (node)
+                                     (convert-id-to-int (node-id node)))
                                #'<))))))
 
 (defun seed-buckets (first second seed)
   "Seeds the values of a bucket into 2 fresh buckets."
-  (sort-bucket-by-distance seed)
+  (sort-bucket-by-ids seed)
   (dotimes (i +k+)
     (let ((current-node (svref (bucket-nodes seed) i)))
       (if (<= (convert-id-to-int (node-id current-node))
@@ -147,7 +156,7 @@ TARGET, closest to furthest."
          (small-bucket (make-new-bucket min mid))
          (large-bucket (make-new-bucket (1+ mid) max)))
     (setf *routing-table*
-          (remove bucket *routing-table* :test #'eq))
+          (delete bucket *routing-table* :test #'eq))
     (push small-bucket *routing-table*)
     (push large-bucket *routing-table*)
     (seed-buckets small-bucket large-bucket bucket)
@@ -207,14 +216,10 @@ if NODELY is non-NIL."
 (defun find-in-table (criteria)
   "Attempts to find a node in the routing table that satisfies CRITERIA. Returns
 the node if found, NIL otherwise."
-  (let (target)
-    (tagbody (iterate-table (lambda (node)
-                              (when (funcall criteria node)
-                                (setf target node)
-                                (go done)))
-                            :nodely t)
-     done)
-    target))
+  (iterate-table (lambda (node)
+                   (when (funcall criteria node)
+                     (return-from find-in-table node)))
+                 :nodely t))
 
 (defun find-node-in-table (id)
   "Tries to find a node in the routing table based on its ID."
@@ -240,22 +245,18 @@ the node if found, NIL otherwise."
              (cond ((and x y) (node-closer-p goal x y))
                    (x t)
                    (y nil))))
-      (tagbody
-         (iterate-table
-          (lambda (node)
-            (let ((distance (calculate-distance
-                             (convert-id-to-int (node-id node)) goal))
-                  (len (length winners)))
-              (cond ((sorter distance worst)
-                     (push node winners)
-                     (setf winners (sort winners #'list-sorter)
-                           worst distance)
-                     (when (> len +k+)
-                       (setf winners (butlast winners))))
-                    (t (unless (< len +k+)
-                         (go done))))))
-          :nodely t)
-       done))
+      (iterate-table
+       (lambda (node)
+         (let ((distance (calculate-node-distance node goal))
+               (len (length winners)))
+           (cond ((sorter distance worst)
+                  (insert item winners #'list-sorter)
+                  (setf worst distance)
+                  (when (> len +k+)
+                    (setf winners (butlast winners))))
+                 (t (unless (< len +k+)
+                      (return-from find-closest-nodes winners))))))
+       :nodely t))
     winners))
 
 (defun have-peers (info-hash)

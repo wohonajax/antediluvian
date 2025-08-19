@@ -36,3 +36,7 @@
                                             :protocol :datagram
                                             :local-port *default-port*))
      ,@body))
+
+(defmacro insert (item list predicate &key key)
+  "Inserts ITEM into the correct position in LIST according to PREDICATE."
+  `(setf ,list (sort (cons ,item ,list) ,predicate :key ,key)))

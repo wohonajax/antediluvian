@@ -73,10 +73,10 @@
         do (lookup node)
            (pop *results-list*)))
 
-(defun sort-best-results! (target)
-  (setf *best-results*
-        (sort *best-results* #'>
-              :key (lambda (node) (calculate-node-distance node target)))))
+(defun push-to-best-results (target)
+  (insert node *best-results* #'<
+          :key (lambda (node)
+                 (calculate-node-distance node target))))
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
@@ -177,10 +177,8 @@ results are the same as the previous best results."
            ;; TODO: use insertion sort to avoid calling SORT on the whole list
            (unless (< (node-distance (first *best-results*))
                       (node-distance node))
-             (setf *best-results* (cons node (rest *best-results*)))
-             (sort-best-results! target)))
-          (t (push node *best-results*)
-             (sort-best-results! target)))
+             (push-to-best-results node)))
+          (t (push-to-best-results node)))
     (remhash transaction-id *active-lookups*)
     (cond (*results-list* ; if *RESULTS-LIST* isn't empty
            (lookup (first *results-list*))
