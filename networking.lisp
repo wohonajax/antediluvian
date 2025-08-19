@@ -152,21 +152,19 @@ Returns the node object."
 (defun handle-nodes-response (nodes)
   "Handle a nodes response from a find_node or get_peers query by pinging every
 node in the response."
-  (when nodes
-    (loop with node-list = (parse-nodes nodes)
-          for (node-id node-ip node-port) in node-list
-          for node = (create-node :id node-id :ip node-ip :port node-port)
-          do (push node *results-list*))
-    (ping-results!)))
+  (loop with node-list = (parse-nodes nodes)
+        for (node-id node-ip node-port) in node-list
+        for node = (create-node :id node-id :ip node-ip :port node-port)
+        do (push node *results-list*))
+  (ping-results!))
 
 (defun handle-values-response (peers)
   "Handle a list of peers that have been searched for."
   ;; TODO: add to *PEER-LIST*
-  (when peers
-    (loop with peer-list = (parse-peers peers)
-          for (peer-ip . peer-port) in peer-list
-          do (send-message :ping peer-ip peer-port
-                           (generate-transaction-id)))))
+  (loop with peer-list = (parse-peers peers)
+        for (peer-ip . peer-port) in peer-list
+        do (send-message :ping peer-ip peer-port
+                         (generate-transaction-id))))
 
 (defun handle-lookup-response (transaction-id node target)
   "Handles a find_node response. Recursively calls find_node until the best
@@ -194,14 +192,13 @@ results are the same as the previous best results."
 
 (defun store-received-token (token time transaction-id node)
   "Handles bookkeeping for a given TOKEN."
-  (when token
-    (setf (gethash token *token-births*) time
+  (setf (gethash token *token-births*) time
 
-          (gethash (gethash transaction-id *transactions*) ; info_hash
-                   *token-hashes*)
-          token
+        (gethash (gethash transaction-id *transactions*) ; info_hash
+                 *token-hashes*)
+        token
 
-          (gethash token *token-nodes*) node)))
+        (gethash token *token-nodes*) node))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
@@ -227,10 +224,14 @@ results are the same as the previous best results."
       (send-response :dht_error node dict :error-type :protocol)
       (setf (node-health node) :bad)
       (return-from parse-response))
-    (handle-nodes-response nodes)
-    (handle-values-response values)
-    (handle-lookup-response transaction-id node info-hash)
-    (store-received-token token now transaction-id node)
+    (when nodes
+      (handle-nodes-response nodes))
+    (when values
+      (handle-values-response values))
+    (when info-hash
+      (handle-lookup-response transaction-id node info-hash))
+    (when token
+      (store-received-token token now transaction-id node))
     (remhash transaction-id *transactions*)))
 
 (defun parse-message ()
