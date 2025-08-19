@@ -203,11 +203,8 @@ newest."
 
 (defun iterate-bucket (bucket action)
   "Funcalls ACTION on each node in BUCKET."
-  (let ((nodes (bucket-nodes bucket)))
-    (dotimes (i (length nodes))
-      (let ((node (svref nodes i)))
-        (when node
-          (funcall action node))))))
+  (loop for node in (bucket-nodes bucket)
+        when node do (funcall action node)))
 
 (defun iterate-table (action &key nodely)
   "Funcalls ACTION on each bucket in the routing table, or on each node
@@ -228,11 +225,10 @@ the node if found, NIL otherwise."
 (defun find-node-in-table (id)
   "Tries to find a node in the routing table based on its ID."
   (find-in-table (lambda (x) (string= id (node-id x)))))
-;;; FIXME: yuck
+
 (defun find-closest-nodes (id)
   "Returns a list of the K closest nodes to ID."
-  (let ((worst nil)
-        (winners '()))
+  (let (worst winners)
     (flet ((sorter (x y)
              (cond ((and x y) (< x y))
                    (x t)
@@ -245,13 +241,11 @@ the node if found, NIL otherwise."
        (lambda (node)
          (let ((distance (calculate-node-distance node id))
                (len (length winners)))
-           (cond ((sorter distance worst)
-                  (insert item winners #'list-sorter)
-                  (setf worst distance)
-                  (when (> len +k+)
-                    (setf winners (butlast winners))))
-                 (t (unless (< len +k+)
-                      (return-from find-closest-nodes winners))))))
+           (when (sorter distance worst)
+             (insert node winners #'list-sorter)
+             (setf worst distance)
+             (when (> len +k+)
+               (setf winners (butlast winners))))))
        :nodely t))
     winners))
 
