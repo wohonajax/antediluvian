@@ -59,7 +59,7 @@
   (let ((node (svref bucket 0)))
     (send-message :ping (node-ip node) (node-port node)
                   (generate-transaction-id)))
-  (sort-bucket-by-distance bucket *my-id*))
+  (sort-bucket-by-id bucket))
 
 (defun lookup (node)
   "Begins a lookup of NODE."
@@ -182,12 +182,14 @@ results are the same as the previous best results."
            (lookup (first *results-list*))
            (pop *results-list*))
           ((equalp *best-results* *previous-best-results*)) ; stop recursion
+          ;; FIXME: make sure we receive the K closest best results
           (t (setf *previous-best-results* *best-results*)
              (mapc (lambda (node)
                      (send-message :find_node
                                    (node-ip node)
                                    (node-port node)
-                                   (generate-transaction-id)))
+                                   (generate-transaction-id)
+                                   :id target))
                    *best-results*)))))
 
 (defun store-received-token (token time transaction-id node)
