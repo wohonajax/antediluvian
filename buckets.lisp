@@ -184,21 +184,19 @@ oldest to newest. Returns a boolean indicating whether BUCKET was split."
   "Adds NODE to the correct bucket, per its ID."
   (let* ((id (node-id node))
          (bucket (correct-bucket id)))
-    (unless (dotimes (i +k+)
+    (unless (dotimes (i +k+) ; if DOTIMES runs to the end it returns nil
               (let ((current-bucket-index (svref (bucket-nodes bucket) i)))
+                ;; unless one of these conditions is satisfied
                 (cond ((equalp node current-bucket-index)
-                       (return))
+                       (return t))
                       ((null current-bucket-index)
                        (setf (svref (bucket-nodes bucket) i)
                              node)
-                       (sort-bucket-by-distance bucket)
+                       (sort-bucket-by-ids bucket)
                        (update-bucket bucket)
-                       ;; unless this RETURN form is evaluated
-                       ;; i.e., unless we add NODE to the bucket
                        (return t)))))
-      ;; MAYBE-SPLIT-BUCKET only gets evaluated if the bucket was already full
+      ;; if the bucket was already full
       (maybe-split-bucket bucket id)
-      ;; TODO: only call ADD-TO-BUCKET when MAYBE-SPLIT-BUCKET actually splits
       (add-to-bucket node))))
 
 (defun iterate-bucket (bucket action)

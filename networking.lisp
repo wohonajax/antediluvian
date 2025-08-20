@@ -27,7 +27,7 @@
                     (send-message :ping (node-ip node) (node-port node)
                                   (generate-transaction-id))))
   (update-bucket bucket)
-  (sort-bucket-by-id bucket))
+  (sort-bucket-by-ids bucket))
 
 (defun purge-bad-nodes (bucket)
   "Removes all nodes of bad health from BUCKET."
@@ -38,7 +38,7 @@
                   node)))
             (bucket-nodes bucket))
   (update-bucket bucket)
-  (sort-bucket-by-id bucket))
+  (sort-bucket-by-ids bucket))
 ;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
@@ -59,7 +59,7 @@
   (let ((node (svref bucket 0)))
     (send-message :ping (node-ip node) (node-port node)
                   (generate-transaction-id)))
-  (sort-bucket-by-id bucket))
+  (sort-bucket-by-ids bucket))
 
 (defun lookup (node)
   "Begins a lookup of NODE."
