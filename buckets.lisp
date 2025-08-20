@@ -220,7 +220,11 @@ the node if found, NIL otherwise."
 
 (defun find-node-in-table (id)
   "Tries to find a node in the routing table based on its ID."
-  (find-in-table (lambda (x) (string= id (node-id x)))))
+  (iterate-bucket (correct-bucket id)
+                  (lambda (node)
+                    (and node
+                         (string= id (node-id node))
+                         (return-from find-node-in-table node)))))
 
 (defun find-closest-nodes (id)
   "Returns a list of the K closest nodes to ID."
