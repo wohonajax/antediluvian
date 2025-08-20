@@ -93,9 +93,9 @@ routing table."
 (defun last-node-in-bucket (bucket)
   "Returns the last node in BUCKET."
   (->> bucket
-       bucket-nodes
-       (remove-if-not #'identity)
-       lastcar))
+       first-empty-slot
+       1-
+       (svref (bucket-nodes bucket))))
 
 (flet ((node-sorter (x y field pred)
          (let ((xfield (when x
@@ -199,7 +199,7 @@ newest."
 
 (defun iterate-bucket (bucket action)
   "Funcalls ACTION on each node in BUCKET."
-  (loop for node in (bucket-nodes bucket)
+  (loop for node across (bucket-nodes bucket)
         when node do (funcall action node)))
 
 (defun iterate-table (action &key nodely)

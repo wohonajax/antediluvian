@@ -4,7 +4,6 @@
   (:use #:cl)
   (:import-from #:alexandria
                 #:clamp
-                #:lastcar
                 #:switch
                 #:eswitch)
   (:import-from #:arrows #:->>)
