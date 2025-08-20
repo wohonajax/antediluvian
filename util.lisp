@@ -38,5 +38,5 @@
      ,@body))
 
 (defmacro insert (item list predicate &key key)
-  "Inserts ITEM into the correct position in LIST according to PREDICATE."
+  "Inserts ITEM into LIST and sorts it according to PREDICATE."
   `(setf ,list (sort (cons ,item ,list) ,predicate :key ,key)))
