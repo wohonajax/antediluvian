@@ -163,18 +163,22 @@ TARGET, closest to furthest."
     (sort-table)))
 
 (defun maybe-split-bucket (bucket id)
-  "Splits BUCKET if ID is in its range, otherwise pings from oldest to
-newest."
+  "Splits BUCKET if it's full and ID is in its range, otherwise pings from
+oldest to newest. Returns a boolean indicating whether BUCKET was split."
+  (when (first-empty-slot bucket)
+    (return-from maybe-split-bucket))
   (let ((target-id (convert-id-to-int id))
-        (nodes (remove-if-not #'identity (bucket-nodes bucket))))
+        (nodes (bucket-nodes bucket)))
     (flet ((node-id-as-number (node)
              (convert-id-to-int (node-id node))))
       (cond ((within target-id
                      (reduce #'min nodes :key #'node-id-as-number)
                      (reduce #'max nodes :key #'node-id-as-number))
-             (split-bucket bucket))
+             (split-bucket bucket)
+             t)
             (t (ping-old-nodes bucket)
-               (update-bucket bucket))))))
+               (update-bucket bucket)
+               nil)))))
 
 (defun add-to-bucket (node)
   "Adds NODE to the correct bucket, per its ID."
