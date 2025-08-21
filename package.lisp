@@ -6,7 +6,7 @@
                 #:clamp
                 #:switch
                 #:eswitch)
-  (:import-from #:arrows #:->>)
+  (:import-from #:clj-arrows #:->>)
   (:import-from #:ironclad
                 #:ascii-string-to-byte-array
                 #:octets-to-integer

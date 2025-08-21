@@ -93,9 +93,9 @@ routing table."
 (defun last-node-in-bucket (bucket)
   "Returns the last node in BUCKET."
   (->> bucket
-       first-empty-slot
-       1-
-       (svref (bucket-nodes bucket))))
+    first-empty-slot
+    1-
+    (svref (bucket-nodes bucket))))
 
 (flet ((node-sorter (x y field pred)
          (let ((xfield (when x
