@@ -2,8 +2,8 @@
 
 (in-package #:dhticl)
 
-(defvar *my-id*
-  (octets-to-string ;; FIXME: bencode encodes this as a >20 length string
+(defvar *id*
+  (octets-to-string ;; FIXME: utf-8 encoding causes this to exceed length 20
    (let ((array (make-array 20 :element-type '(unsigned-byte 8))))
      (dotimes (i 20 array)
        (setf (aref array i) (random 256))))))
@@ -15,6 +15,7 @@
           :read-only t)
   (ip)
   (port)
+  (socket)
   (last-activity nil :type fixnum)
   (health))
 
@@ -24,6 +25,10 @@ to *NODE-LIST*."
   (let ((node (make-node :id id
                          :ip ip
                          :port port
+                         :socket (socket-connect
+                                  ip port
+                                  :protocol :datagram
+                                  :element-type '(unsigned-byte 8))
                          :last-activity last-activity
                          :health health)))
     (push node *node-list*)

@@ -27,7 +27,7 @@
 
 (defun bootstrap-node (host port)
   (send-message :find_node host port (generate-transaction-id)
-                :info-hash *my-id*))
+                :info-hash *id*))
 
 ;;; TODO: find_node each found node for nodes near the hash
 (defun main-loop ()

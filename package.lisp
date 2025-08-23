@@ -20,7 +20,7 @@
                 #:socket-send
                 #:+max-datagram-packet-size+)
   (:export #:dht
-           #:*my-id*
+           #:*id*
            #:*default-port*
            #:*use-implied-port-p*
            #:*routing-table*
