@@ -24,6 +24,7 @@
   "The number of simultaneous lookups to perform.")
 
 (defun receive-data ()
+  "Receive data from the listening socket."
   (socket-receive
    *listening-socket*
    nil ;; FIXME: this just hangs waiting for a huge response
