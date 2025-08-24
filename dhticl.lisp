@@ -71,5 +71,4 @@
        (main-loop)
     (progn (save-settings)
            (save-table)
-           (mapc (lambda (node) (socket-close (node-socket node)))
-                 *node-list*))))
+           (mapc #'kill-node *node-list*))))
