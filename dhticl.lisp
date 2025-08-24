@@ -31,6 +31,14 @@
   (send-message :find_node host port (generate-transaction-id)
                 :info-hash *id*))
 
+(defun initiate-lookups ()
+  (mapc (lambda (hash)
+          (let ((node-list (find-closest-nodes hash)))
+            (dotimes (i +alpha+)
+              (let ((node (nth i node-list)))
+                (send-message :find_node (node-ip node) (node-port node)
+                              (generate-transaction-id) :info-hash hash)))))
+        *hashes*))
 ;;; TODO: find_node each found node for nodes near the hash
 (defun main-loop ()
   (with-listening-usocket socket
@@ -42,14 +50,8 @@
     (bootstrap-node "dht.transmissionbt.com" 6881)
     (bootstrap-node "dht.libtorrent.org" 25401)
     (bootstrap-node "dht.aelitis.com" 6881)
-    (mapc (lambda (hash)
-            (let ((node-list (find-closest-nodes hash)))
-              (dotimes (i +alpha+)
-                (let ((node (nth i node-list)))
-                  (send-message :find_node (node-ip node) (node-port node)
-                                (generate-transaction-id)
-                                :info-hash hash)))))
-          *hashes*)
+    ;; TODO: wait for bootstrapping before initiating lookups
+    (initiate-lookups)
     (let ((start-time (get-universal-time)))
       (loop (parse-message)
             ;; TODO: routing table upkeep
