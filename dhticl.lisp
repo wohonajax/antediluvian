@@ -71,6 +71,7 @@
           hashes))
   (unwind-protect
        (main-loop)
-    (progn (save-settings)
+    (progn (iterate-table (lambda (bucket) (purge-bad-nodes bucket)))
+           (save-settings)
            (save-table)
            (mapc #'kill-node *node-list*))))
