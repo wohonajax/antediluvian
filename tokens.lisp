@@ -92,7 +92,7 @@ token isn't found, returns NIL."
              (mapc (lambda (token)
                      (unless (valid-token-p token)
                        (setf (gethash info-hash *token-hashes*)
-                             (delete token tokens :test #'equalp))
+                             (remove token tokens :test #'equalp))
                        (remhash token *token-births*)
                        (remhash token *token-nodes*)))
                    tokens))

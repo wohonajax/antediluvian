@@ -114,7 +114,7 @@ TARGET, closest to furthest."
          (small-bucket (make-new-bucket min mid))
          (large-bucket (make-new-bucket (1+ mid) max)))
     (setf *routing-table*
-          (delete bucket *routing-table* :test #'eq))
+          (remove bucket *routing-table* :test #'eq))
     (seed-buckets small-bucket large-bucket bucket)
     (sort-table)))
 
