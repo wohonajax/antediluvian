@@ -47,6 +47,8 @@
               (when node
                 (if (eql :bad (node-health node))
                     (progn (kill-node node)
+                           (setf *node-list*
+                                 (remove node *node-list* :test #'eq :count 1))
                            nil)
                     node)))
             (bucket-nodes bucket))

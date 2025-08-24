@@ -70,7 +70,5 @@ or :BAD."
                (compact-peer-info node)))
 
 (defun kill-node (node)
-  "Closes the socket associated with NODE and removes it from the node list."
-  (socket-close (node-socket node))
-  (setf *node-list*
-        (remove node *node-list* :test #'eq :count 1)))
+  "Closes the socket associated with NODE."
+  (socket-close (node-socket node)))
