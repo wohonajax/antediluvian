@@ -24,18 +24,10 @@
     (octets-to-string array)))
 
 (defun parse-node-ip (ip)
-  "Returns a node's IP address and port as multiple values."
-  (let ((ip-vector (make-array 4 :element-type '(unsigned-byte 8)))
-        (port-vector (make-array 2 :element-type '(unsigned-byte 8))))
-    (flet ((parse-char (char)
-             (char-code (char ip char))))
-      (setf (aref ip-vector 0) (parse-char 0)
-            (aref ip-vector 1) (parse-char 1)
-            (aref ip-vector 2) (parse-char 2)
-            (aref ip-vector 3) (parse-char 3)
-            (aref port-vector 0) (parse-char 4)
-            (aref port-vector 1) (parse-char 5))
-      (values ip-vector (port-from-octet-buffer port-vector)))))
+  "Takes a byte-vector in compact peer format and returns an IP address and
+port as multiple values."
+  (assert (= (length ip) 6)) ; TODO: support IPv6
+  (values (subseq ip 0 4) (port-from-octet-buffer (subseq ip 4))))
 
 (defun make-secret ()
   "Makes a secret."
