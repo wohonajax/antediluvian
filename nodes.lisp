@@ -68,3 +68,9 @@ or :BAD."
   (concatenate '(vector (unsigned-byte 8))
                (node-id node)
                (compact-peer-info node)))
+
+(defun kill-node (node)
+  "Closes the socket associated with NODE and removes it from the node list."
+  (socket-close (node-socket node))
+  (setf *node-list*
+        (delete node *node-list* :test #'eq :count 1)))

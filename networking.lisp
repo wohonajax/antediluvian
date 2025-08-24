@@ -41,12 +41,14 @@
   (sort-bucket-by-ids bucket))
 
 (defun purge-bad-nodes (bucket)
-  "Removes all nodes of bad health from BUCKET."
+  "Removes all nodes of bad health from BUCKET and from the list of nodes."
   (map-into (bucket-nodes bucket)
             (lambda (node)
               (when node
-                (unless (eql :bad (node-health node))
-                  node)))
+                (if (eql :bad (node-health node))
+                    (progn (kill-node node)
+                           nil)
+                    node)))
             (bucket-nodes bucket))
   (update-bucket bucket)
   (sort-bucket-by-ids bucket))
