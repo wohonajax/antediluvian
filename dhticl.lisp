@@ -68,4 +68,6 @@
   (unwind-protect
        (main-loop)
     (progn (save-settings)
-           (save-table))))
+           (save-table)
+           (mapc (lambda (node) (socket-close (node-socket node)))
+                 *node-list*))))
