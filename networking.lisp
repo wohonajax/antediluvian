@@ -85,7 +85,7 @@
         do (lookup node)
            (pop *results-list*)))
 
-(defun push-to-best-results (target)
+(defun push-to-best-results (node target)
   (insert node *best-results* #'<
           :key (lambda (node)
                  (calculate-node-distance node target))))
@@ -184,10 +184,12 @@ results are the same as the previous best results."
     (cond ((= (length *best-results*) +k+)
            ;; we only want the k closest nodes
            ;; TODO: use insertion sort to avoid calling SORT on the whole list
-           (unless (< (node-distance (first *best-results*))
-                      (node-distance node))
-             (push-to-best-results node)))
-          (t (push-to-best-results node)))
+           (unless (< (calculate-node-distance (first *best-results*) target)
+                      (calculate-node-distance node target))
+             (push-to-best-results node target)
+             ;; TODO: handle this in PUSH-TO-BEST-RESULTS?
+             (setf *best-results* (subseq *best-results* 0 +k+))))
+          (t (push-to-best-results node target)))
     (remhash transaction-id *active-lookups*)
     (cond (*results-list* ; if *RESULTS-LIST* isn't empty
            (lookup (first *results-list*))
