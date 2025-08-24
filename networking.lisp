@@ -3,7 +3,11 @@
 
 (in-package #:dhticl)
 
-(defvar *listening-socket*)
+(defvar *listening-socket*
+        (socket-connect nil nil
+                        :protocol :datagram
+                        :local-port *default-port*)
+  "A listening UDP socket.")
 
 (defvar *results-list* (list)
   "A list containing nodes received from find_node queries.")
@@ -18,6 +22,12 @@
 
 (defconstant +alpha+ 3
   "The number of simultaneous lookups to perform.")
+
+(defun receive-data ()
+  (socket-receive
+   *listening-socket*
+   nil ;; FIXME: this just hangs waiting for a huge response
+   +max-datagram-packet-size+))
 
 (defun ping-old-nodes (bucket)
   "Pings the nodes in a bucket from oldest to newest."

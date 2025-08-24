@@ -13,12 +13,6 @@
   "A hash table storing valid transaction IDs we've generated.
 Maps to info_hash when applicable.")
 
-(defun receive-data ()
-  (socket-receive
-   *listening-socket*
-   nil ;; FIXME: this just hangs waiting for a huge response
-   +max-datagram-packet-size+))
-
 (defun send-bencoded-data (socket data)
   (let ((bencoded-data (bencode:encode data nil)))
     (socket-send socket bencoded-data (length bencoded-data))))
