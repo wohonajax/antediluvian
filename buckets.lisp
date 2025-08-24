@@ -8,50 +8,6 @@
 
 (defvar *peer-list* (make-hash-table :test #'equalp)
   "A hash table containing info_hashes as keys and a list of nodes as values.")
-
-(defun save-table ()
-  "Saves the routing table to a file."
-  (with-open-file (file *routing-table-location*
-                        :direction :output
-                        :if-exists :overwrite
-                        :if-does-not-exist :create)
-    (format file "(")
-    (map nil
-         (lambda (bucket)
-           (format file "(")
-           (map nil
-                (lambda (node)
-                  (if node
-                      (format file
-                              "(~S ~S ~S ~S)"
-                              (node-id node)
-                              (node-ip node)
-                              (node-port node)
-                              (node-last-activity node))
-                      (format file "(~S)" nil)))
-                bucket)
-           (format file ")"))
-         *routing-table*)
-    (format file ")")))
-
-(defun load-table ()
-  "Loads the routing table from the indicated location. Returns NIL and does
-nothing if the specified file doesn't exist, otherwise returns the loaded
-routing table."
-  (when (probe-file *routing-table-location*)
-    (with-open-file (file *routing-table-location*)
-      (let ((empty-node (list nil)))
-        (map-into *routing-table*
-                  (lambda (bucket)
-                    (map 'simple-vector
-                         (lambda (node)
-                           (unless (equal node empty-node)
-                             (create-node :id (first node)
-                                          :ip (second node)
-                                          :port (third node)
-                                          :last-activity (fourth node))))
-                         bucket))
-                  (read file))))))
 ;;; recommended bucket size limit is 8
 (defconstant +k+ 8 "Bucket size limit.")
 
@@ -256,3 +212,54 @@ the node if found, NIL otherwise."
     (unless peer-list
       (remhash info-hash *peer-list*))
     peer-list))
+
+(defun save-table ()
+  "Saves the routing table to a file."
+  (with-open-file (file *routing-table-location*
+                        :direction :output
+                        :if-exists :overwrite
+                        :if-does-not-exist :create)
+    (format file "(")
+    (map nil
+        (lambda (bucket)
+          (format file "(")
+          (map nil
+              (lambda (node)
+                (if node
+                    (format file
+                        "(~S ~S ~S ~S)"
+                      (node-id node)
+                      (node-ip node)
+                      (node-port node)
+                      (node-last-activity node))
+                    (format file "(~S)" nil)))
+              bucket)
+          (format file ")"))
+        *routing-table*)
+    (format file ")")))
+
+(defun populate-node-list ()
+  (iterate-table (lambda (node)
+                   (when node
+                         (push node *node-list*)))
+                 :nodely t))
+
+(defun load-table ()
+  "Loads the routing table from the indicated location. Returns NIL and does
+nothing if the specified file doesn't exist, otherwise returns the loaded
+routing table."
+  (when (probe-file *routing-table-location*)
+    (with-open-file (file *routing-table-location*)
+      (let ((empty-node (list nil)))
+        (map-into *routing-table*
+                  (lambda (bucket)
+                    (map 'simple-vector
+                         (lambda (node)
+                           (unless (equal node empty-node)
+                             (create-node :id (first node)
+                                          :ip (second node)
+                                          :port (third node)
+                                          :last-activity (fourth node))))
+                         bucket))
+                  (read file))))
+    (populate-node-list)))
