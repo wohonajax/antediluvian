@@ -225,7 +225,7 @@ the node if found, NIL otherwise."
   (iterate-bucket (correct-bucket id)
                   (lambda (node)
                     (and node
-                         (string= id (node-id node))
+                         (equalp id (node-id node))
                          (return-from find-node-in-table node)))))
 
 (defun find-closest-nodes (id)

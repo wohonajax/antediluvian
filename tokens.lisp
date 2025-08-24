@@ -21,7 +21,7 @@
   (let ((array (make-array 2 :element-type '(unsigned-byte 8))))
     (setf (aref array 0) (random 256)
           (aref array 1) (random 256))
-    (octets-to-string array)))
+    array))
 
 (defun parse-node-ip (ip)
   "Takes a byte-vector in compact peer format and returns an IP address and

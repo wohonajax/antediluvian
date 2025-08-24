@@ -231,7 +231,7 @@ results are the same as the previous best results."
          (values (gethash "values" arguments))
          (implied-port (gethash "implied_port" arguments))
          (peer-port (gethash "port" arguments))
-         (node (first (member id *node-list* :key #'node-id :test #'string=))))
+         (node (first (member id *node-list* :key #'node-id :test #'equalp))))
     (setf node
           (handle-node-bookkeeping node now implied-port peer-port id ip port))
     ;; bad transaction ID

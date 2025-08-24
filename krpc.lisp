@@ -123,7 +123,7 @@ Maps to info_hash when applicable.")
           (let* ((target (gethash "target" dict))
                  (have-target-p (member target *node-list*
                                         :key #'node-id
-                                        :test #'string=)))
+                                        :test #'equalp)))
             (if have-target-p
                 ;; MEMBER returns a list
                 (compact-node-info (first have-target-p))

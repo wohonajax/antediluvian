@@ -21,13 +21,9 @@
   "Returns the distance between A and B."
   (logxor a b))
 
-(defun octets-to-string (byte-vector)
-  "Coerces BYTE-VECTOR to an ASCII string."
-  (map 'string #'code-char byte-vector))
-
 (defun convert-id-to-int (id)
-  "Converts a node ID from an ID string to a decimal integer."
-  (octets-to-integer (ascii-string-to-byte-array id)))
+  "Converts a node ID from an ID byte-vector to a decimal integer."
+  (octets-to-integer id))
 
 (defmacro with-listening-usocket (socket-var &body body)
   "Creates a listening UDP socket and binds it to SOCKET-VAR."

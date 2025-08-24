@@ -3,16 +3,14 @@
 (in-package #:dhticl)
 
 (defvar *id*
-  (octets-to-string ;; FIXME: utf-8 encoding causes this to exceed length 20
-   (let ((array (make-array 20 :element-type '(unsigned-byte 8))))
-     (dotimes (i 20 array)
-       (setf (aref array i) (random 256))))))
+  (let ((array (make-array 20 :element-type '(unsigned-byte 8))))
+    (dotimes (i 20 array)
+      (setf (aref array i) (random 256)))))
 
 (defvar *node-list* (list))
 
 (defstruct node
-  (id nil :type string
-          :read-only t)
+  (id nil :read-only t)
   (ip)
   (port)
   (socket)
@@ -61,10 +59,12 @@ or :BAD."
 
 (defun compact-peer-info (node)
   "Translates NODE's IP and port into compact format."
-  (format nil "~a~a"
-          (octets-to-string (node-ip node))
-          (octets-to-string (integer-to-octets (node-port node)))))
+  (concatenate '(vector (unsigned-byte 8))
+               (node-ip node)
+               (integer-to-octets (node-port node))))
 
 (defun compact-node-info (node)
   "Translate's NODE's ID, IP, and port into compact peer format."
-  (format nil "~a~a" (node-id node) (compact-peer-info node)))
+  (concatenate '(vector (unsigned-byte 8))
+               (node-id node)
+               (compact-peer-info node)))

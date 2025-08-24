@@ -8,7 +8,6 @@
                 #:eswitch)
   (:import-from #:clj-arrows #:->>)
   (:import-from #:ironclad
-                #:ascii-string-to-byte-array
                 #:octets-to-integer
                 #:integer-to-octets
                 #:digest-sequence)
