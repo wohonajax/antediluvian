@@ -6,10 +6,6 @@
 (defvar *token-hashes* (make-hash-table :test #'equalp)
   "A hash table mapping info_hashes to tokens valid for them.")
 
-(defun make-hash (byte-vector)
-  "Hashes BYTE-VECTOR using the SHA1 algorithm."
-  (digest-sequence :sha1 byte-vector))
-
 (defun generate-transaction-id ()
   "Creates a transaction ID and returns it as a string."
   (let ((array (make-array 2 :element-type '(unsigned-byte 8))))
