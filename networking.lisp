@@ -96,22 +96,33 @@
           :key (lambda (node)
                  (calculate-node-distance node target))))
 
+(defun handle-node-bookkeeping (node time implied-port peer-port id ip port)
+  "Either adjust NODE's settings or create a node based on those settings.
+Returns the node object."
+  (cond (node (setf (node-last-activity node) time
+                    (node-health node) :good)
+              ;; when implied_port is 1, use the port the socket sees
+              (cond ((and implied-port (= implied-port 1))
+                     (setf (node-port node) port))
+                    (peer-port (setf (node-port node) peer-port))))
+        (t (setf node (create-node :id id :ip ip :port port
+                                   :last-activity time
+                                   :health :good))
+           (add-to-bucket node)))
+  node)
+
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
   (let* ((now (get-universal-time))
+         (transaction-id (gethash "t" dict))
          (arguments (gethash "a" dict))
          (id (gethash "id" arguments))
          (info-hash (gethash "info_hash" arguments))
          (token (gethash "token" arguments))
          (node (find-node-in-table id)))
-    (if node
-        (setf (node-last-activity node) now
-              (node-health node) :good)
-        (progn (setf node (create-node :id id :ip ip :port port
-                                       :last-activity now
-                                       :health :good))
-               (add-to-bucket node)
-               (setf (gethash (gethash "t" dict) *transactions*) t)))
+    (unless node
+      (setf (gethash transaction-id *transactions*) (or info-hash t)))
+    (setf node (handle-node-bookkeeping node now nil nil id ip port))
     (switch ((gethash "q" dict) :test #'string=)
       ("ping" (send-response :ping node dict))
       ("find_node" (send-response :find_node node dict))
@@ -151,20 +162,6 @@
       ;; TODO: error handling for out-of-bounds
       ;; (node's health may be bad--malformed response sent?)
       (error () (return-from parse-peers peers)))))
-
-(defun handle-node-bookkeeping (node time implied-port peer-port id ip port)
-  "Either adjust NODE's settings or create a node based on those settings.
-Returns the node object."
-  (cond (node (setf (node-last-activity node) time
-                    (node-health node) :good)
-              (cond ((and implied-port (= implied-port 1))
-                     (setf (node-port node) port))
-                    (peer-port (setf (node-port node) peer-port))))
-        (t (setf node (create-node :id id :ip ip :port port
-                                   :last-activity time
-                                   :health :good))
-           (add-to-bucket node)))
-  node)
 
 (defun handle-nodes-response (nodes)
   "Handle a nodes response from a find_node or get_peers query by pinging every
