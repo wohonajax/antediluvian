@@ -122,14 +122,14 @@ Maps to info_hash when applicable.")
   (let ((response-dict (make-hash-table))
         (response-arguments (make-hash-table)))
     (setf (gethash "id" response-arguments) *id*
+
           (gethash "nodes" response-arguments)
           (let* ((target (gethash "target" dict))
                  (node-if-found (find-node-in-table target)))
             (if node-if-found
                 (compact-node-info node-if-found)
-                (with-output-to-string (str)
-                  (mapc (lambda (peer) (princ (compact-node-info peer) str))
-                        (find-closest-nodes target)))))
+                (reduce #'concat-vec (find-closest-nodes target)
+                        :key #'compact-node-info)))
 
           (gethash "t" response-dict) (gethash "t" dict)
           (gethash "y" response-dict) "r"
@@ -153,9 +153,8 @@ Maps to info_hash when applicable.")
         (setf (gethash "values" response-arguments)
               (mapcar #'compact-peer-info peers))
         (setf (gethash "nodes" response-arguments)
-              (with-output-to-string (str)
-                (mapc (lambda (node) (princ (compact-node-info node) str))
-                      (find-closest-nodes hash)))))
+              (reduce #'concat-vec (find-closest-nodes hash)
+                      :key #'compact-node-info)))
     (send-bencoded-data socket response-dict)))
 
 (defun respond-to-announce-peer (socket dict node source-port)
