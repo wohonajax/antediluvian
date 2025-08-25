@@ -5,9 +5,12 @@
 
 (in-package #:dhticl)
 
-(defvar *default-port* 6881)
+(defvar *default-port* 6881
+  "The default port to use when listening.")
 
-(defvar *use-implied-port-p* nil)
+(defvar *use-implied-port-p* nil
+  "Whether peers should use the visible port (T) or the given port (NIL).
+Useful for NATs.")
 
 (defvar *transactions* (make-hash-table :test #'equal)
   "A hash table storing valid transaction IDs we've generated.
