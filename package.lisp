@@ -13,6 +13,8 @@
                 #:digest-sequence
                 #:random-data
                 #:strong-random)
+  (:import-from #:uiop
+                #:xdg-config-home)
   (:import-from #:usocket
                 #:socket-connect
                 #:socket-close

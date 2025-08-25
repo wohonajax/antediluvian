@@ -20,4 +20,5 @@
                alexandria
                ironclad/core
                ironclad/digests
-               clj-arrows))
+               clj-arrows
+               uiop))

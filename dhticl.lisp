@@ -2,7 +2,7 @@
 
 ;;;; TODO: general interface
 (defvar *settings-location*
-  (merge-pathnames ".dhticl/settings.sexp" (user-homedir-pathname)))
+  (xdg-config-home "dhticl/settings.sexp"))
 
 (defvar *hashes* (list)
   "The list of info_hashes the DHT program will use.")

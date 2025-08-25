@@ -3,7 +3,7 @@
 (in-package #:dhticl)
 
 (defvar *routing-table-location*
-  (merge-pathnames ".dhticl/table.sexp" (user-homedir-pathname)))
+  (xdg-config-home "dhticl/table.sexp"))
 (defvar *routing-table* (list))
 
 (defvar *peer-list* (make-hash-table :test #'equalp)
