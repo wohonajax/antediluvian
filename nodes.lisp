@@ -2,7 +2,7 @@
 
 (in-package #:dhticl)
 
-(defvar *id* (random-data 20))
+(defvar *id* (make-hash (random-data 20)))
 
 (defstruct node
   (id nil :read-only t)
