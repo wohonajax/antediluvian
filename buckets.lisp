@@ -177,11 +177,11 @@ the node if found, NIL otherwise."
                  :nodely t))
 
 (defun find-node-in-table (id)
-  "Tries to find a node in the routing table based on its ID."
+  "Tries to find a node in the routing table based on its ID. Returns the node
+if successful, NIL otherwise."
   (iterate-bucket (correct-bucket id)
                   (lambda (node)
-                    (and node
-                         (equalp id (node-id node))
+                    (and (equalp id (node-id node))
                          (return-from find-node-in-table node)))))
 
 (defun find-closest-nodes (id)
