@@ -119,10 +119,13 @@ Returns the node object."
          (id (gethash "id" arguments))
          (info-hash (gethash "info_hash" arguments))
          (token (gethash "token" arguments))
+         (implied-port (gethash "implied_port" arguments))
+         (peer-port (gethash "port" arguments))
          (node (find-node-in-table id)))
     (unless node
       (setf (gethash transaction-id *transactions*) (or info-hash t)))
-    (setf node (handle-node-bookkeeping node now nil nil id ip port))
+    (setf node
+          (handle-node-bookkeeping node now implied-port peer-port id ip port))
     (switch ((gethash "q" dict) :test #'string=)
       ("ping" (send-response :ping node dict))
       ("find_node" (send-response :find_node node dict))
@@ -230,11 +233,8 @@ results are the same as the previous best results."
          ;; VALUES is a list of strings which are compact peer info
          ;; Comes from a get_peers response
          (values (gethash "values" arguments))
-         (implied-port (gethash "implied_port" arguments))
-         (peer-port (gethash "port" arguments))
          (node (find-node-in-table id)))
-    (setf node
-          (handle-node-bookkeeping node now implied-port peer-port id ip port))
+    (setf node (handle-node-bookkeeping node now nil nil id ip port))
     ;; bad transaction ID
     (unless (gethash transaction-id *transactions*)
       (send-response :dht_error node dict :error-type :protocol)
