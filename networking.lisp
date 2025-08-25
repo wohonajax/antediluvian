@@ -113,11 +113,10 @@ Returns the node object."
 
 (defun store-received-token (token time transaction-id node)
   "Handles bookkeeping for a given TOKEN."
-  (setf (gethash token *token-births*) time
+  (let ((info-hash (gethash transaction-id *transactions*)))
+    (setf (gethash token *token-births*) time
 
-        (gethash (gethash transaction-id *transactions*) ; info_hash
-                 *token-hashes*)
-        token))
+          (gethash info-hash *token-hashes*) token)))
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
