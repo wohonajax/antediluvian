@@ -75,6 +75,12 @@ port as multiple values."
     (push node (gethash token *token-nodes*))
     token))
 
+(defun verify-token (token node)
+  "Verifies whether TOKEN comes from us and is valid for a given NODE."
+  (let ((ip (node-ip node)))
+    (or (equalp token (hash-ip-and-secret ip *current-secret*))
+        (equalp token (hash-ip-and-secret ip *previous-secret*)))))
+
 (defun valid-token-p (token)
   "Determines whether TOKEN is valid or not."
   (let ((token-birth (gethash token *token-births*)))
