@@ -249,6 +249,8 @@ results are the same as the previous best results."
       (handle-values-response values))
     (when info-hash
       (handle-lookup-response transaction-id node info-hash))
+    (when token
+      (store-received-token token now transaction-id node))
     (remhash transaction-id *transactions*)))
 
 (defun parse-message ()
