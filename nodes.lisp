@@ -34,7 +34,7 @@ to the routing table."
 
 (defun calculate-elapsed-inactivity (node)
   "Returns the time in minutes since NODE's last seen activity."
-  (let ((last-activity (node-last-activity node))) 
+  (let ((last-activity (node-last-activity node)))
     (and last-activity (minutes-since last-activity))))
 
 (defun calculate-node-health (node)
