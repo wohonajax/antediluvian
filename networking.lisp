@@ -7,7 +7,7 @@
         (socket-connect nil nil
                         :protocol :datagram
                         :local-port *default-port*)
-  "A listening UDP socket.")
+  "A UDP socket listening on *DEFAULT-PORT*.")
 
 (defvar *results-list* (list)
   "A list containing nodes received from find_node queries.")
