@@ -13,12 +13,11 @@
                 #:digest-sequence)
   (:import-from #:usocket
                 #:socket-connect
-                #:with-connected-socket
+                #:socket-close
                 #:port-from-octet-buffer
                 #:socket-receive
                 #:socket-send
-                #:+max-datagram-packet-size+
-                #:socket-close)
+                #:+max-datagram-packet-size+)
   (:export #:dht
            #:*id*
            #:*default-port*
