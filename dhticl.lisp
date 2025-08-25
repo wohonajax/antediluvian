@@ -71,7 +71,7 @@
           hashes))
   (unwind-protect
        (main-loop)
-    (progn (iterate-table (lambda (bucket) (purge-bad-nodes bucket)))
+    (progn (iterate-table #'purge-bad-nodes)
            (iterate-table #'kill-node :nodely t)
            (save-settings)
            (save-table))))
