@@ -48,7 +48,7 @@ port as multiple values."
 
 (defun consider-token (token info-hash node)
   "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
-  (and (member node (gethash token *token-nodes*) :test #'equalp)
+  (and (member node (gethash token *token-nodes*) :test #'eq)
        (member token (gethash info-hash *token-hashes*) :test #'equalp))
   #| this old code checked to see if TOKEN came from our INVENT-TOKEN
   (let* ((node-ip-hash (make-array 20 :element-type '(unsigned-byte 8)))
