@@ -43,7 +43,7 @@ port as multiple values."
     (setf (gethash token *token-births*) (get-universal-time))
     (push token (gethash info-hash *token-hashes*))
     token))
-
+;; TODO: verify that tokens came from us (in networking.lisp probably)
 (defun verify-token (token node)
   "Verifies whether TOKEN comes from us and is valid for a given NODE."
   (let ((ip (node-ip node)))
@@ -52,8 +52,7 @@ port as multiple values."
 
 (defun consider-token (token info-hash node)
   "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
-  (and (member token (gethash info-hash *token-hashes*) :test #'equalp)
-       (verify-token token node)))
+  (member token (gethash info-hash *token-hashes*) :test #'equalp))
 
 (defun valid-token-p (token)
   "Determines whether TOKEN is valid or not."
