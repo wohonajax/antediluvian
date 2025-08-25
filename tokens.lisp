@@ -28,7 +28,7 @@ port as multiple values."
       (setf (aref secret i) (strong-random 160)))))
 
 (defparameter *current-secret* (cons (make-secret) (get-universal-time)))
-(defparameter *previous-secret*)
+(defvar *previous-secret*)
 
 (defun ensure-secret ()
   "Makes sure the current secret isn't stale. If it is, makes a fresh secret."
