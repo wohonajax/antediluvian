@@ -2,10 +2,7 @@
 
 (in-package #:dhticl)
 
-(defvar *id*
-  (let ((array (make-array 20 :element-type '(unsigned-byte 8))))
-    (dotimes (i 20 array)
-      (setf (aref array i) (random 256)))))
+(defvar *id* (random-data 20))
 
 (defstruct node
   (id nil :read-only t)

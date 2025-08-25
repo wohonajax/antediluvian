@@ -10,7 +10,9 @@
   (:import-from #:ironclad
                 #:octets-to-integer
                 #:integer-to-octets
-                #:digest-sequence)
+                #:digest-sequence
+                #:random-data
+                #:strong-random)
   (:import-from #:usocket
                 #:socket-connect
                 #:socket-close

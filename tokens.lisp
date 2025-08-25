@@ -35,7 +35,7 @@ port as multiple values."
   (let* ((secret-length 5)
          (secret (make-array secret-length :element-type '(unsigned-byte 8))))
     (dotimes (i secret-length secret)
-      (setf (aref secret i) (random 160)))))
+      (setf (aref secret i) (strong-random 160)))))
 
 (defun ensure-secret ()
   "Makes sure the current secret isn't stale. If it is, makes a fresh secret."
