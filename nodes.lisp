@@ -42,7 +42,7 @@ to the routing table."
 or :BAD."
   (let ((time-inactive (calculate-elapsed-inactivity node)))
     (cond ((null time-inactive) :questionable)
-          ((< time-inactive 15) :good)
+          ((< time-inactive 15) (node-health node))
           (t :bad))))
 
 (defun node-closer-p (goal node1 node2)
