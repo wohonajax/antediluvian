@@ -11,8 +11,7 @@
                 #:octets-to-integer
                 #:integer-to-octets
                 #:digest-sequence
-                #:random-data
-                #:strong-random)
+                #:random-data)
   (:import-from #:uiop
                 #:xdg-config-home)
   (:import-from #:usocket

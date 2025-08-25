@@ -1,5 +1,8 @@
 (in-package #:dhticl)
 
+(defvar *current-secret*)
+(defvar *previous-secret*)
+
 (defvar *token-births* (make-hash-table :test #'equalp)
   "A hash table mapping tokens to their creation times.")
 
@@ -20,24 +23,18 @@ port as multiple values."
   (values (subseq byte-vector 0 4)
           (port-from-octet-buffer (subseq byte-vector 4))))
 
-(defun make-secret ()
-  "Makes a secret."
-  (let* ((secret-length 5)
-         (secret (make-array secret-length :element-type '(unsigned-byte 8))))
-    (dotimes (i secret-length secret)
-      (setf (aref secret i) (strong-random 160)))))
-
-(defparameter *current-secret* (cons (make-secret) (get-universal-time)))
-(defvar *previous-secret*)
-
 (defun ensure-secret ()
   "Makes sure the current secret isn't stale. If it is, makes a fresh secret."
-  (when (> (minutes-since (cdr *current-secret*))
-           5)
-    (shiftf *previous-secret*
-            *current-secret*
-            (cons (make-secret) (get-universal-time)))
-  (car *current-secret*)))
+  (flet ((make-secret ()
+           (cons (random-data 5) (get-universal-time))))
+    (unless *current-secret*
+      (setf *current-secret* (make-secret)))
+    (when (> (minutes-since (cdr *current-secret*))
+             5)
+      (shiftf *previous-secret*
+              *current-secret*
+              (make-secret)))
+    (car *current-secret*)))
 
 (defun hash-ip-and-secret (ip secret)
   "Returns the SHA1 hash of IP concatenated onto SECRET."
