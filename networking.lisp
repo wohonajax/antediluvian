@@ -234,6 +234,7 @@ results are the same as the previous best results."
          ;; Comes from a get_peers response
          (values (gethash "values" arguments))
          (node (find-node-in-table id)))
+    ;; no implied_port or port arguments in responses so they're both nil here
     (setf node (handle-node-bookkeeping node now nil nil id ip port))
     ;; bad transaction ID
     (unless (gethash transaction-id *transactions*)
