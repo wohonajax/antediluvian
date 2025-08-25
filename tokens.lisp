@@ -41,9 +41,10 @@ port as multiple values."
   "Makes sure the current secret isn't stale. If it is, makes a fresh secret."
   (when (> (minutes-since (cdr *current-secret*))
            5)
-    (setf *previous-secret* *current-secret*
-          *current-secret* (cons (make-secret) (get-universal-time))))
-  (car *current-secret*))
+    (shiftf *previous-secret*
+            *current-secret*
+            (cons (make-secret) (get-universal-time)))
+  (car *current-secret*)))
 
 (defun consider-token (token info-hash node)
   "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
