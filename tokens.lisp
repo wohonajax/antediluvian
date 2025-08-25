@@ -47,8 +47,8 @@ port as multiple values."
 (defun verify-token (token node)
   "Verifies whether TOKEN comes from us and is valid for a given NODE."
   (let ((ip (node-ip node)))
-    (or (equalp token (hash-ip-and-secret ip *current-secret*))
-        (equalp token (hash-ip-and-secret ip *previous-secret*)))))
+    (or (equalp token (hash-ip-and-secret ip (car *current-secret*)))
+        (equalp token (hash-ip-and-secret ip (car *previous-secret*))))))
 
 (defun consider-token (token info-hash node)
   "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
