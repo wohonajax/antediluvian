@@ -3,9 +3,6 @@
 (defvar *token-births* (make-hash-table :test #'equalp)
   "A hash table mapping tokens to their creation times.")
 
-(defvar *token-nodes* (make-hash-table :test #'equalp)
-  "A hash table mapping tokens to nodes each token is valid for.")
-
 (defvar *token-hashes* (make-hash-table :test #'equalp)
   "A hash table mapping info_hashes to tokens valid for them.")
 
@@ -46,23 +43,6 @@ port as multiple values."
             (cons (make-secret) (get-universal-time)))
   (car *current-secret*)))
 
-(defun consider-token (token info-hash node)
-  "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
-  (and (member node (gethash token *token-nodes*) :test #'eq)
-       (member token (gethash info-hash *token-hashes*) :test #'equalp))
-  #| this old code checked to see if TOKEN came from our INVENT-TOKEN
-  (let* ((node-ip-hash (make-array 20 :element-type '(unsigned-byte 8)))
-         (token-value (token-value token))
-         (token-hash (subseq token-value 0 20))
-         (token-secret (subseq token-value 20)))
-    (map-into node-ip-hash #'identity
-              (make-hash (parse-node-ip (node-ip node))))
-    (ensure-secret)
-    (and (equal node-ip-hash token-hash)
-         (or (equal token-secret (car *previous-secret*))
-             (equal token-secret (car *current-secret*))))) |#
-  )
-
 (defun hash-ip-and-secret (ip secret)
   "Returns the SHA1 hash of IP concatenated onto SECRET."
   (make-hash (concatenate '(vector (unsigned-byte 8)) ip secret)))
@@ -72,7 +52,6 @@ port as multiple values."
   (let ((token (hash-ip-and-secret (node-ip node) (ensure-secret))))
     (setf (gethash token *token-births*) (get-universal-time))
     (push token (gethash info-hash *token-hashes*))
-    (push node (gethash token *token-nodes*))
     token))
 
 (defun verify-token (token node)
@@ -80,6 +59,11 @@ port as multiple values."
   (let ((ip (node-ip node)))
     (or (equalp token (hash-ip-and-secret ip *current-secret*))
         (equalp token (hash-ip-and-secret ip *previous-secret*)))))
+
+(defun consider-token (token info-hash node)
+  "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
+  (and (member token (gethash info-hash *token-hashes*) :test #'equalp)
+       (verify-token token node)))
 
 (defun valid-token-p (token)
   "Determines whether TOKEN is valid or not."
@@ -100,7 +84,6 @@ token isn't found, returns NIL."
                      (unless (valid-token-p token)
                        (setf (gethash info-hash *token-hashes*)
                              (remove token tokens :test #'equalp :count 1))
-                       (remhash token *token-births*)
-                       (remhash token *token-nodes*)))
+                       (remhash token *token-births*)))
                    tokens))
            *token-hashes*))

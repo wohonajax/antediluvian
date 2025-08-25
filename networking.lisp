@@ -214,9 +214,7 @@ results are the same as the previous best results."
 
         (gethash (gethash transaction-id *transactions*) ; info_hash
                  *token-hashes*)
-        token
-
-        (gethash token *token-nodes*) node))
+        token))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
