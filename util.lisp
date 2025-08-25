@@ -10,10 +10,8 @@
 
 (defun minutes-since (time)
   "Returns the time in minutes that has elapsed since TIME."
-  (declare (type fixnum time))
-  (/ (the fixnum
-          (- (the fixnum (get-universal-time))
-             time))
+  (/ (- (get-universal-time)
+        time)
      60))
 
 (defun calculate-distance (a b)
