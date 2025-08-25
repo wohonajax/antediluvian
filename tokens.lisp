@@ -23,11 +23,12 @@
           (aref array 1) (random 256))
     array))
 
-(defun parse-node-ip (ip)
+(defun parse-node-ip (byte-vector)
   "Takes a byte-vector in compact peer format and returns an IP address and
 port as multiple values."
-  (assert (= (length ip) 6)) ; TODO: support IPv6
-  (values (subseq ip 0 4) (port-from-octet-buffer (subseq ip 4))))
+  (assert (= (length byte-vector) 6)) ; TODO: support IPv6
+  (values (subseq byte-vector 0 4)
+          (port-from-octet-buffer (subseq byte-vector 4))))
 
 (defun make-secret ()
   "Makes a secret."
