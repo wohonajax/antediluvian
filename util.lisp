@@ -24,6 +24,10 @@
   "Converts a node ID from an ID byte-vector to a decimal integer."
   (octets-to-integer id))
 
+(defun make-hash (byte-vector)
+  "Returns the hash of BYTE-VECTOR using the SHA1 algorithm."
+  (digest-sequence :sha1 byte-vector))
+
 (defmacro insert (item list predicate &key key)
   "Inserts ITEM into LIST and sorts it according to PREDICATE."
   `(setf ,list (sort (cons ,item ,list) ,predicate :key ,key)))
