@@ -41,26 +41,24 @@
         *hashes*))
 ;;; TODO: find_node each found node for nodes near the hash
 (defun main-loop ()
-  (with-listening-usocket socket
-    (setf *listening-socket* socket)
-    ;; bootstrap the DHT with known nodes
-    ;; (taken from qbittorrent's bootstrap list)
-    (bootstrap-node "router.bittorrent.com" 6881)
-    (bootstrap-node "router.utorrent.com" 6881)
-    (bootstrap-node "dht.transmissionbt.com" 6881)
-    (bootstrap-node "dht.libtorrent.org" 25401)
-    (bootstrap-node "dht.aelitis.com" 6881)
-    ;; TODO: wait for bootstrapping before initiating lookups
-    (initiate-lookups)
-    (let ((start-time (get-universal-time)))
-      (loop (parse-message)
-            ;; TODO: routing table upkeep
-            (when (= 0 (mod (minutes-since start-time) 10))
-              (iterate-table (lambda (bucket)
-                               (handle-questionable-nodes bucket)
-                               (purge-bad-nodes bucket)
-                               (ping-old-nodes bucket)))
-              (refresh-tokens))))))
+  ;; bootstrap the DHT with known nodes
+  ;; (taken from qbittorrent's bootstrap list)
+  (bootstrap-node "router.bittorrent.com" 6881)
+  (bootstrap-node "router.utorrent.com" 6881)
+  (bootstrap-node "dht.transmissionbt.com" 6881)
+  (bootstrap-node "dht.libtorrent.org" 25401)
+  (bootstrap-node "dht.aelitis.com" 6881)
+  ;; TODO: wait for bootstrapping before initiating lookups
+  (initiate-lookups)
+  (let ((start-time (get-universal-time)))
+    (loop (parse-message)
+          ;; TODO: routing table upkeep
+          (when (= 0 (mod (minutes-since start-time) 10))
+            (iterate-table (lambda (bucket)
+                             (handle-questionable-nodes bucket)
+                             (purge-bad-nodes bucket)
+                             (ping-old-nodes bucket)))
+            (refresh-tokens)))))
 
 (defun dht (&rest hashes)
   "Initiates the distributed hash table."
@@ -73,5 +71,6 @@
        (main-loop)
     (progn (iterate-table #'purge-bad-nodes)
            (iterate-table #'kill-node :nodely t)
+           (socket-close *listening-socket*)
            (save-settings)
            (save-table))))

@@ -24,14 +24,6 @@
   "Converts a node ID from an ID byte-vector to a decimal integer."
   (octets-to-integer id))
 
-(defmacro with-listening-usocket (socket-var &body body)
-  "Creates a listening UDP socket and binds it to SOCKET-VAR."
-  `(with-connected-socket
-       (,socket-var (socket-connect nil nil
-                                    :protocol :datagram
-                                    :local-port *default-port*))
-     ,@body))
-
 (defmacro insert (item list predicate &key key)
   "Inserts ITEM into LIST and sorts it according to PREDICATE."
   `(setf ,list (sort (cons ,item ,list) ,predicate :key ,key)))
