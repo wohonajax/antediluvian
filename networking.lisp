@@ -55,6 +55,10 @@
 ;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
+  (let ((inactivity (calculate-elapsed-inactivity node)))
+    (when (and inactivity (> inactivity 15))
+      (setf (node-health node) :bad)
+      (return-from handle-questionable-node)))
   (send-message :ping (node-ip node) (node-port node)
                 (generate-transaction-id)))
 
