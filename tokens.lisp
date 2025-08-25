@@ -10,11 +10,8 @@
   "A hash table mapping info_hashes to tokens valid for them.")
 
 (defun generate-transaction-id ()
-  "Creates a transaction ID and returns it as a string."
-  (let ((array (make-array 2 :element-type '(unsigned-byte 8))))
-    (setf (aref array 0) (random 256)
-          (aref array 1) (random 256))
-    array))
+  "Creates a transaction ID and returns it as a byte-vector."
+  (random-data 2))
 
 (defun parse-node-ip (byte-vector)
   "Takes a byte-vector in compact peer format and returns an IP address and
