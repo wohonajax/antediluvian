@@ -9,7 +9,6 @@
   (:import-from #:clj-arrows #:->>)
   (:import-from #:ironclad
                 #:octets-to-integer
-                #:integer-to-octets
                 #:digest-sequence
                 #:random-data)
   (:import-from #:uiop
@@ -18,6 +17,7 @@
                 #:socket-connect
                 #:socket-close
                 #:port-from-octet-buffer
+                #:port-to-octet-buffer
                 #:socket-receive
                 #:socket-send
                 #:+max-datagram-packet-size+)
