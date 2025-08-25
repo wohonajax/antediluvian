@@ -35,7 +35,7 @@ port as multiple values."
 
 (defun hash-ip-and-secret (ip secret)
   "Returns the SHA1 hash of IP concatenated onto SECRET."
-  (make-hash (concatenate '(vector (unsigned-byte 8)) ip secret)))
+  (make-hash (concat-vec ip secret)))
 
 (defun invent-token (info-hash node)
   "Creates a token associated with INFO-HASH and NODE."

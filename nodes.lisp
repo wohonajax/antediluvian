@@ -53,15 +53,13 @@ or :BAD."
 (defun compact-peer-info (node)
   "Translates NODE's IP and port into compact format."
   (let ((port-vec (make-array 2 :element-type '(unsigned-byte 8))))
-    (concatenate '(vector (unsigned-byte 8))
-                 (node-ip node)
-                 (port-to-octet-buffer (node-port node) port-vec))))
+    (concat-vec (node-ip node)
+                (port-to-octet-buffer (node-port node) port-vec))))
 
 (defun compact-node-info (node)
   "Translate's NODE's ID, IP, and port into compact peer format."
-  (concatenate '(vector (unsigned-byte 8))
-               (node-id node)
-               (compact-peer-info node)))
+  (concat-vec (node-id node)
+              (compact-peer-info node)))
 
 (defun kill-node (node)
   "Closes the socket associated with NODE."
