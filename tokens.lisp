@@ -23,7 +23,7 @@ port as multiple values."
 (defun ensure-secret ()
   "Makes sure the current secret isn't stale. If it is, makes a fresh secret."
   (flet ((make-secret ()
-           (cons (random-data 5) (get-universal-time))))
+           (cons (random-data 16) (get-universal-time))))
     (unless *current-secret*
       (setf *current-secret* (make-secret)))
     (when (> (minutes-since (cdr *current-secret*))
