@@ -9,9 +9,6 @@
 (defvar *token-hashes* (make-hash-table :test #'equalp)
   "A hash table mapping info_hashes to tokens valid for them.")
 
-(defvar *current-secret*)
-(defvar *previous-secret*)
-
 (defun make-hash (byte-vector)
   "Hashes BYTE-VECTOR using the SHA1 algorithm."
   (digest-sequence :sha1 byte-vector))
@@ -36,6 +33,9 @@ port as multiple values."
          (secret (make-array secret-length :element-type '(unsigned-byte 8))))
     (dotimes (i secret-length secret)
       (setf (aref secret i) (strong-random 160)))))
+
+(defparameter *current-secret* (cons (make-secret) (get-universal-time)))
+(defparameter *previous-secret*)
 
 (defun ensure-secret ()
   "Makes sure the current secret isn't stale. If it is, makes a fresh secret."
