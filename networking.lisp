@@ -111,6 +111,14 @@ Returns the node object."
            (add-to-bucket node)))
   node)
 
+(defun store-received-token (token time transaction-id node)
+  "Handles bookkeeping for a given TOKEN."
+  (setf (gethash token *token-births*) time
+
+        (gethash (gethash transaction-id *transactions*) ; info_hash
+                 *token-hashes*)
+        token))
+
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
   (let* ((now (get-universal-time))
@@ -126,6 +134,8 @@ Returns the node object."
       (setf (gethash transaction-id *transactions*) (or info-hash t)))
     (setf node
           (handle-node-bookkeeping node now implied-port peer-port id ip port))
+    (when token
+      (store-received-token token now transaction-id node))
     (switch ((gethash "q" dict) :test #'string=)
       ("ping" (send-response :ping node dict))
       ("find_node" (send-response :find_node node dict))
@@ -211,14 +221,6 @@ results are the same as the previous best results."
                                    :id target))
                    *best-results*)))))
 
-(defun store-received-token (token time transaction-id node)
-  "Handles bookkeeping for a given TOKEN."
-  (setf (gethash token *token-births*) time
-
-        (gethash (gethash transaction-id *transactions*) ; info_hash
-                 *token-hashes*)
-        token))
-
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
   (let* ((now (get-universal-time))
@@ -247,8 +249,6 @@ results are the same as the previous best results."
       (handle-values-response values))
     (when info-hash
       (handle-lookup-response transaction-id node info-hash))
-    (when token
-      (store-received-token token now transaction-id node))
     (remhash transaction-id *transactions*)))
 
 (defun parse-message ()
