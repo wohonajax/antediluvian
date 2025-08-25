@@ -66,9 +66,9 @@ port as multiple values."
 (defun invent-token (info-hash node)
   "Creates a token associated with INFO-HASH and NODE."
   (let* ((ip-vec (node-ip node))
-         (token (concatenate '(vector (unsigned-byte 8))
-                             (make-hash ip-vec)
-                             (ensure-secret))))
+         (token (make-hash (concatenate '(vector (unsigned-byte 8))
+                                        ip-vec
+                                        (ensure-secret)))))
     (setf (gethash token *token-births*) (get-universal-time))
     (push token (gethash info-hash *token-hashes*))
     (push node (gethash token *token-nodes*))
