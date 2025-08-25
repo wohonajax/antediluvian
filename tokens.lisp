@@ -63,12 +63,13 @@ port as multiple values."
              (equal token-secret (car *current-secret*))))) |#
   )
 
+(defun hash-ip-and-secret (ip secret)
+  "Returns the SHA1 hash of IP concatenated onto SECRET."
+  (make-hash (concatenate '(vector (unsigned-byte 8)) ip secret)))
+
 (defun invent-token (info-hash node)
   "Creates a token associated with INFO-HASH and NODE."
-  (let* ((ip-vec (node-ip node))
-         (token (make-hash (concatenate '(vector (unsigned-byte 8))
-                                        ip-vec
-                                        (ensure-secret)))))
+  (let ((token (hash-ip-and-secret (node-ip node) (ensure-secret))))
     (setf (gethash token *token-births*) (get-universal-time))
     (push token (gethash info-hash *token-hashes*))
     (push node (gethash token *token-nodes*))
