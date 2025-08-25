@@ -121,12 +121,9 @@ Maps to info_hash when applicable.")
     (setf (gethash "id" response-arguments) *id*
           (gethash "nodes" response-arguments)
           (let* ((target (gethash "target" dict))
-                 (have-target-p (member target *node-list*
-                                        :key #'node-id
-                                        :test #'equalp)))
-            (if have-target-p
-                ;; MEMBER returns a list
-                (compact-node-info (first have-target-p))
+                 (node-if-found (find-node-in-table target)))
+            (if node-if-found
+                (compact-node-info node-if-found)
                 (with-output-to-string (str)
                   (mapc (lambda (peer) (princ (compact-node-info peer) str))
                         (find-closest-nodes target)))))

@@ -47,8 +47,6 @@
               (when node
                 (if (eql :bad (node-health node))
                     (progn (kill-node node)
-                           (setf *node-list*
-                                 (remove node *node-list* :test #'eq :count 1))
                            nil)
                     node)))
             (bucket-nodes bucket))
@@ -235,7 +233,7 @@ results are the same as the previous best results."
          (values (gethash "values" arguments))
          (implied-port (gethash "implied_port" arguments))
          (peer-port (gethash "port" arguments))
-         (node (first (member id *node-list* :key #'node-id :test #'equalp))))
+         (node (find-node-in-table id)))
     (setf node
           (handle-node-bookkeeping node now implied-port peer-port id ip port))
     ;; bad transaction ID

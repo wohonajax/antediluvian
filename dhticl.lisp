@@ -72,6 +72,6 @@
   (unwind-protect
        (main-loop)
     (progn (iterate-table (lambda (bucket) (purge-bad-nodes bucket)))
+           (iterate-table #'kill-node :nodely t)
            (save-settings)
-           (save-table)
-           (mapc #'kill-node *node-list*))))
+           (save-table))))

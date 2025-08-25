@@ -7,8 +7,6 @@
     (dotimes (i 20 array)
       (setf (aref array i) (random 256)))))
 
-(defvar *node-list* (list))
-
 (defstruct node
   (id nil :read-only t)
   (ip)
@@ -19,7 +17,7 @@
 
 (defun create-node (&key id ip port last-activity (health :questionable))
   "Creates a node object with the specified attributes and adds it
-to *NODE-LIST*."
+to the routing table."
   (let ((node (make-node :id id
                          :ip ip
                          :port port
@@ -29,7 +27,7 @@ to *NODE-LIST*."
                                   :element-type '(unsigned-byte 8))
                          :last-activity last-activity
                          :health health)))
-    (push node *node-list*)
+    (add-to-bucket node)
     node))
 
 (defun calculate-node-distance (node target)

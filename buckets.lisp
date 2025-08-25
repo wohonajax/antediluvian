@@ -238,12 +238,6 @@ the node if found, NIL otherwise."
         *routing-table*)
     (format file ")")))
 
-(defun populate-node-list ()
-  (iterate-table (lambda (node)
-                   (when node
-                         (push node *node-list*)))
-                 :nodely t))
-
 (defun load-table ()
   "Loads the routing table from the indicated location. Returns NIL and does
 nothing if the specified file doesn't exist, otherwise returns the loaded
@@ -261,5 +255,4 @@ routing table."
                                           :port (third node)
                                           :last-activity (fourth node))))
                          bucket))
-                  (read file))))
-    (populate-node-list)))
+                  (read file))))))
