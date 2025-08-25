@@ -33,19 +33,17 @@ port as multiple values."
 (defun make-secret ()
   "Makes a secret."
   (let* ((secret-length 5)
-         (vec (make-array secret-length :element-type '(unsigned-byte 8))))
-    (dotimes (i secret-length)
-      (setf (aref vec i) (random 160)))
-    (setf *previous-secret* *current-secret*
-          *current-secret* (cons vec (get-universal-time)))
-    vec))
+         (secret (make-array secret-length :element-type '(unsigned-byte 8))))
+    (dotimes (i secret-length secret)
+      (setf (aref secret i) (random 160)))))
 
 (defun ensure-secret ()
   "Makes sure the current secret isn't stale. If it is, makes a fresh secret."
-  (if (> (minutes-since (cdr *current-secret*))
-         5)
-      (make-secret)
-      (car *current-secret*)))
+  (when (> (minutes-since (cdr *current-secret*))
+           5)
+    (setf *previous-secret* *current-secret*
+          *current-secret* (cons (make-secret) (get-universal-time))))
+  (car *current-secret*))
 
 (defun consider-token (token info-hash node)
   "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
