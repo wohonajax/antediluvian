@@ -47,10 +47,8 @@ or :BAD."
 
 (defun node-closer-p (goal node1 node2)
   "Returns T if NODE1 is closer to GOAL than NODE2, NIL otherwise."
-  (let ((id1 (node-id node1))
-        (id2 (node-id node2)))
-    (< (calculate-distance (convert-id-to-int id1) goal)
-       (calculate-distance (convert-id-to-int id2) goal))))
+  (< (calculate-node-distance node1 goal)
+     (calculate-node-distance node2 goal)))
 
 (defun compact-peer-info (node)
   "Translates NODE's IP and port into compact format."
