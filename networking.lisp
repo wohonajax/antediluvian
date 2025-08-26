@@ -162,18 +162,17 @@ Returns the node object."
       ;; (node's health may be bad--malformed response sent?)
       (error () (return-from parse-nodes nodes)))))
 
-(defun parse-peers (string)
-  "Parses a list of peers out of a string of compact peer info substrings."
-  (let (peers)
-    (handler-case
-        (do ((i 0 (+ i 6))) ; operate on compact peer info substrings
-            ((= i (length string)) peers)
-          (multiple-value-bind (parsed-ip parsed-port)
-              (parse-node-ip (subseq string i (+ i 6)))
-            (push (cons parsed-ip parsed-port) peers)))
-      ;; TODO: error handling for out-of-bounds
-      ;; (node's health may be bad--malformed response sent?)
-      (error () (return-from parse-peers peers)))))
+(defun parse-peers (peers-list)
+  "Parses a list of peers out of a list of compact peer info byte-vectors."
+  (handler-case
+      (mapcar (lambda (byte-vector)
+                (multiple-value-bind (parsed-ip parsed-port)
+                    (parse-node-ip byte-vector)
+                  (cons parsed-ip parsed-port)))
+              peers-list)
+    ;; TODO: error handling for out-of-bounds
+    ;; (node's health may be bad--malformed response sent?)
+    (error () (return-from parse-peers))))
 
 (defun handle-nodes-response (nodes)
   "Handle a nodes response from a find_node or get_peers query by pinging every
