@@ -13,19 +13,11 @@
   (health))
 
 (defun create-node (&key id ip port last-activity (health :questionable))
-  "Creates a node object with the specified attributes and adds it
-to the routing table."
-  (let ((node (make-node :id id
-                         :ip ip
-                         :port port
-                         :socket (socket-connect
-                                  ip port
-                                  :protocol :datagram
-                                  :element-type '(unsigned-byte 8))
-                         :last-activity last-activity
-                         :health health)))
-    (add-to-bucket node)
-    node))
+  "Creates a node object with the specified attributes."
+  (make-node :id id :ip ip :port port
+             :socket (socket-connect ip port :protocol :datagram
+                                     :element-type '(unsigned-byte 8))
+             :last-activity last-activity :health health))
 
 (defun calculate-node-distance (node target)
   "Returns the distance between NODE and TARGET."
