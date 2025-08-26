@@ -9,6 +9,9 @@
 (defvar *token-hashes* (make-hash-table :test #'equalp)
   "A hash table mapping info_hashes to tokens valid for them.")
 
+(defvar *token-ips* (make-hash-table :test #'equalp)
+  "A hash table mapping IP addresses to tokens valid for them.")
+
 (defun parse-node-ip (byte-vector)
   "Takes a byte-vector in compact peer format and returns an IP address and
 port as multiple values."

@@ -125,7 +125,9 @@ Returns the node object."
   (let ((info-hash (gethash transaction-id *transactions*)))
     (setf (gethash token *token-births*) time
 
-          (gethash info-hash *token-hashes*) token)))
+          (gethash info-hash *token-hashes*) token
+      
+          (gethash (node-ip node) *token-ips*) token)))
 
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."

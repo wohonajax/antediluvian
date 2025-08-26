@@ -66,11 +66,10 @@ Maps to info_hash when applicable.")
           (gethash transaction-id *transactions*) info-hash)
     (send-bencoded-data socket query-dict)))
 
-(defun announce-peer (socket info-hash transaction-id)
+(defun announce-peer (socket info-hash transaction-id token)
   "Announces peer status under INFO-HASH."
-  (let* ((query-dict (make-hash-table))
-         (query-arguments (make-hash-table))
-         (token (recall-token info-hash)))
+  (let ((query-dict (make-hash-table))
+        (query-arguments (make-hash-table)))
     (setf (gethash "id" query-arguments) *id*
           (gethash "implied_port" query-arguments) (if *use-implied-port-p* 1 0)
           (gethash "info_hash" query-arguments) info-hash
@@ -102,7 +101,8 @@ Maps to info_hash when applicable.")
                     (:find_value)
                     (:get_peers (get-peers socket info-hash transaction-id))
                     (:announce_peer (announce-peer socket info-hash
-                                                   transaction-id)))
+                                                   transaction-id
+                                                   (gethash ip *token-ips*))))
       (simple-error () (invoke-restart :continue)))))
 
 ;;; Responses to queries
@@ -174,7 +174,7 @@ sends a protocol error message."
                    (gethash "port" argument-dict)))
          (token (gethash "token" argument-dict)))
     (setf (node-port node) port)
-    (if (consider-token token info-hash)
+    (if (consider-token token info-hash node)
         (progn (add-to-bucket node)
                (setf (gethash "id" response-arguments) *id*
 
