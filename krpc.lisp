@@ -174,7 +174,7 @@ sends a protocol error message."
                    (gethash "port" argument-dict)))
          (token (gethash "token" argument-dict)))
     (setf (node-port node) port)
-    (if (consider-token token info-hash node)
+    (if (consider-token token info-hash)
         (progn (add-to-bucket node)
                (setf (gethash "id" response-arguments) *id*
 

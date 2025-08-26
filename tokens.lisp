@@ -46,8 +46,8 @@ port as multiple values."
     (or (equalp token (hash-ip-and-secret ip (car *current-secret*)))
         (equalp token (hash-ip-and-secret ip (car *previous-secret*))))))
 
-(defun consider-token (token info-hash node)
-  "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
+(defun consider-token (token info-hash)
+  "Checks whether TOKEN is valid for INFO-HASH or not."
   (member token (gethash info-hash *token-hashes*) :test #'equalp))
 
 (defun valid-token-p (token)
