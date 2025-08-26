@@ -46,21 +46,22 @@ port as multiple values."
     (or (equalp token (hash-ip-and-secret ip (car *current-secret*)))
         (equalp token (hash-ip-and-secret ip (car *previous-secret*))))))
 
-(defun consider-token (token info-hash)
-  "Checks whether TOKEN is valid for INFO-HASH or not."
-  (member token (gethash info-hash *token-hashes*) :test #'equalp))
-
 (defun valid-token-p (token)
   "Determines whether TOKEN is valid or not."
   (let ((token-birth (gethash token *token-births*)))
     (and token-birth
          (< (minutes-since token-birth) 10))))
 
-(defun recall-token (info-hash)
+(defun recall-tokens (info-hash)
   "Retrieves the token values associated with INFO-HASH. If a recent enough
 token isn't found, returns NIL."
   (let ((tokens (gethash info-hash *token-hashes*)))
     (remove-if-not #'valid-token-p tokens)))
+
+(defun consider-token (token info-hash node)
+  "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
+  (and (member token (recall-tokens info-hash) :test #'equalp)
+       (verify-token token node)))
 
 (defun refresh-tokens ()
   "Deletes every token more than 10 minutes old."

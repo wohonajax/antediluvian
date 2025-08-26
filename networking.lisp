@@ -147,7 +147,7 @@ Returns the node object."
       ("ping" (send-response :ping node dict))
       ("find_node" (send-response :find_node node dict))
       ("get_peers" (send-response :get_peers node dict))
-      ("announce_peer" (cond ((member token (recall-token info-hash)
+      ("announce_peer" (cond ((member token (recall-tokens info-hash)
                                       :test #'equalp)
                               (push node (gethash info-hash *peer-list*))
                               (send-response :announce_peer node dict
