@@ -63,9 +63,9 @@ if successful, NIL otherwise."
          (let ((distance (calculate-node-distance node id)))
            (when (sorter distance worst)
              (insert node winners #'list-sorter)
-             (setf worst distance)
              (when (> (length winners) +k+)
-               (setf winners (butlast winners))))))
+               (setf winners (butlast winners)))
+             (setf worst (calculate-node-distance (lastcar winners) id)))))
        :nodely t))
     winners))
 
