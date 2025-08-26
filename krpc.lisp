@@ -13,7 +13,7 @@
 Useful for NATs.")
 
 (defvar *transactions* (make-hash-table :test #'equal)
-  "A hash table storing valid transaction IDs we've generated.
+  "A hash table storing valid, active transaction IDs we've generated.
 Maps to info_hash when applicable.")
 
 (defun send-bencoded-data (socket data)
