@@ -84,9 +84,10 @@ if successful, NIL otherwise."
 
 (defun correct-bucket (id)
   "Returns the proper bucket for ID."
-  (dolist (x *routing-table*)
-    (when (within (convert-id-to-int id) (bucket-min x) (bucket-max x))
-      (return x))))
+  (let ((id-int (convert-id-to-int id)))
+    (dolist (bucket *routing-table*)
+      (when (within id-int (bucket-min bucket) (bucket-max bucket))
+        (return bucket)))))
 
 (defun first-empty-slot (bucket)
   "Returns the index of the first empty slot in BUCKET."
