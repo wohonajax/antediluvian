@@ -110,7 +110,7 @@ in the body."
 Returns the node object."
   (cond (node (setf (node-last-activity node) time
                     (node-health node) :good)
-              ;; when implied_port is 1, use the port the socket sees
+              ;; when implied_port is 1, use the source port of the UDP packet
               (cond ((and implied-port (= implied-port 1))
                      (setf (node-port node) port))
                     (peer-port (setf (node-port node) peer-port))))
