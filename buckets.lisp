@@ -17,6 +17,57 @@
   (nodes (make-array +k+ :initial-element nil))
   (last-changed (get-universal-time)))
 
+(defun iterate-bucket (bucket action)
+  "Funcalls ACTION on each node in BUCKET."
+  (loop for node across (bucket-nodes bucket)
+        when node do (funcall action node)))
+
+(defun iterate-table (action &key nodely)
+  "Funcalls ACTION on each bucket in the routing table, or on each node
+if NODELY is non-NIL."
+  (dolist (bucket *routing-table*)
+    (if nodely
+        (iterate-bucket bucket action)
+        (funcall action bucket))))
+
+(defun find-in-table (criteria)
+  "Attempts to find a node in the routing table that satisfies CRITERIA. Returns
+the node if found, NIL otherwise."
+  (iterate-table (lambda (node)
+                   (when (funcall criteria node)
+                     (return-from find-in-table node)))
+                 :nodely t))
+
+(defun find-node-in-table (id)
+  "Tries to find a node in the routing table based on its ID. Returns the node
+if successful, NIL otherwise."
+  (iterate-bucket (correct-bucket id)
+                  (lambda (node)
+                    (and (equalp id (node-id node))
+                         (return-from find-node-in-table node)))))
+
+(defun find-closest-nodes (id)
+  "Returns a list of the K closest nodes to ID."
+  (let (worst winners)
+    (flet ((sorter (x y)
+                   (cond ((and x y) (< x y))
+                         (x t)
+                         (t nil)))
+           (list-sorter (x y)
+                        (cond ((and x y) (node-closer-p id x y))
+                              (x t)
+                              (y nil))))
+      (iterate-table
+       (lambda (node)
+         (let ((distance (calculate-node-distance node id)))
+           (when (sorter distance worst)
+             (insert node winners #'list-sorter)
+             (setf worst distance)
+             (when (> (length winners) +k+)
+               (setf winners (butlast winners))))))
+       :nodely t))
+    winners))
+
 (defun sort-table ()
   "Ensures the buckets of the routing table are sorted."
   (setf *routing-table*
@@ -157,57 +208,6 @@ BUCKET was split."
       ;; if the bucket was already full
       (maybe-split-bucket bucket id)
       (add-to-bucket node))))
-
-(defun iterate-bucket (bucket action)
-  "Funcalls ACTION on each node in BUCKET."
-  (loop for node across (bucket-nodes bucket)
-        when node do (funcall action node)))
-
-(defun iterate-table (action &key nodely)
-  "Funcalls ACTION on each bucket in the routing table, or on each node
-if NODELY is non-NIL."
-  (dolist (x *routing-table*)
-    (if nodely
-        (iterate-bucket x action)
-        (funcall action x))))
-
-(defun find-in-table (criteria)
-  "Attempts to find a node in the routing table that satisfies CRITERIA. Returns
-the node if found, NIL otherwise."
-  (iterate-table (lambda (node)
-                   (when (funcall criteria node)
-                     (return-from find-in-table node)))
-                 :nodely t))
-
-(defun find-node-in-table (id)
-  "Tries to find a node in the routing table based on its ID. Returns the node
-if successful, NIL otherwise."
-  (iterate-bucket (correct-bucket id)
-                  (lambda (node)
-                    (and (equalp id (node-id node))
-                         (return-from find-node-in-table node)))))
-
-(defun find-closest-nodes (id)
-  "Returns a list of the K closest nodes to ID."
-  (let (worst winners)
-    (flet ((sorter (x y)
-             (cond ((and x y) (< x y))
-                   (x t)
-                   (t nil)))
-           (list-sorter (x y)
-             (cond ((and x y) (node-closer-p id x y))
-                   (x t)
-                   (y nil))))
-      (iterate-table
-       (lambda (node)
-         (let ((distance (calculate-node-distance node id)))
-           (when (sorter distance worst)
-             (insert node winners #'list-sorter)
-             (setf worst distance)
-             (when (> (length winners) +k+)
-               (setf winners (butlast winners))))))
-       :nodely t))
-    winners))
 
 (defun have-peers (info-hash)
   "Returns a list of peers for INFO-HASH."
