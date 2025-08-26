@@ -149,15 +149,16 @@ TARGET, closest to furthest."
 
 (defun seed-buckets (smaller larger seed)
   "Seeds the values of a bucket into 2 fresh buckets."
-  (sort-bucket-by-ids seed)
-  (dotimes (i +k+)
-    (let ((current-node (svref (bucket-nodes seed) i)))
-      (if (<= (convert-id-to-int (node-id current-node))
-              (bucket-max smaller))
-          (setf (svref (bucket-nodes smaller) (first-empty-slot smaller))
-                current-node)
-          (setf (svref (bucket-nodes larger) (first-empty-slot larger))
-                current-node)))))
+  (iterate-bucket
+   seed
+   (lambda (node)
+     (if (<= (convert-id-to-int (node-id node)))
+         (setf (svref (bucket-nodes smaller)
+                      (first-empty-slot smaller))
+               node)
+         (setf (svref (bucket-nodes larger)
+                      (first-empty-slot larger))
+               node)))))
 
 (defun split-bucket (bucket)
   "Splits BUCKET into two new buckets."
