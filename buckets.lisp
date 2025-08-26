@@ -186,7 +186,7 @@ BUCKET was split."
       (cond ((and (within (convert-id-to-int id)
                           lower-bound
                           upper-bound)
-                  (within *id* lower-bound upper-bound)
+                  (within (convert-id-to-int *id*) lower-bound upper-bound)
                   ;; if ID is closer to our ID than the Kth closest node
                   (let ((kth-closest-node (reduce #'max (find-closest-nodes *id*)
                                                   :key #'node-distance-from-us)))
