@@ -19,6 +19,21 @@ port as multiple values."
   (values (subseq byte-vector 0 4)
           (port-from-octet-buffer (subseq byte-vector 4))))
 
+(defun make-secret ()
+  "Makes a secret out of random data."
+  (random-data 16))
+
+(defun start-sercret-rotation-thread ()
+  "Starts a thread that rotates secrets every 5 minutes."
+  (make-thread (lambda ()
+                 (loop (shiftf *previous-secret*
+                               *current-secret*
+                               (make-secret))
+                       (sleep 300)))
+               :name "dht-secret-rotation"))
+
+(defvar *secret-rotation-thread* (start-sercret-rotation-thread))
+
 (defun ensure-secret ()
   "Makes sure the current secret isn't stale. If it is, makes a fresh secret."
   (flet ((make-secret ()

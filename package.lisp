@@ -6,6 +6,9 @@
                 #:clamp
                 #:switch
                 #:eswitch)
+  (:import-from #:bordeaux-threads
+                #:make-thread
+                #:destroy-thread)
   (:import-from #:clj-arrows #:->>)
   (:import-from #:ironclad
                 #:octets-to-integer

@@ -21,4 +21,5 @@
                ironclad/core
                ironclad/digests
                clj-arrows
-               uiop))
+               uiop
+               bordeaux-threads))
