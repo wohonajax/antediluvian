@@ -30,6 +30,10 @@
    nil ;; FIXME: this just hangs waiting for a huge response
    +max-datagram-packet-size+))
 
+(defun generate-transaction-id ()
+  "Creates a transaction ID and returns it as a byte-vector."
+  (random-data 2))
+
 (defun ping-old-nodes (bucket)
   "Pings the nodes in a bucket from oldest to newest."
   (sort-bucket-by-age bucket)

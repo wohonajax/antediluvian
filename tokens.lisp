@@ -9,10 +9,6 @@
 (defvar *token-hashes* (make-hash-table :test #'equalp)
   "A hash table mapping info_hashes to tokens valid for them.")
 
-(defun generate-transaction-id ()
-  "Creates a transaction ID and returns it as a byte-vector."
-  (random-data 2))
-
 (defun parse-node-ip (byte-vector)
   "Takes a byte-vector in compact peer format and returns an IP address and
 port as multiple values."
