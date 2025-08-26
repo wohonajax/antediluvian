@@ -147,16 +147,17 @@ Returns the node object."
                              (t (send-response :dht_error node dict
                                                :error-type :protocol)))))))
 
-(defun parse-nodes (string)
-  "Parses a list of nodes out of a string of compact node info substrings."
+(defun parse-nodes (byte-vector)
+  "Parses a list of nodes out of a byte-vector of compact node info
+substrings."
   (let (nodes)
     (handler-case
-        (do ((i 0 (+ i 26))) ; operate on compact node info substrings
-            ((= i (length string)) nodes)
+        (do ((i 0 (+ i 26))) ; operate on compact node info "substrings"
+            ((= i (length byte-vector)) nodes)
           (multiple-value-bind (parsed-ip parsed-port)
-              (parse-node-ip (subseq string (+ i 20) (+ i 26)))
+              (parse-node-ip (subseq byte-vector (+ i 20) (+ i 26)))
             ;; (list node-id node-ip node-port)
-            (push (list (subseq string i (+ i 20)) parsed-ip parsed-port)
+            (push (list (subseq byte-vector i (+ i 20)) parsed-ip parsed-port)
                   nodes)))
       ;; TODO: error handling for out-of-bounds
       ;; (node's health may be bad--malformed response sent?)
