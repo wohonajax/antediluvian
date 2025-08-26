@@ -22,10 +22,11 @@
                           :direction :output
                           :if-exists :overwrite
                           :if-does-not-exist :create)
-      (format file "~{~S~}" (list (make-setting *routing-table-location*)
-                                  (make-setting *default-port*)
-                                  (make-setting *use-implied-port-p*)
-                                  (make-setting *hashes*))))))
+      (format file "~{~S~^~%~}"
+              (list (make-setting *routing-table-location*)
+                    (make-setting *default-port*)
+                    (make-setting *use-implied-port-p*)
+                    (make-setting *hashes*))))))
 
 (defun bootstrap-node (host port)
   (send-message :find_node host port (generate-transaction-id)
@@ -34,7 +35,7 @@
 (defun initiate-lookups ()
   (mapc (lambda (hash)
           (let ((node-list (find-closest-nodes hash)))
-            (dotimes (i +alpha+)
+            (dotimes (i +alpha+) ; FIXME: handle the whole list
               (let ((node (nth i node-list)))
                 (send-message :find_node (node-ip node) (node-port node)
                               (generate-transaction-id) :info-hash hash)))))
