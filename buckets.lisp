@@ -152,7 +152,8 @@ TARGET, closest to furthest."
   (iterate-bucket
    seed
    (lambda (node)
-     (if (<= (convert-id-to-int (node-id node)))
+     (if (<= (convert-id-to-int (node-id node))
+             (bucket-max smaller))
          (setf (svref (bucket-nodes smaller)
                       (first-empty-slot smaller))
                node)
