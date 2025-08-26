@@ -42,27 +42,26 @@
                     (send-message :ping (node-ip node) (node-port node)
                                   (generate-transaction-id)))))
 
-(defmacro replace-bucket (bucket &body body)
-  "Replaces nodes in BUCKET with the result of BODY. The variable NODE is bound
-in the body."
+(defmacro replace-bucket (bucket test)
+  "Replaces nodes in BUCKET with NIL when TEST isn't satisfied. The variable
+NODE is bound in the test form."
   `(progn (map-into (bucket-nodes ,bucket)
                     (lambda (node)
                       (when node
-                        ,@body))
+                        (if ,test
+                            (progn (kill-node node)
+                                   nil)
+                            node)))
                     (bucket-nodes ,bucket))
           (sort-bucket-by-age ,bucket)))
 
 (defun purge-stale-nodes (bucket)
   "Removes all stale nodes from BUCKET."
-  (replace-bucket bucket (if (node-stale-p node) nil node)))
+  (replace-bucket bucket (node-stale-p node)))
 
 (defun purge-bad-nodes (bucket)
   "Removes all nodes of bad health from BUCKET and from the list of nodes."
-  (replace-bucket bucket
-                  (if (eql :bad (node-health node))
-                      (progn (kill-node node)
-                             nil)
-                      node)))
+  (replace-bucket bucket (eql :bad (node-health node))))
 ;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
