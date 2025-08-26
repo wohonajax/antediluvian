@@ -20,7 +20,8 @@
                 #:port-to-octet-buffer
                 #:socket-receive
                 #:socket-send
-                #:+max-datagram-packet-size+)
+                #:+max-datagram-packet-size+
+                #:with-connected-socket)
   (:export #:dht
            #:*id*
            #:*default-port*

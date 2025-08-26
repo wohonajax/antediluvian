@@ -88,6 +88,7 @@ Maps to info_hash when applicable.")
 (defun send-message (type ip port transaction-id &key id info-hash)
   "Sends NODE a TYPE message. TYPE should be a keyword like
 :PING or :FIND_NODE."
+  ;; we might not have a node object yet so we have to bind a temporary socket
   (with-connected-socket
       (socket (socket-connect
                ip port
@@ -197,20 +198,19 @@ sends a protocol error message."
 
 (defun send-response (type node dict &key error-type source-port)
   (let ((ip (node-ip node))
-        (port (node-port node)))
-    (with-connected-socket
-        (target-socket (node-socket node))
-      (handler-case (case type
-                      (:ping
-                       (respond-to-ping target-socket dict node))
-                      (:find_node
-                       (respond-to-find-node target-socket dict node))
-                      (:get_peers
-                       (respond-to-get-peers target-socket dict node))
-                      (:announce_peer
-                       (respond-to-announce-peer target-socket
-                                                 dict
-                                                 node
-                                                 source-port))
-                      (:dht_error (dht-error target-socket error-type dict)))
-        (simple-error () (invoke-restart :continue))))))
+        (port (node-port node))
+        (target-socket (node-socket node)))
+    (handler-case (case type
+                    (:ping
+                     (respond-to-ping target-socket dict node))
+                    (:find_node
+                     (respond-to-find-node target-socket dict node))
+                    (:get_peers
+                     (respond-to-get-peers target-socket dict node))
+                    (:announce_peer
+                     (respond-to-announce-peer target-socket
+                                               dict
+                                               node
+                                               source-port))
+                    (:dht_error (dht-error target-socket error-type dict)))
+      (simple-error () (invoke-restart :continue)))))
