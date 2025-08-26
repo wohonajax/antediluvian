@@ -9,7 +9,8 @@
 (defvar *peer-list* (make-hash-table :test #'equalp)
   "A hash table containing info_hashes as keys and a list of nodes as values.")
 ;;; recommended bucket size limit is 8
-(defconstant +k+ 8 "Bucket size limit.")
+(defconstant +k+ 8
+  "Replication parameter. Used for the bucket size limit, among other things.")
 
 (defstruct bucket
   (min 0 :read-only t)
