@@ -36,9 +36,7 @@
   (iterate-bucket bucket
                   (lambda (node)
                     (send-message :ping (node-ip node) (node-port node)
-                                  (generate-transaction-id))))
-  (update-bucket bucket)
-  (sort-bucket-by-ids bucket))
+                                  (generate-transaction-id)))))
 
 (defmacro replace-bucket (bucket &body body)
   "Replaces nodes in BUCKET with the result of BODY. The variable NODE is bound
@@ -76,16 +74,14 @@ in the body."
   (iterate-bucket bucket
                   (lambda (node)
                     (when (eql :questionable (node-health node))
-                      (handle-questionable-node node))))
-  (update-bucket bucket))
+                      (handle-questionable-node node)))))
 
 (defun ping-oldest-node (bucket)
   "Pings the oldest node in BUCKET."
   (sort-bucket-by-age bucket)
   (let ((node (svref bucket 0)))
     (send-message :ping (node-ip node) (node-port node)
-                  (generate-transaction-id)))
-  (sort-bucket-by-ids bucket))
+                  (generate-transaction-id))))
 
 (defun lookup (node)
   "Begins a lookup of NODE."
@@ -138,8 +134,7 @@ Returns the node object."
          (implied-port (gethash "implied_port" arguments))
          (peer-port (gethash "port" arguments))
          (node (find-node-in-table id)))
-    (unless node
-      (setf (gethash transaction-id *transactions*) (or info-hash t)))
+    (setf (gethash transaction-id *transactions*) (or info-hash t))
     (setf node
           (handle-node-bookkeeping node now implied-port peer-port id ip port))
     (when token
@@ -251,6 +246,8 @@ results are the same as the previous best results."
       (send-response :dht_error node dict :error-type :protocol)
       (setf (node-health node) :bad)
       (return-from parse-response))
+    ;; we're getting a response, so the node isn't stale
+    (setf (node-failed-rpcs node) 0)
     (when nodes
       (handle-nodes-response nodes))
     (when values
