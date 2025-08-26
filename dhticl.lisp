@@ -56,6 +56,7 @@
           ;; TODO: routing table upkeep
           (when (= 0 (mod (minutes-since start-time) 10))
             (iterate-table (lambda (bucket)
+                             (purge-stale-nodes bucket)
                              (handle-questionable-nodes bucket)
                              (purge-bad-nodes bucket)
                              (ping-old-nodes bucket)))

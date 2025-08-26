@@ -10,7 +10,8 @@
   (port)
   (socket)
   (last-activity nil :type fixnum)
-  (health))
+  (health)
+  (failed-rpcs 0 :type fixnum))
 
 (defun create-node (&key id ip port last-activity (health :questionable))
   "Creates a node object with the specified attributes."
@@ -36,6 +37,10 @@ or :BAD."
     (cond ((null time-inactive) :questionable)
           ((< time-inactive 15) (node-health node))
           (t :bad))))
+
+(defun node-stale-p (node)
+  "Returns T if NODE is stale, NIL otherwise."
+  (>= (node-failed-rpcs node) 5))
 
 (defun node-closer-p (goal node1 node2)
   "Returns T if NODE1 is closer to GOAL than NODE2, NIL otherwise."

@@ -40,18 +40,27 @@
   (update-bucket bucket)
   (sort-bucket-by-ids bucket))
 
+(defmacro replace-bucket (bucket &body body)
+  "Replaces nodes in BUCKET with the result of BODY. The variable NODE is bound
+in the body."
+  `(progn (map-into (bucket-nodes ,bucket)
+                    (lambda (node)
+                      (when node
+                        ,@body))
+                    (bucket-nodes ,bucket))
+          (sort-bucket-by-age ,bucket)))
+
+(defun purge-stale-nodes (bucket)
+  "Removes all stale nodes from BUCKET."
+  (replace-bucket bucket (if (node-stale-p node) nil node)))
+
 (defun purge-bad-nodes (bucket)
   "Removes all nodes of bad health from BUCKET and from the list of nodes."
-  (map-into (bucket-nodes bucket)
-            (lambda (node)
-              (when node
-                (if (eql :bad (node-health node))
-                    (progn (kill-node node)
-                           nil)
-                    node)))
-            (bucket-nodes bucket))
-  (update-bucket bucket)
-  (sort-bucket-by-ids bucket))
+  (replace-bucket bucket
+                  (if (eql :bad (node-health node))
+                      (progn (kill-node node)
+                             nil)
+                      node)))
 ;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
