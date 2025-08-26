@@ -177,9 +177,7 @@ substrings."
   "Parses a list of peers out of a list of compact peer info byte-vectors."
   (handler-case
       (mapcar (lambda (byte-vector)
-                (multiple-value-bind (parsed-ip parsed-port)
-                    (parse-node-ip byte-vector)
-                  (cons parsed-ip parsed-port)))
+                (multiple-value-call #'cons (parse-node-ip byte-vector)))
               peers-list)
     ;; TODO: error handling for out-of-bounds
     ;; (node's health may be bad--malformed response sent?)
