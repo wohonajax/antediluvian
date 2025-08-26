@@ -34,35 +34,24 @@ port as multiple values."
 
 (defvar *secret-rotation-thread* (start-sercret-rotation-thread))
 
-(defun ensure-secret ()
-  "Makes sure the current secret isn't stale. If it is, makes a fresh secret."
-  (flet ((make-secret ()
-           (cons (random-data 16) (get-universal-time))))
-    (unless *current-secret*
-      (setf *current-secret* (make-secret)))
-    (when (> (minutes-since (cdr *current-secret*))
-             5)
-      (shiftf *previous-secret*
-              *current-secret*
-              (make-secret)))
-    (car *current-secret*)))
-
 (defun hash-ip-and-secret (ip secret)
   "Returns the SHA1 hash of IP concatenated onto SECRET."
   (make-hash (concat-vec ip secret)))
 
 (defun invent-token (info-hash node)
   "Creates a token associated with INFO-HASH and NODE."
-  (let ((token (hash-ip-and-secret (node-ip node) (ensure-secret))))
+  (let* ((ip (node-ip node))
+         (token (hash-ip-and-secret ip *current-secret*)))
     (setf (gethash token *token-births*) (get-universal-time))
+    (setf (gethash ip *token-ips*) token)
     (push token (gethash info-hash *token-hashes*))
     token))
 ;; TODO: verify that tokens came from us (in networking.lisp probably)
 (defun verify-token (token node)
   "Verifies whether TOKEN comes from us and is valid for a given NODE."
   (let ((ip (node-ip node)))
-    (or (equalp token (hash-ip-and-secret ip (car *current-secret*)))
-        (equalp token (hash-ip-and-secret ip (car *previous-secret*))))))
+    (or (equalp token (hash-ip-and-secret ip *current-secret*))
+        (equalp token (hash-ip-and-secret ip *previous-secret*)))))
 
 (defun valid-token-p (token)
   "Determines whether TOKEN is valid or not."
