@@ -72,6 +72,7 @@
   (unwind-protect
        (main-loop)
     (progn (iterate-table #'purge-bad-nodes)
+           (iterate-table #'purge-stale-nodes)
            (iterate-table #'kill-node :nodely t)
            (socket-close *listening-socket*)
            (save-settings)
