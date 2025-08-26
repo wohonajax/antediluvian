@@ -232,7 +232,7 @@ if successful, NIL otherwise."
 nothing if the specified file doesn't exist, otherwise returns the loaded
 routing table."
   (unless *routing-table*
-    (make-new-bucket :min 0 :max (expt 2 160)))
+    (make-new-bucket 0 (expt 2 160)))
   (when (probe-file *routing-table-location*)
     (with-open-file (file *routing-table-location*)
       (loop for sexp = (read file nil :eof)
