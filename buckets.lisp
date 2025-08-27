@@ -179,28 +179,23 @@ and ID is closer to us than the kth closest node in the routing table,
 otherwise pings from oldest to newest. Returns a boolean indicating whether
 BUCKET was split."
   (when (first-empty-slot bucket)
+    ;; bucket isn't full; return nil since we didn't split the bucket
     (return-from maybe-split-bucket))
-  (labels ((node-id-as-number (node)
-             (convert-id-to-int (node-id node)))
-           (node-distance-from-us (node)
+  (labels ((node-distance-from-us (node)
              (calculate-node-distance node *id*))
            (kth-closest-node-to-us ()
              (extremum (find-closest-nodes *id*) #'>
                        :key #'node-distance-from-us)))
-    (let* ((nodes (bucket-nodes bucket))
-           (lower-bound (reduce #'min nodes :key #'node-id-as-number))
-           (upper-bound (reduce #'max nodes :key #'node-id-as-number)))
-      (cond ((and (within (convert-id-to-int id)
-                          lower-bound
-                          upper-bound)
+    (let ((lower-bound (bucket-min bucket))
+          (upper-bound (bucket-max bucket)))
+      (cond ((and (within (convert-id-to-int id) lower-bound upper-bound)
                   (within (convert-id-to-int *id*) lower-bound upper-bound)
                   ;; if ID is closer to our ID than the kth closest node
                   (< (calculate-distance id *id*)
-                     (calculate-node-distance (kth-closest-node-to-us) *id*)))
+                     (node-distance-from-us (kth-closest-node-to-us))))
              (split-bucket bucket)
              t)
             (t (ping-old-nodes bucket)
-               (update-bucket bucket)
                nil)))))
 
 (defun add-to-bucket (node)
