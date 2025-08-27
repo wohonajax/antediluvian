@@ -75,18 +75,34 @@ NODE is bound in the test form."
   "Handles bucket upkeep when a node sends us a message."
   (let ((bucket (correct-bucket node)))
     (sort-bucket-by-age bucket)
-    (when-let (empty-slot-index (first-empty-slot bucket))
-      (setf (svref bucket empty-slot-index) node)
-      ;; we've added the node to the bucket; we're done
-      (return-from maybe-add-to-bucket))
     (unless (contains node bucket :test #'eq)
+      (when-let (empty-slot-index (first-empty-slot bucket))
+        (setf (svref bucket empty-slot-index) node)
+        ;; we've added the node to the bucket; we're done
+        (return-from maybe-add-to-bucket))
       (let ((deletion-candidate-node (svref bucket 0))
-            (transaction-id (generate-transaction-id)))
+            (transaction-id (generate-transaction-id))
+            (promise (promise)))
         (setf (gethash transaction-id *replacement-candidates*)
-              (cons (promise) node))
+              (cons promise node))
+        ;; if the promise isn't fulfilled after 10 seconds, consider it failed
+        (make-thread (lambda () (sleep 10) (fulfill promise 'timeout)))
         (send-message :ping (node-ip deletion-candidate-node)
                       (node-port deletion-candidate-node)
                       transaction-id)))))
+
+(defun check-replacement-candidates ()
+  "Checks whether to replace potentially stale nodes with replacement
+candidates or add those candidates to the replacement cache."
+  (maphash (lambda (transaction-id promise-node-cons)
+             (let ((promise (car promise-node-cons))
+                   (node (cdr promise-node-cons)))
+               (when (fulfilledp promise)
+                 (case (force promise)
+                   (timeout (setf (svref (correct-bucket node) 0) node))
+                   (response (push node *replacement-cache*)))
+                 (remhash transaction-id *replacement-candidates*))))
+           *replacement-candidates*))
 ;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
@@ -278,6 +294,12 @@ results are the same as the previous best results."
     ;; we're getting a response, so the node isn't stale
     (setf (node-failed-rpcs node) 0)
     (maybe-add-to-bucket node)
+    (check-replacement-candidates)
+    ;; if this is a response to a test for a candidate's replacement,
+    ;; fulfill the promise/indicate that we got a response
+    (when-let (promise-node-cons (gethash transaction-id
+                                          *replacement-candidates*))
+      (fulfill (car promise-node-cons) 'response))
     (when nodes
       (handle-nodes-response nodes))
     (when values
