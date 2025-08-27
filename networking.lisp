@@ -33,10 +33,7 @@ whose cdr is the node to add to the bucket.")
 
 (defun receive-data ()
   "Receive data from the listening socket."
-  (socket-receive
-   *listening-socket*
-   nil ;; FIXME: this just hangs waiting for a huge response
-   +max-datagram-packet-size+))
+  (socket-receive *listening-socket* nil +max-datagram-packet-size+))
 
 (defun generate-transaction-id ()
   "Creates a transaction ID and returns it as a byte-vector."
