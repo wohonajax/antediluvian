@@ -81,7 +81,7 @@ Maps to info_hash when applicable.")
           (gethash "q" query-dict) "announce_peer"
           (gethash "a" query-dict) query-arguments
 
-          (gethash transaction-id *transactions*) t)
+          (gethash transaction-id *transactions*) info-hash)
     (send-bencoded-data socket query-dict)))
 
 (defun send-message (type ip port transaction-id &key id info-hash)
