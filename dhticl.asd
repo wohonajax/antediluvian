@@ -15,12 +15,12 @@
                (:file "networking")
                (:file "dhticl"))
   :serial t
-  :depends-on (usocket
+  :depends-on (alexandria
                bencode
-               alexandria
+               bordeaux-threads
+               clj-arrows
                ironclad/core
                ironclad/digests
-               clj-arrows
+               lparallel
                uiop
-               bordeaux-threads
-               anaphora))
+               usocket))

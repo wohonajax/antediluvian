@@ -24,6 +24,10 @@
   "A list of nodes to potentially add to the routing table, should a bucket
 contain nodes that go stale.")
 
+(defvar *replacement-candidates* (make-hash-table :test #'equalp)
+  "A hash table mapping transaction IDs to a cons whose car is a promise and
+whose cdr is the node to add to the bucket.")
+
 (defconstant +alpha+ 3
   "The number of simultaneous lookups to perform.")
 
@@ -71,18 +75,18 @@ NODE is bound in the test form."
   "Handles bucket upkeep when a node sends us a message."
   (let ((bucket (correct-bucket node)))
     (sort-bucket-by-age bucket)
-    (awhen (first-empty-slot bucket)
-      (setf (svref bucket it) node)
+    (when-let (empty-slot-index (first-empty-slot bucket))
+      (setf (svref bucket empty-slot-index) node)
       ;; we've added the node to the bucket; we're done
       (return-from maybe-add-to-bucket))
     (unless (contains node bucket :test #'eq)
-      (let ((deletion-candidate-node (svref bucket 0)))
-        ;; TODO: wait for a response. if we get one, add NODE to
-        ;; *REPLACEMENT-CACHE*. if we don't, replace DELETION-CANDIDATE-NODE
-        ;; with NODE
+      (let ((deletion-candidate-node (svref bucket 0))
+            (transaction-id (generate-transaction-id)))
+        (setf (gethash transaction-id *replacement-candidates*)
+              (cons (promise) node))
         (send-message :ping (node-ip deletion-candidate-node)
                       (node-port deletion-candidate-node)
-                      (generate-transaction-id))))))
+                      transaction-id)))))
 ;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
