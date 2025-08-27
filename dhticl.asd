@@ -22,4 +22,5 @@
                ironclad/digests
                clj-arrows
                uiop
-               bordeaux-threads))
+               bordeaux-threads
+               anaphora))

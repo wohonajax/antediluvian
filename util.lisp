@@ -33,3 +33,9 @@
 (defun concat-vec (x y)
   "Concatenates X and Y into a byte-vector."
   (concatenate '(vector (unsigned-byte 8)) x y))
+
+(defun contains (item vector &key (test #'eql))
+  "Returns T if ITEM is present in VECTOR under TEST, NIL otherwise."
+  (loop for elt across sequence
+        when (funcall test item elt)
+          do (return t)))

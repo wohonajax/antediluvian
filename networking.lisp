@@ -20,6 +20,10 @@
 (defvar *active-lookups* (make-hash-table :test #'equal)
   "A hash table containing currently active lookups.")
 
+(defvar *replacement-cache* (list)
+  "A list of nodes to potentially add to the routing table, should a bucket
+contain nodes that go stale.")
+
 (defconstant +alpha+ 3
   "The number of simultaneous lookups to perform.")
 
@@ -62,6 +66,23 @@ NODE is bound in the test form."
 (defun purge-bad-nodes (bucket)
   "Removes all nodes of bad health from BUCKET and from the list of nodes."
   (replace-bucket bucket (eql :bad (node-health node))))
+
+(defun maybe-add-to-bucket (node)
+  "Handles bucket upkeep when a node sends us a message."
+  (let ((bucket (correct-bucket node)))
+    (sort-bucket-by-age bucket)
+    (awhen (first-empty-slot bucket)
+      (setf (svref bucket it) node)
+      ;; we've added the node to the bucket; we're done
+      (return-from maybe-add-to-bucket))
+    (unless (contains node bucket :test #'eq)
+      (let ((deletion-candidate-node (svref bucket 0)))
+        ;; TODO: wait for a response. if we get one, add NODE to
+        ;; *REPLACEMENT-CACHE*. if we don't, replace DELETION-CANDIDATE-NODE
+        ;; with NODE
+        (send-message :ping (node-ip deletion-candidate-node)
+                      (node-port deletion-candidate-node)
+                      (generate-transaction-id))))))
 ;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
@@ -142,6 +163,7 @@ Returns the node object."
     (setf (gethash transaction-id *transactions*) (or info-hash t))
     (setf node
           (handle-node-bookkeeping node now implied-port peer-port id ip port))
+    (maybe-add-to-bucket node)
     (when token
       (store-received-token token now transaction-id node))
     (switch ((gethash "q" dict) :test #'string=)
@@ -251,6 +273,7 @@ results are the same as the previous best results."
       (return-from parse-response))
     ;; we're getting a response, so the node isn't stale
     (setf (node-failed-rpcs node) 0)
+    (maybe-add-to-bucket node)
     (when nodes
       (handle-nodes-response nodes))
     (when values

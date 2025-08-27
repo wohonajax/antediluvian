@@ -8,6 +8,8 @@
                 #:lastcar
                 #:switch
                 #:eswitch)
+  (:import-from #:anaphora
+                #:awhen)
   (:import-from #:bordeaux-threads
                 #:make-thread
                 #:destroy-thread)
