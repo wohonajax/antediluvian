@@ -17,7 +17,7 @@ Useful for NATs.")
 Maps to info_hash when applicable.")
 
 (defun send-bencoded-data (socket data)
-  (let ((bencoded-data (bencode:encode data nil)))
+  (let ((bencoded-data (encode data nil)))
     (socket-send socket bencoded-data (length bencoded-data))))
 
 ;;; Queries

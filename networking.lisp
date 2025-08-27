@@ -315,7 +315,7 @@ results are the same as the previous best results."
   (multiple-value-bind (data size host port)
       (receive-data)
     (let* ((packet (subseq data 0 size))
-           (dict (bencode:decode packet)))
+           (dict (decode packet)))
       (eswitch ((gethash "y" dict) :test #'string=)
         ("q" (parse-query dict host port))
         ("r" (parse-response dict host port))

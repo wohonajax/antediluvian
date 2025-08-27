@@ -9,6 +9,9 @@
                 #:lastcar
                 #:switch
                 #:when-let)
+  (:import-from #:bencode
+                #:decode
+                #:encode)
   (:import-from #:bordeaux-threads
                 #:destroy-thread
                 #:make-thread)
