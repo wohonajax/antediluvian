@@ -210,7 +210,7 @@ BUCKET was split."
                       ((null current-bucket-index)
                        (setf (svref (bucket-nodes bucket) i)
                              node)
-                       (sort-bucket-by-ids bucket)
+                       (sort-bucket-by-age bucket)
                        (update-bucket bucket)
                        (return t)))))
       ;; if the bucket was already full
