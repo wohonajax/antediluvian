@@ -173,18 +173,6 @@ TARGET, closest to furthest."
     (seed-buckets small-bucket large-bucket bucket)
     (sort-table)))
 
-(defun kth-closest-node (target)
-  "Returns the kth closest node to TARGET."
-  (let (farthest-node)
-    (dolist (node (find-closest-nodes target) farthest-node)
-      (unless farthest-node
-        (setf farthest-node node))
-      (when farthest-node
-        (setf farthest-node
-              (if (node-closer-p target farthest-node node)
-                  farthest-node
-                  node))))))
-
 (defun maybe-split-bucket (bucket id)
   "Splits BUCKET if it's full, ID is in its range, our ID is in its range,
 and ID is closer to us than the kth closest node in the routing table,
@@ -192,10 +180,13 @@ otherwise pings from oldest to newest. Returns a boolean indicating whether
 BUCKET was split."
   (when (first-empty-slot bucket)
     (return-from maybe-split-bucket))
-  (flet ((node-id-as-number (node)
-           (convert-id-to-int (node-id node)))
-         (node-distance-from-us (node)
-           (calculate-node-distance node *id*)))
+  (labels ((node-id-as-number (node)
+             (convert-id-to-int (node-id node)))
+           (node-distance-from-us (node)
+             (calculate-node-distance node *id*))
+           (kth-closest-node-to-us ()
+             (extremum (find-closest-nodes *id*) #'>
+                       :key #'node-distance-from-us)))
     (let* ((nodes (bucket-nodes bucket))
            (lower-bound (reduce #'min nodes :key #'node-id-as-number))
            (upper-bound (reduce #'max nodes :key #'node-id-as-number)))
@@ -204,9 +195,8 @@ BUCKET was split."
                           upper-bound)
                   (within (convert-id-to-int *id*) lower-bound upper-bound)
                   ;; if ID is closer to our ID than the kth closest node
-                  (let ((kth-closest-node (kth-closest-node *id*)))
-                    (< (calculate-distance id *id*)
-                       (calculate-node-distance kth-closest-node *id*))))
+                  (< (calculate-distance id *id*)
+                     (calculate-node-distance (kth-closest-node-to-us) *id*)))
              (split-bucket bucket)
              t)
             (t (ping-old-nodes bucket)

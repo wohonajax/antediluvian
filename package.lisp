@@ -4,6 +4,7 @@
   (:use #:cl)
   (:import-from #:alexandria
                 #:clamp
+                #:extremum
                 #:lastcar
                 #:switch
                 #:eswitch)
