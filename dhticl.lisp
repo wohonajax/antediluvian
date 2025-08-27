@@ -77,6 +77,7 @@
            (iterate-table #'purge-stale-nodes)
            (iterate-table #'kill-node :nodely t)
            (socket-close *listening-socket*)
+           (end-kernel)
            (destroy-thread *secret-rotation-thread*)
            (save-settings)
            (save-table))))

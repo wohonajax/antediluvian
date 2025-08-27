@@ -20,6 +20,7 @@
                 #:random-data)
   (:import-from #:lparallel
                 #:*kernel*
+                #:end-kernel
                 #:force
                 #:fulfill
                 #:make-kernel
