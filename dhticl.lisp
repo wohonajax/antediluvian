@@ -7,6 +7,8 @@
 (defvar *hashes* (list)
   "The list of info_hashes the DHT program will use.")
 
+(setf *kernel* (make-kernel 4)) ; lparallel kernel
+
 ;;; TODO: sanitize settings
 (defun load-settings ()
   "Loads settings."
