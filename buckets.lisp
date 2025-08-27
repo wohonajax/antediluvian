@@ -173,6 +173,18 @@ TARGET, closest to furthest."
     (seed-buckets small-bucket large-bucket bucket)
     (sort-table)))
 
+(defun kth-closest-node (target)
+  "Returns the kth closest node to TARGET."
+  (let (farthest-node)
+    (dolist (node (find-closest-nodes target) farthest-node)
+      (unless farthest-node
+        (setf farthest-node node))
+      (when farthest-node
+        (setf farthest-node
+              (if (node-closer-p target farthest-node node)
+                  farthest-node
+                  node))))))
+
 (defun maybe-split-bucket (bucket id)
   "Splits BUCKET if it's full, ID is in its range, our ID is in its range,
 and ID is closer to us than the kth closest node in the routing table,
@@ -191,9 +203,8 @@ BUCKET was split."
                           lower-bound
                           upper-bound)
                   (within (convert-id-to-int *id*) lower-bound upper-bound)
-                  ;; if ID is closer to our ID than the Kth closest node
-                  (let ((kth-closest-node (reduce #'max (find-closest-nodes *id*)
-                                                  :key #'node-distance-from-us)))
+                  ;; if ID is closer to our ID than the kth closest node
+                  (let ((kth-closest-node (kth-closest-node *id*)))
                     (< (calculate-distance id *id*)
                        (calculate-node-distance kth-closest-node *id*))))
              (split-bucket bucket)
