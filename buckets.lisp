@@ -173,61 +173,9 @@ TARGET, closest to furthest."
     (seed-buckets small-bucket large-bucket bucket)
     (sort-table)))
 
-(defun add-to-bucket (node)
-  "Adds NODE to the correct bucket, per its ID."
-  (let* ((id (node-id node))
-         (bucket (correct-bucket id)))
-    (unless (dotimes (i +k+) ; if DOTIMES runs to the end it returns nil
-              (let ((current-bucket-index (svref (bucket-nodes bucket) i)))
-                ;; unless one of these conditions is satisfied
-                (cond ((equalp node current-bucket-index)
-                       (return t))
-                      ((null current-bucket-index)
-                       (setf (svref (bucket-nodes bucket) i)
-                             node)
-                       (sort-bucket-by-age bucket)
-                       (update-bucket bucket)
-                       (return t)))))
-      ;; if the bucket was already full
-      (maybe-split-bucket bucket id)
-      (add-to-bucket node))))
-
 (defun have-peers (info-hash)
   "Returns a list of peers for INFO-HASH."
   (let ((peer-list (gethash info-hash *peer-list*)))
     (unless peer-list
       (remhash info-hash *peer-list*))
     peer-list))
-
-(defun save-table ()
-  "Saves the routing table to a file."
-  (with-open-file (file *routing-table-location*
-                        :direction :output
-                        :if-exists :overwrite
-                        :if-does-not-exist :create)
-    (iterate-table (lambda (node)
-                     (format file "~&(~S ~S ~S ~S)"
-                             (node-id node)
-                             (node-ip node)
-                             (node-port node)
-                             (node-last-activity node)))
-                   :nodely t)))
-
-(defun load-table ()
-  "Loads the routing table from the indicated location. Returns NIL and does
-nothing if the specified file doesn't exist, otherwise returns the loaded
-routing table."
-  (unless *routing-table*
-    (make-new-bucket 0 (expt 2 160)))
-  (when (probe-file *routing-table-location*)
-    (with-open-file (file *routing-table-location*)
-      (loop with eof-value = (gensym "EOF")
-            for sexp = (read file nil eof-value)
-            until (eq sexp eof-value)
-            for node = (create-node :id (coerce (first sexp)
-                                                '(vector (unsigned-byte 8)))
-                                    :ip (coerce (second sexp)
-                                                '(vector (unsigned-byte 8)))
-                                    :port (third sexp)
-                                    :last-activity (fourth sexp))
-            do (add-to-bucket node)))))

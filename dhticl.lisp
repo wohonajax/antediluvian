@@ -67,7 +67,6 @@
 (defun dht (&rest hashes)
   "Initiates the distributed hash table."
   (load-settings)
-  (load-table)
   (when hashes
     (mapc (lambda (hash) (push hash *hashes*))
           hashes))
@@ -79,5 +78,4 @@
            (socket-close *listening-dht-socket*)
            (end-kernel)
            (destroy-thread *secret-rotation-thread*)
-           (save-settings)
-           (save-table))))
+           (save-settings))))
