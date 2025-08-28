@@ -121,11 +121,12 @@ Maps to info_hash when applicable.")
 (defun respond-to-find-node (socket dict node)
   "Responds to a find_node query."
   (let ((response-dict (make-hash-table :test #'equal))
-        (response-arguments (make-hash-table :test #'equal)))
+        (response-arguments (make-hash-table :test #'equal))
+        (dict-arguments (gethash "a" dict)))
     (setf (gethash "id" response-arguments) *id*
 
           (gethash "nodes" response-arguments)
-          (let* ((target (gethash "target" dict))
+          (let* ((target (gethash "target" dict-arguments))
                  (node-if-found (find-node-in-table target)))
             (if node-if-found
                 (compact-node-info node-if-found)
@@ -139,8 +140,8 @@ Maps to info_hash when applicable.")
 
 (defun respond-to-get-peers (socket dict node)
   "Responds to a get_peers query."
-  (let* ((arguments-dict (gethash "a" dict))
-         (hash (gethash "info_hash" arguments-dict))
+  (let* ((dict-arguments (gethash "a" dict))
+         (hash (gethash "info_hash" dict-arguments))
          (peers (have-peers hash))
          (response-dict (make-hash-table :test #'equal))
          (response-arguments (make-hash-table :test #'equal)))
@@ -163,16 +164,16 @@ Maps to info_hash when applicable.")
 sends a protocol error message."
   (let* ((response-dict (make-hash-table :test #'equal))
          (response-arguments (make-hash-table :test #'equal))
-         (argument-dict (gethash "a" dict))
-         (id (gethash "id" argument-dict))
-         (implied-port-p (gethash "implied_port" argument-dict))
-         (info-hash (gethash "info_hash" argument-dict))
+         (dict-arguments (gethash "a" dict))
+         (id (gethash "id" dict-arguments))
+         (implied-port-p (gethash "implied_port" dict-arguments))
+         (info-hash (gethash "info_hash" dict-arguments))
          (port (if (and implied-port-p (= implied-port-p 1))
                    ;; if implied_port is 1, use the source port
                    source-port
                    ;; otherwise use the supplied port
-                   (gethash "port" argument-dict)))
-         (token (gethash "token" argument-dict)))
+                   (gethash "port" dict-arguments)))
+         (token (gethash "token" dict-arguments)))
     (setf (node-port node) port)
     (if (consider-token token info-hash node)
         (progn (add-to-bucket node)
