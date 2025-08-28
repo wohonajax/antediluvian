@@ -123,7 +123,9 @@ candidates or add those candidates to the replacement cache."
   (let ((node (svref bucket 0)))
     (send-message :ping (node-ip node) (node-port node)
                   (generate-transaction-id))))
-
+;;; FIXME: we need to perform recursive find_node queries for lookups until
+;;; the k best results are the same distance from the target as the previous
+;;; k best results
 (defun lookup (node)
   "Begins a lookup of NODE."
   (let ((transaction-id (generate-transaction-id)))
@@ -301,6 +303,8 @@ results are the same as the previous best results."
       (handle-nodes-response nodes))
     (when values
       (handle-values-response values))
+    ;; FIXME: *active-lookups* currently maps transaction IDs to node objects.
+    ;; we need to maintain the target of our lookups, which will be a node ID
     (when-let* ((info-hash (gethash transaction-id *transactions*))
                 (info-hash-p (not (eql t info-hash))))
       (handle-lookup-response transaction-id node info-hash))
