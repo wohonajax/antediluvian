@@ -3,11 +3,11 @@
 
 (in-package #:dhticl)
 
-(defvar *listening-socket*
+(defvar *listening-dht-socket*
         (socket-connect nil nil
                         :protocol :datagram
                         :local-port *default-port*)
-  "A UDP socket listening on *DEFAULT-PORT*.")
+  "A UDP socket listening on *DEFAULT-PORT* for DHT communication.")
 
 (defvar *results-list* (list)
   "A list containing nodes received from find_node queries.")
