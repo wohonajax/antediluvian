@@ -36,6 +36,6 @@
 
 (defun contains (item vector &key (test #'eql))
   "Returns T if ITEM is present in VECTOR under TEST, NIL otherwise."
-  (loop for elt across sequence
+  (loop for elt across vector
         when (funcall test item elt)
           do (return t)))
