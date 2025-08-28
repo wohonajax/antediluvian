@@ -68,25 +68,61 @@ NODE is bound in the test form."
   "Removes all nodes of bad health from BUCKET and from the list of nodes."
   (replace-bucket bucket (eql :bad (node-health node))))
 
-(defun maybe-add-to-bucket (node)
-  "Handles bucket upkeep when a node sends us a message."
+(defun maybe-replace-node (deletion-candidate replacement-candidate)
+  "Initiates a check for whether to replace DELETION-CANDIDATE with
+REPLACEMENT-CANDIDATE."
+  (let ((transaction-id (generate-transaction-id))
+        (promise (promise)))
+    (setf (gethash transaction-id *replacement-candidates*)
+          (cons promise replacement-candidate))
+    ;; if the promise isn't fulfilled after 10 seconds, consider it failed
+    (make-thread (lambda () (sleep 10) (fulfill promise 'timeout)))
+    (send-message :ping (node-ip deletion-candidate)
+                  (node-port deletion-candidate)
+                  transaction-id)))
+
+(defun maybe-add-to-table (node)
+  "Adds NODE to the routing table if there's an empty slot in the appropriate
+bucket, otherwise checks whether to replace the least-recently-active node in
+that bucket."
   (let ((bucket (correct-bucket node)))
     (sort-bucket-by-age bucket)
     (unless (contains node bucket :test #'eq)
       (when-let (empty-slot-index (first-empty-slot bucket))
         (setf (svref bucket empty-slot-index) node)
         ;; we've added the node to the bucket; we're done
-        (return-from maybe-add-to-bucket))
-      (let ((deletion-candidate-node (svref bucket 0))
-            (transaction-id (generate-transaction-id))
-            (promise (promise)))
-        (setf (gethash transaction-id *replacement-candidates*)
-              (cons promise node))
-        ;; if the promise isn't fulfilled after 10 seconds, consider it failed
-        (make-thread (lambda () (sleep 10) (fulfill promise 'timeout)))
-        (send-message :ping (node-ip deletion-candidate-node)
-                      (node-port deletion-candidate-node)
-                      transaction-id)))))
+        (return-from maybe-add-to-table))
+      ;; check whether to replace the least-recently-active
+      ;; node in the bucket with the new node we're handling
+      (maybe-replace-node (svref bucket 0) node))))
+
+(defun bucket-split-candidate-p (node bucket)
+  "Tests whether BUCKET fits the criteria for being split or not. In order to
+be split, a bucket's range must encapsulate both the node's ID and our ID, and
+NODE must be closer to us than the kth closest node in the routing table."
+  (when (first-empty-slot bucket)
+    ;; bucket isn't full; don't split it
+    (return-from bucket-split-candidate-p))
+  (labels ((node-distance-from-us (node)
+             (calculate-node-distance node *id*))
+           (kth-closest-node-to-us ()
+             (extremum (find-closest-nodes *id*) #'>
+                       :key #'node-distance-from-us)))
+    (let ((id (node-id node))
+          (lower-bound (bucket-min bucket))
+          (upper-bound (bucket-max bucket)))
+      (and (within (convert-id-to-int id) lower-bound upper-bound)
+           (within (convert-id-to-int *id*) lower-bound upper-bound)
+           (< (calculate-distance id *id*)
+              (node-distance-from-us (kth-closest-node-to-us)))))))
+
+(defun maybe-add-node (node)
+  "Splits the bucket NODE fits into if it's a candidate for splitting.
+Initiates the procedure for potentially adding a node to a bucket."
+  (let ((bucket (correct-bucket node)))
+    (when (bucket-split-candidate-p node bucket)
+      (split-bucket bucket))
+    (maybe-add-to-table node)))
 
 (defun check-replacement-candidates ()
   "Checks whether to replace potentially stale nodes with replacement
@@ -145,8 +181,8 @@ candidates or add those candidates to the replacement cache."
                  (calculate-node-distance node target))))
 
 (defun handle-node-bookkeeping (node time implied-port peer-port id ip port)
-  "Either adjust NODE's settings or create a node based on those settings.
-Returns the node object."
+  "Either adjust NODE's settings or create a node based on those settings,
+then tries to add it to the routing table. Returns the node object."
   (cond (node (setf (node-last-activity node) time
                     (node-health node) :good)
               ;; when implied_port is 1, use the source port of the UDP packet
@@ -155,8 +191,8 @@ Returns the node object."
                     (peer-port (setf (node-port node) peer-port))))
         (t (setf node (create-node :id id :ip ip :port port
                                    :last-activity time
-                                   :health :good))
-           (add-to-bucket node)))
+                                   :health :good))))
+  (maybe-add-node node)
   node)
 
 (defun store-received-token (token time transaction-id node)
@@ -182,7 +218,6 @@ Returns the node object."
     (setf (gethash transaction-id *transactions*) (or info-hash t))
     (setf node
           (handle-node-bookkeeping node now implied-port peer-port id ip port))
-    (maybe-add-to-bucket node)
     (when token
       (store-received-token token now transaction-id node))
     (switch ((gethash "q" dict) :test #'string=)
@@ -292,7 +327,6 @@ results are the same as the previous best results."
       (return-from parse-response))
     ;; we're getting a response, so the node isn't stale
     (setf (node-failed-rpcs node) 0)
-    (maybe-add-to-bucket node)
     (check-replacement-candidates)
     ;; if this is a response to a test for a candidate's replacement,
     ;; fulfill the promise/indicate that we got a response
