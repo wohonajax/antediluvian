@@ -12,7 +12,7 @@
   "Whether peers should use the visible port (T) or the given port (NIL).
 Useful for NATs.")
 
-(defvar *transactions* (make-hash-table :test #'equal)
+(defvar *transactions* (make-hash-table :test #'equalp)
   "A hash table storing valid, active transaction IDs we've generated.
 Maps to info_hash when applicable.")
 
@@ -24,8 +24,8 @@ Maps to info_hash when applicable.")
 
 (defun ping-node (socket transaction-id)
   "Sends a ping message."
-  (let ((query-dict (make-hash-table))
-        (query-arguments (make-hash-table)))
+  (let ((query-dict (make-hash-table :test #'equal))
+        (query-arguments (make-hash-table :test #'equal)))
     (setf (gethash "id" query-arguments) *id*
 
           (gethash "t" query-dict) transaction-id
@@ -38,8 +38,8 @@ Maps to info_hash when applicable.")
 
 (defun find-node (socket node-id transaction-id)
   "Asks for a node's contact information."
-  (let ((query-dict (make-hash-table))
-        (query-arguments (make-hash-table)))
+  (let ((query-dict (make-hash-table :test #'equal))
+        (query-arguments (make-hash-table :test #'equal)))
     (setf (gethash "id" query-arguments) *id*
           (gethash "target" query-arguments) node-id
 
@@ -53,8 +53,8 @@ Maps to info_hash when applicable.")
 
 (defun get-peers (socket info-hash transaction-id)
   "Asks for peers under INFO-HASH."
-  (let ((query-dict (make-hash-table))
-        (query-arguments (make-hash-table)))
+  (let ((query-dict (make-hash-table :test #'equal))
+        (query-arguments (make-hash-table :test #'equal)))
     (setf (gethash "id" query-arguments) *id*
           (gethash "info_hash" query-arguments) info-hash
 
@@ -68,8 +68,8 @@ Maps to info_hash when applicable.")
 
 (defun announce-peer (socket info-hash transaction-id token)
   "Announces peer status under INFO-HASH."
-  (let ((query-dict (make-hash-table))
-        (query-arguments (make-hash-table)))
+  (let ((query-dict (make-hash-table :test #'equal))
+        (query-arguments (make-hash-table :test #'equal)))
     (setf (gethash "id" query-arguments) *id*
           (gethash "implied_port" query-arguments) (if *use-implied-port-p* 1 0)
           (gethash "info_hash" query-arguments) info-hash
@@ -109,8 +109,8 @@ Maps to info_hash when applicable.")
 
 (defun respond-to-ping (socket dict node)
   "Responds to a ping query."
-  (let ((response-dict (make-hash-table))
-        (response-arguments (make-hash-table)))
+  (let ((response-dict (make-hash-table :test #'equal))
+        (response-arguments (make-hash-table :test #'equal)))
     (setf (gethash "id" response-arguments) *id*
 
           (gethash "t" response-dict) (gethash "t" dict)
@@ -120,8 +120,8 @@ Maps to info_hash when applicable.")
 
 (defun respond-to-find-node (socket dict node)
   "Responds to a find_node query."
-  (let ((response-dict (make-hash-table))
-        (response-arguments (make-hash-table)))
+  (let ((response-dict (make-hash-table :test #'equal))
+        (response-arguments (make-hash-table :test #'equal)))
     (setf (gethash "id" response-arguments) *id*
 
           (gethash "nodes" response-arguments)
@@ -142,8 +142,8 @@ Maps to info_hash when applicable.")
   (let* ((arguments-dict (gethash "a" dict))
          (hash (gethash "info_hash" arguments-dict))
          (peers (have-peers hash))
-         (response-dict (make-hash-table))
-         (response-arguments (make-hash-table)))
+         (response-dict (make-hash-table :test #'equal))
+         (response-arguments (make-hash-table :test #'equal)))
     (setf (gethash "id" response-arguments) *id*
           (gethash "token" response-arguments) (invent-token hash node)
 
@@ -161,8 +161,8 @@ Maps to info_hash when applicable.")
 (defun respond-to-announce-peer (socket dict node source-port)
   "Responds to an announce_peer query. If the received token isn't valid,
 sends a protocol error message."
-  (let* ((response-dict (make-hash-table))
-         (response-arguments (make-hash-table))
+  (let* ((response-dict (make-hash-table :test #'equal))
+         (response-arguments (make-hash-table :test #'equal))
          (argument-dict (gethash "a" dict))
          (id (gethash "id" argument-dict))
          (implied-port-p (gethash "implied_port" argument-dict))
@@ -186,7 +186,7 @@ sends a protocol error message."
 
 (defun dht-error (socket type dict)
   "Sends a DHT error message."
-  (let ((error-dict (make-hash-table)))
+  (let ((error-dict (make-hash-table :test #'equal)))
     (setf (gethash "t" error-dict) (gethash "t" dict)
           (gethash "y" error-dict) "e"
           (gethash "e" error-dict) (case type

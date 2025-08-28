@@ -17,7 +17,7 @@
 (defvar *best-results* (list)
   "A list containing the k best results from a find_node lookup.")
 
-(defvar *active-lookups* (make-hash-table :test #'equal)
+(defvar *active-lookups* (make-hash-table :test #'equalp)
   "A hash table containing currently active lookups.")
 
 (defvar *replacement-cache* (list)
