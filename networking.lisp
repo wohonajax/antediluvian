@@ -312,11 +312,22 @@ results are the same as the previous best results."
       (store-received-token token now transaction-id node))
     (remhash transaction-id *transactions*)))
 
+(defun binary-key-test (keys)
+  "Tests whether KEYS suits decoding as a byte-vector rather than a string."
+  (or (equal keys '("t"))
+      (equal keys '("id" "a"))
+      (equal keys '("target" "a"))
+      (equal keys '("nodes" "a"))
+      (equal keys '("values" "a"))
+      (equal keys '("info_hash" "a"))
+      (equal keys '("token" "a"))))
+
 (defun parse-message ()
   "Parses a KRPC message."
   (multiple-value-bind (data size host port)
       (receive-data)
     (let* ((packet (subseq data 0 size))
+           (*binary-key-p* #'binary-key-test)
            (dict (decode packet)))
       (eswitch ((gethash "y" dict) :test #'string=)
         ("q" (parse-query dict host port))

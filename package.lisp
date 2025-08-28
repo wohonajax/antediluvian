@@ -11,6 +11,7 @@
                 #:when-let
                 #:when-let*)
   (:import-from #:bencode
+                #:*binary-key-p*
                 #:decode
                 #:encode)
   (:import-from #:bordeaux-threads
