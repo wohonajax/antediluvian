@@ -301,7 +301,8 @@ results are the same as the previous best results."
       (handle-nodes-response nodes))
     (when values
       (handle-values-response values))
-    (when info-hash
+    (when-let* ((info-hash (gethash transaction-id *transactions*))
+                (info-hash-p (not (eql t info-hash))))
       (handle-lookup-response transaction-id node info-hash))
     (when token
       (store-received-token token now transaction-id node))
