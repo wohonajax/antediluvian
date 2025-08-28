@@ -1,7 +1,7 @@
 (in-package #:dhticl)
 
-(defvar *current-secret*)
-(defvar *previous-secret*)
+(defvar *current-secret* nil)
+(defvar *previous-secret* nil)
 
 (defvar *token-births* (make-hash-table :test #'equalp)
   "A hash table mapping tokens to their creation times.")
