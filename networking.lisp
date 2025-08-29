@@ -50,7 +50,7 @@ NODE is bound in the test form."
   "Removes all nodes of bad health from BUCKET and from the list of nodes."
   (replace-bucket bucket (eql :bad (node-health node))))
 
-(defun maybe-replace-node (deletion-candidate replacement-candidate)
+(defun node-replacement-check (deletion-candidate replacement-candidate)
   "Initiates a check for whether to replace DELETION-CANDIDATE with
 REPLACEMENT-CANDIDATE."
   (let ((transaction-id (generate-transaction-id))
@@ -76,7 +76,7 @@ that bucket."
         (return-from maybe-add-to-table))
       ;; check whether to replace the least-recently-active
       ;; node in the bucket with the new node we're handling
-      (maybe-replace-node (svref bucket 0) node))))
+      (node-replacement-check (svref bucket 0) node))))
 
 (defun bucket-split-candidate-p (node bucket)
   "Tests whether BUCKET fits the criteria for being split or not. In order to
@@ -227,7 +227,7 @@ node in the response."
         for (node-id node-ip node-port) in node-list
         for node = (create-node :id node-id :ip node-ip :port node-port)
         do (push node *results-list*))
-  (ping-results!))
+  (ping-lookup-results))
 
 (defun handle-values-response (peers)
   "Handle a list of peers that have been searched for."

@@ -15,7 +15,6 @@
 
 (defvar *active-lookups* (make-hash-table :test #'equalp)
   "A hash table containing currently active lookups.")
-
 ;;; FIXME: we need to perform recursive find_node queries for lookups until
 ;;; the k best results are the same distance from the target as the previous
 ;;; k best results
@@ -25,7 +24,7 @@
     (send-message :ping (node-ip node) (node-port node) transaction-id)
     (setf (gethash transaction-id *active-lookups*) node)))
 
-(defun ping-results! ()
+(defun ping-lookup-results ()
   "Begins looking up nodes in the intermediary results list."
   (loop for node in *results-list*
         while (< (hash-table-count *active-lookups*) +alpha+)
@@ -35,25 +34,19 @@
 (defun push-to-best-results (node target)
   (insert node *best-results* #'<
           :key (lambda (node)
-                 (calculate-node-distance node target))))
+                 (calculate-node-distance node target)))
+  ;; we only want the k closest nodes
+  (when (> (length *best-results*) +k+)
+    (setf *best-results* (subseq *best-results* 0 +k+))))
 
 (defun handle-lookup-response (transaction-id node target)
   "Handles a find_node response. Recursively calls find_node until the best
 results are the same as the previous best results."
   (when (gethash transaction-id *active-lookups*)
-    (cond ((= (length *best-results*) +k+)
-           ;; we only want the k closest nodes
-           ;; TODO: use insertion sort to avoid calling SORT on the whole list
-           (unless (< (calculate-node-distance (first *best-results*) target)
-                      (calculate-node-distance node target))
-             (push-to-best-results node target)
-             ;; TODO: handle this in PUSH-TO-BEST-RESULTS?
-             (setf *best-results* (subseq *best-results* 0 +k+))))
-          (t (push-to-best-results node target)))
+    (push-to-best-results node target)
     (remhash transaction-id *active-lookups*)
     (cond (*results-list* ; if *RESULTS-LIST* isn't empty
-           (lookup (first *results-list*))
-           (pop *results-list*))
+           (ping-lookup-results))
           ((equalp *best-results* *previous-best-results*)) ; stop recursion
           ;; FIXME: make sure we receive the K closest best results
           (t (setf *previous-best-results* *best-results*)
