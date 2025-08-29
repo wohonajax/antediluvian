@@ -69,14 +69,13 @@ bucket, otherwise checks whether to replace the least-recently-active node in
 that bucket."
   (let ((bucket (correct-bucket node)))
     (sort-bucket-by-age bucket)
-    (unless (contains node bucket :test #'eq)
-      (when-let (empty-slot-index (first-empty-slot bucket))
-        (setf (svref bucket empty-slot-index) node)
-        ;; we've added the node to the bucket; we're done
-        (return-from maybe-add-to-table))
-      ;; check whether to replace the least-recently-active
-      ;; node in the bucket with the new node we're handling
-      (node-replacement-check (svref bucket 0) node))))
+    (when-let (empty-slot-index (first-empty-slot bucket))
+      (setf (svref bucket empty-slot-index) node)
+      ;; we've added the node to the bucket; we're done
+      (return-from maybe-add-to-table))
+    ;; check whether to replace the least-recently-active
+    ;; node in the bucket with the new node we're handling
+    (node-replacement-check (svref bucket 0) node)))
 
 (defun bucket-split-candidate-p (node bucket)
   "Tests whether BUCKET fits the criteria for being split or not. In order to
@@ -100,8 +99,11 @@ NODE must be closer to us than the kth closest node in the routing table."
 
 (defun maybe-add-node (node)
   "Splits the bucket NODE fits into if it's a candidate for splitting.
-Initiates the procedure for potentially adding a node to a bucket."
+Initiates the procedure for potentially adding a node to a bucket. Does nothing
+if NODE is already in the bucket."
   (let ((bucket (correct-bucket node)))
+    (when (contains node bucket :test #'eq)
+      (return-from maybe-add-node))
     (when (bucket-split-candidate-p node bucket)
       (split-bucket bucket))
     (maybe-add-to-table node)))
