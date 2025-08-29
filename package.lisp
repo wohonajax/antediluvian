@@ -8,8 +8,7 @@
                 #:extremum
                 #:lastcar
                 #:switch
-                #:when-let
-                #:when-let*)
+                #:when-let)
   (:import-from #:bencode
                 #:*binary-key-p*
                 #:decode

@@ -275,9 +275,8 @@ node in the response."
       (handle-values-response values))
     ;; FIXME: *active-lookups* currently maps transaction IDs to node objects.
     ;; we need to maintain the target of our lookups, which will be a node ID
-    (when-let* ((info-hash (gethash transaction-id *transactions*))
-                (info-hash-p (not (eql t info-hash))))
-      (handle-lookup-response transaction-id node info-hash))
+    (when-let (target (gethash transaction-id *transactions*))
+      (handle-lookup-response transaction-id node target))
     (when token
       (store-received-token token now transaction-id node))
     (remhash transaction-id *transactions*)))
