@@ -20,6 +20,10 @@ Maps to info_hash when applicable.")
   (let ((bencoded-data (encode data nil)))
     (socket-send socket bencoded-data (length bencoded-data))))
 
+(defun generate-transaction-id ()
+  "Creates a transaction ID and returns it as a byte-vector."
+  (random-data 2))
+
 ;;; Queries
 
 (defun ping-node (socket transaction-id)
