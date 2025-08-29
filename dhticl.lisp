@@ -1,4 +1,4 @@
-(in-package :dhticl)
+(in-package #:dhticl)
 
 ;;;; TODO: general interface
 (defvar *settings-location*
@@ -6,8 +6,6 @@
 
 (defvar *hashes* (list)
   "The list of info_hashes the DHT program will use.")
-
-(setf *kernel* (make-kernel 4)) ; lparallel kernel
 
 ;;; TODO: sanitize settings
 (defun load-settings ()
@@ -76,6 +74,5 @@
            (iterate-table #'purge-stale-nodes)
            (iterate-table #'kill-node :nodely t)
            (socket-close *listening-dht-socket*)
-           (end-kernel)
            (destroy-thread *secret-rotation-thread*)
            (save-settings))))

@@ -24,11 +24,8 @@
                 #:octets-to-integer
                 #:random-data)
   (:import-from #:lparallel
-                #:*kernel*
-                #:end-kernel
                 #:force
                 #:fulfill
-                #:make-kernel
                 #:promise)
   (:import-from #:uiop
                 #:xdg-config-home)
