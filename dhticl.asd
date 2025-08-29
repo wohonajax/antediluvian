@@ -1,7 +1,7 @@
 (asdf:defsystem #:dhticl
   :name "DHTiCL"
   :author "Hunter Chandler <wohonajax@gmail.com>"
-  :version "20250828"
+  :version "20250829"
   :maintainer "Hunter Chandler <wohonajax@gmail.com>"
   :license "MIT"
   :description "DHTiCL"
@@ -19,7 +19,6 @@
   :depends-on (alexandria
                bencode
                bordeaux-threads
-               clj-arrows
                ironclad/core
                ironclad/digests
                lparallel

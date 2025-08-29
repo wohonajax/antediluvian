@@ -16,8 +16,6 @@
   (:import-from #:bordeaux-threads
                 #:destroy-thread
                 #:make-thread)
-  (:import-from #:clj-arrows
-                #:->>)
   (:import-from #:ironclad
                 #:digest-sequence
                 #:octets-to-integer

@@ -31,14 +31,6 @@ if NODELY is non-NIL."
         (iterate-bucket bucket action)
         (funcall action bucket))))
 
-(defun find-in-table (criteria)
-  "Attempts to find a node in the routing table that satisfies CRITERIA. Returns
-the node if found, NIL otherwise."
-  (iterate-table (lambda (node)
-                   (when (funcall criteria node)
-                     (return-from find-in-table node)))
-                 :nodely t))
-
 (defun find-node-in-table (id)
   "Tries to find a node in the routing table based on its ID. Returns the node
 if successful, NIL otherwise."
@@ -99,13 +91,6 @@ if successful, NIL otherwise."
   "Updates BUCKET's LAST-CHANGED property."
   (setf (bucket-last-changed bucket) (get-universal-time)))
 
-(defun last-node-in-bucket (bucket)
-  "Returns the last node in BUCKET."
-  (->> bucket
-    first-empty-slot
-    1-
-    (svref (bucket-nodes bucket))))
-
 (flet ((node-sorter (x y field pred)
          (let ((xfield (when x
                          (funcall field x)))
@@ -125,27 +110,7 @@ if successful, NIL otherwise."
                 (lambda (x y)
                   (node-sorter x y
                                #'node-last-activity
-                               #'>)))))
-
-  (defun sort-bucket-by-distance (bucket target)
-    "Sorts BUCKET so the nodes it contains are ordered by distance from
-TARGET, closest to furthest."
-    (setf (bucket-nodes bucket)
-          (sort (bucket-nodes bucket)
-                (lambda (x y)
-                  (node-sorter x y
-                               (lambda (node)
-                                 (calculate-distance node target))
-                               #'<)))))
-
-  (defun sort-bucket-by-ids (bucket)
-    "Sorts BUCKET so the nodes it contains are ordered by ID."
-    (setf (bucket-nodes bucket)
-          (sort (bucket-nodes bucket)
-                (lambda (x y)
-                  (node-sorter x y (lambda (node)
-                                     (convert-id-to-int (node-id node)))
-                               #'<))))))
+                               #'>))))))
 
 (defun seed-buckets (smaller larger seed)
   "Seeds the values of a bucket into 2 fresh buckets."
