@@ -12,6 +12,7 @@
                (:file "tokens")
                (:file "buckets")
                (:file "krpc")
+               (:file "lookups")
                (:file "networking")
                (:file "dhticl"))
   :serial t
