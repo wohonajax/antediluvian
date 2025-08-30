@@ -51,8 +51,10 @@ results are the same as the previous best results."
   (remhash transaction-id *active-lookups*)
   (cond (*results-list* ; if *RESULTS-LIST* isn't empty
          (ping-lookup-results))
-        ((equalp *best-results* *previous-best-results*)) ; stop recursion
+        ((equalp (gethash target *best-results*)
+                 (gethash target *previous-best-results*))) ; stop recursion
         ;; FIXME: make sure we receive the K closest best results
-        (t (setf *previous-best-results* *best-results*)
+        (t (setf (gethash target *previous-best-results*)
+                 (gethash target *best-results*))
            (mapc (lambda (node) (lookup target node))
                  *best-results*))))
