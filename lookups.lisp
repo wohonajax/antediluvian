@@ -9,13 +9,13 @@
 (defconstant +alpha+ 3
   "The number of simultaneous lookups to perform.")
 
-(defvar *results-list* (make-hash-table :test #'equalp)
+(defvar *lookup-results-lists* (make-hash-table :test #'equalp)
   "A hash table mapping lookup targets to lists containing nodes received from
 find_node queries.")
 
-(defvar *previous-best-results* (make-hash-table :test #'equalp))
+(defvar *previous-best-lookup-results* (make-hash-table :test #'equalp))
 
-(defvar *best-results* (make-hash-table :test #'equalp)
+(defvar *best-lookup-results* (make-hash-table :test #'equalp)
   "A hash table mapping lookup targets to lists containing the k best results
 from find_node lookups.")
 
@@ -31,30 +31,33 @@ from find_node lookups.")
 
 (defun ping-lookup-results (target)
   "Begins lookups of TARGET using nodes in the intermediary results list."
-  (loop for node in (gethash target *results-list*)
+  (loop for node in (gethash target *lookup-results-lists*)
         while (< (hash-table-count *active-lookups*) +alpha+)
         do (lookup target node)
-           (pop (gethash target *results-list*))))
+           (pop (gethash target *lookup-results-lists*))))
 
 (defun push-to-best-results (node target)
-  (insert node (gethash target *best-results*) #'<
+  (insert node (gethash target *best-lookup-results*) #'<
           :key (lambda (node) (calculate-node-distance node target)))
   ;; we only want the k closest nodes
-  (let ((results-list (gethash target *best-results*)))
+  (let ((results-list (gethash target *best-lookup-results*)))
     (when (> (length results-list) +k+)
-      (setf (gethash target *best-results*) (subseq results-list 0 +k+)))))
+      (setf (gethash target *best-lookup-results*)
+            (subseq results-list 0 +k+)))))
 
 (defun handle-lookup-response (transaction-id node target)
   "Handles a find_node response. Recursively calls find_node until the best
 results are the same as the previous best results."
   (push-to-best-results node target)
   (remhash transaction-id *active-lookups*)
-  (cond (*results-list* ; if *RESULTS-LIST* isn't empty
+  (cond ((gethash target *lookup-results-lists*)
          (ping-lookup-results))
-        ((equalp (gethash target *best-results*)
-                 (gethash target *previous-best-results*))) ; stop recursion
+        ;; if the previous results are the same
+        ;; as the current results, stop recursion
+        ((equalp (gethash target *best-lookup-results*)
+                 (gethash target *previous-best-lookup-results*)))
         ;; FIXME: make sure we receive the K closest best results
-        (t (setf (gethash target *previous-best-results*)
-                 (gethash target *best-results*))
+        (t (setf (gethash target *previous-best-lookup-results*)
+                 (gethash target *best-lookup-results*))
            (mapc (lambda (node) (lookup target node))
-                 *best-results*))))
+                 (gethash target *best-lookup-results*)))))

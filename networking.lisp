@@ -228,7 +228,7 @@ node in the response."
   (loop with node-list = (parse-nodes nodes)
         for (node-id node-ip node-port) in node-list
         for node = (create-node :id node-id :ip node-ip :port node-port)
-        do (push node *results-list*))
+        do (push node *lookup-results-lists*))
   (ping-lookup-results))
 
 (defun handle-values-response (peers)
