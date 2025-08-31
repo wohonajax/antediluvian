@@ -20,6 +20,13 @@ Maps to info_hash when applicable.")
   (let ((bencoded-data (encode data nil)))
     (socket-send socket bencoded-data (length bencoded-data))))
 
+(defun connect-listening-socket (ip port)
+  "Connects a UDP socket to IP and PORT, binding it to the default port for
+listening."
+  (socket-connect ip port :local-port *default-port*
+                  :protocol :datagram
+                  :element-type '(unsigned-byte 8)))
+
 (defun generate-transaction-id ()
   "Creates a transaction ID and returns it as a byte-vector."
   (random-data 2))
@@ -96,13 +103,7 @@ format."
 (defun send-message (type ip port transaction-id &key id info-hash)
   "Sends NODE a TYPE message. TYPE should be a keyword like
 :PING or :FIND_NODE."
-  ;; we might not have a node object yet so we have to bind a temporary socket
-  (with-connected-socket
-      (socket (socket-connect
-               ip port
-               :protocol :datagram
-               :element-type '(unsigned-byte 8)
-               :timeout 5))
+  (with-connected-socket (socket (connect-listening-socket ip port))
     (handler-case (case type
                     (:ping (ping-node socket transaction-id))
                     (:store)
@@ -206,19 +207,19 @@ sends a protocol error message."
 
 (defun send-response (type node dict &key error-type source-port)
   (let ((ip (node-ip node))
-        (port (node-port node))
-        (target-socket (node-socket node)))
-    (handler-case (case type
-                    (:ping
-                     (respond-to-ping target-socket dict node))
-                    (:find_node
-                     (respond-to-find-node target-socket dict node))
-                    (:get_peers
-                     (respond-to-get-peers target-socket dict node))
-                    (:announce_peer
-                     (respond-to-announce-peer target-socket
-                                               dict
-                                               node
-                                               source-port))
-                    (:dht_error (dht-error target-socket error-type dict)))
-      (simple-error () (invoke-restart :continue)))))
+        (port (node-port node)))
+    (with-connected-socket (socket (connect-listening-socket ip port))
+      (handler-case (case type
+                      (:ping
+                       (respond-to-ping socket dict node))
+                      (:find_node
+                       (respond-to-find-node socket dict node))
+                      (:get_peers
+                       (respond-to-get-peers socket dict node))
+                      (:announce_peer
+                       (respond-to-announce-peer socket
+                                                 dict
+                                                 node
+                                                 source-port))
+                      (:dht_error (dht-error socket error-type dict)))
+        (simple-error () (invoke-restart :continue))))))

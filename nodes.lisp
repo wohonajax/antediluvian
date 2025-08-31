@@ -8,7 +8,6 @@
   ((id :initarg :id :accessor node-id)
    (ip :initarg :ip :accessor node-ip)
    (port :initarg :port :accessor node-port)
-   (socket :initarg :socket :accessor node-socket)
    (last-activity :initarg :last-activity :accessor node-last-activity)
    (health :initarg :health :accessor node-health)
    (failed-rpcs :initform 0 :accessor node-failed-rpcs)))
@@ -16,8 +15,6 @@
 (defun create-node (&key id ip port last-activity (health :questionable))
   "Creates a node object with the specified attributes."
   (make-instance 'node :id id :ip ip :port port
-                 :socket (socket-connect ip port :protocol :datagram
-                                         :element-type '(unsigned-byte 8))
                  :last-activity last-activity :health health))
 
 (defun calculate-node-distance (node target)
