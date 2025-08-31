@@ -23,7 +23,7 @@ Maps to info_hash when applicable.")
 (defun generate-transaction-id ()
   "Creates a transaction ID and returns it as a byte-vector."
   (random-data 2))
-
+;;; TODO: potentially include our own contact information
 (defun pack-nodes-response (target)
   "Packs the contact information for the k closest nodes to TARGET into compact
 format."
