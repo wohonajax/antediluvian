@@ -24,6 +24,11 @@ Maps to info_hash when applicable.")
   "Creates a transaction ID and returns it as a byte-vector."
   (random-data 2))
 
+(defun pack-nodes-response (target)
+  "Packs the contact information for the k closest nodes to TARGET into compact
+format."
+  (reduce #'concat-vec (find-closest-nodes target) :key #'compact-node-info))
+
 ;;; Queries
 
 (defun ping-node (socket transaction-id)
@@ -52,7 +57,7 @@ Maps to info_hash when applicable.")
           (gethash "q" query-dict) "find_node"
           (gethash "a" query-dict) query-arguments
 
-          (gethash transaction-id *transactions*) t)
+          (gethash transaction-id *transactions*) node-id)
     (send-bencoded-data socket query-dict)))
 
 (defun get-peers (socket info-hash transaction-id)
@@ -134,8 +139,7 @@ Maps to info_hash when applicable.")
                  (node-if-found (find-node-in-table target)))
             (if node-if-found
                 (compact-node-info node-if-found)
-                (reduce #'concat-vec (find-closest-nodes target)
-                        :key #'compact-node-info)))
+                (pack-nodes-response target)))
 
           (gethash "t" response-dict) (gethash "t" dict)
           (gethash "y" response-dict) "r"
@@ -159,8 +163,7 @@ Maps to info_hash when applicable.")
         (setf (gethash "values" response-arguments)
               (mapcar #'compact-peer-info peers))
         (setf (gethash "nodes" response-arguments)
-              (reduce #'concat-vec (find-closest-nodes hash)
-                      :key #'compact-node-info)))
+              (pack-nodes-response hash)))
     (send-bencoded-data socket response-dict)))
 
 (defun respond-to-announce-peer (socket dict node source-port)
