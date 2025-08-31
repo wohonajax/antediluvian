@@ -117,6 +117,18 @@ format."
 
 ;;; Responses to queries
 
+(defun dht-error (socket type dict)
+  "Sends a DHT error message."
+  (let ((error-dict (make-hash-table :test #'equal)))
+    (setf (gethash "t" error-dict) (gethash "t" dict)
+          (gethash "y" error-dict) "e"
+          (gethash "e" error-dict) (case type
+                                     (:generic (list 201 "Generic Error"))
+                                     (:server (list 202 "Server Error"))
+                                     (:protocol (list 203 "Protocol Error"))
+                                     (:method (list 204 "Method Unknown"))))
+    (send-bencoded-data socket error-dict)))
+
 (defun respond-to-ping (socket dict node)
   "Responds to a ping query."
   (let ((response-dict (make-hash-table :test #'equal))
@@ -183,27 +195,14 @@ sends a protocol error message."
                    (gethash "port" dict-arguments)))
          (token (gethash "token" dict-arguments)))
     (setf (node-port node) port)
-    (if (consider-token token info-hash node)
-        (progn (add-to-bucket node)
-               (setf (gethash "id" response-arguments) *id*
+    (cond ((consider-token token info-hash node)
+           (setf (gethash "id" response-arguments) *id*
 
-                     (gethash "t" response-dict) (gethash "t" dict)
-                     (gethash "y" response-dict) "r"
-                     (gethash "r" response-dict) response-arguments)
-               (send-bencoded-data socket response-dict))
-        (dht-error socket :protocol dict))))
-
-(defun dht-error (socket type dict)
-  "Sends a DHT error message."
-  (let ((error-dict (make-hash-table :test #'equal)))
-    (setf (gethash "t" error-dict) (gethash "t" dict)
-          (gethash "y" error-dict) "e"
-          (gethash "e" error-dict) (case type
-                                     (:generic (list 201 "Generic Error"))
-                                     (:server (list 202 "Server Error"))
-                                     (:protocol (list 203 "Protocol Error"))
-                                     (:method (list 204 "Method Unknown"))))
-    (send-bencoded-data socket error-dict)))
+                 (gethash "t" response-dict) (gethash "t" dict)
+                 (gethash "y" response-dict) "r"
+                 (gethash "r" response-dict) response-arguments)
+           (send-bencoded-data socket response-dict))
+          (t (dht-error socket :protocol dict)))))
 
 (defun send-response (type node dict &key error-type source-port)
   (let ((ip (node-ip node))
