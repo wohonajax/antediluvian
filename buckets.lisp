@@ -18,6 +18,19 @@
   (nodes (make-array +k+ :initial-element nil))
   (last-changed (get-universal-time)))
 
+(defun make-new-bucket (min max)
+  "Adds a bucket to the routing table with a range from MIN to MAX."
+  (let ((new-bucket (make-bucket :min min :max max)))
+    (push new-bucket *routing-table*)
+    new-bucket))
+
+(defun correct-bucket (id)
+  "Returns the proper bucket for ID."
+  (let ((id-int (convert-id-to-int id)))
+    (dolist (bucket *routing-table*)
+      (when (within id-int (bucket-min bucket) (bucket-max bucket))
+            (return bucket)))))
+
 (defun iterate-bucket (bucket action)
   "Funcalls ACTION on each node in BUCKET."
   (loop for node across (bucket-nodes bucket)
@@ -67,19 +80,6 @@ if successful, NIL otherwise."
         (sort *routing-table*
               (lambda (x y)
                 (< (bucket-min x) (bucket-min y))))))
-
-(defun make-new-bucket (min max)
-  "Adds a bucket to the routing table with a range from MIN to MAX."
-  (let ((new-bucket (make-bucket :min min :max max)))
-    (push new-bucket *routing-table*)
-    new-bucket))
-
-(defun correct-bucket (id)
-  "Returns the proper bucket for ID."
-  (let ((id-int (convert-id-to-int id)))
-    (dolist (bucket *routing-table*)
-      (when (within id-int (bucket-min bucket) (bucket-max bucket))
-        (return bucket)))))
 
 (defun first-empty-slot (bucket)
   "Returns the index of the first empty slot in BUCKET."
