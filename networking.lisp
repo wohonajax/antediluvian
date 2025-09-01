@@ -102,7 +102,7 @@ NODE must be closer to us than the kth closest node in the routing table."
 the bucket NODE fits into if it's a candidate for splitting. Initiates the
 procedure for potentially adding a node to a bucket."
   (let ((bucket (correct-bucket node)))
-    (when (contains node bucket :test #'eq)
+    (when (contains node bucket)
       (return-from maybe-add-node))
     (when (bucket-split-candidate-p node bucket)
       (split-bucket bucket))
