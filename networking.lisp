@@ -13,7 +13,7 @@ whose cdr is the node to add to the bucket.")
 
 (defun receive-data ()
   "Receive data from the listening socket."
-  (socket-receive *listening-socket* nil +max-datagram-packet-size+))
+  (socket-receive *listening-dht-socket* nil +max-datagram-packet-size+))
 
 (defun ping-old-nodes (bucket)
   "Pings the nodes in a bucket from oldest to newest."
