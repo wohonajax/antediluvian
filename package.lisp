@@ -24,6 +24,7 @@
   (:import-from #:lparallel
                 #:force
                 #:fulfill
+                #:fulfilledp
                 #:promise)
   (:import-from #:uiop
                 #:xdg-config-home)
