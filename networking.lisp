@@ -263,7 +263,9 @@ node in the response."
     (when-let (promise-node-cons (gethash transaction-id
                                           *replacement-candidates*))
       (fulfill (car promise-node-cons) 'response))
-    (when-let (target (gethash transaction-id *transactions*))
+    (when-let* ((target (gethash transaction-id *transactions*))
+                ;; target is an info hash or node ID
+                (targetp (not (eql target t))))
       (when nodes
         (handle-nodes-response nodes target))
       (when values
