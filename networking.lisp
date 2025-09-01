@@ -216,16 +216,16 @@ substrings."
     ;; (node's health may be bad--malformed response sent?)
     (error () (return-from parse-peers))))
 
-(defun handle-nodes-response (nodes)
+(defun handle-nodes-response (nodes target)
   "Handle a nodes response from a find_node or get_peers query by pinging every
 node in the response."
   (loop with node-list = (parse-nodes nodes)
         for (node-id node-ip node-port) in node-list
         for node = (create-node :id node-id :ip node-ip :port node-port)
-        do (push node *lookup-results-lists*))
+        do (push node (gethash target *lookup-results-lists*)))
   (ping-lookup-results))
 
-(defun handle-values-response (peers)
+(defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
   ;; TODO: add to *PEER-LIST*
   (loop with peer-list = (parse-peers peers)
@@ -263,13 +263,13 @@ node in the response."
     (when-let (promise-node-cons (gethash transaction-id
                                           *replacement-candidates*))
       (fulfill (car promise-node-cons) 'response))
-    (when nodes
-      (handle-nodes-response nodes))
-    (when values
-      (handle-values-response values))
-    ;; FIXME: *active-lookups* currently maps transaction IDs to node objects.
-    ;; we need to maintain the target of our lookups, which will be a node ID
     (when-let (target (gethash transaction-id *transactions*))
+      (when nodes
+        (handle-nodes-response nodes target))
+      (when values
+        (handle-values-response values target))
+      ;; FIXME: *active-lookups* currently maps transaction IDs to node objects.
+      ;; we need to maintain the target of our lookups, which will be a node ID
       (handle-lookup-response transaction-id node target))
     (when token
       (store-received-token token now transaction-id node))
