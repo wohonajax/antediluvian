@@ -51,7 +51,7 @@ results are the same as the previous best results."
   (push-to-best-results node target)
   (remhash transaction-id *active-lookups*)
   (cond ((gethash target *lookup-results-lists*)
-         (ping-lookup-results))
+         (ping-lookup-results target))
         ;; if the previous results are the same
         ;; as the current results, stop recursion
         ((equalp (gethash target *best-lookup-results*)
