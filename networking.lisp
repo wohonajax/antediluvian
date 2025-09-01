@@ -282,6 +282,7 @@ node in the response."
       (equal keys '("target" "a"))
       (equal keys '("info_hash" "a"))
       (equal keys '("token" "a"))
+      (equal keys '("id" "r"))
       (equal keys '("token" "r"))
       (equal keys '("nodes" "r"))
       (equal keys '("values" "r"))))
