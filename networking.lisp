@@ -280,10 +280,11 @@ node in the response."
   (or (equal keys '("t"))
       (equal keys '("id" "a"))
       (equal keys '("target" "a"))
-      (equal keys '("nodes" "a"))
-      (equal keys '("values" "a"))
       (equal keys '("info_hash" "a"))
-      (equal keys '("token" "a"))))
+      (equal keys '("token" "a"))
+      (equal keys '("token" "r"))
+      (equal keys '("nodes" "r"))
+      (equal keys '("values" "r"))))
 
 (defun parse-message ()
   "Parses a KRPC message."
