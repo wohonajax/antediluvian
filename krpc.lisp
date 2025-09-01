@@ -8,6 +8,12 @@
 (defvar *default-port* 6881
   "The default port to use when listening.")
 
+(defvar *listening-dht-socket*
+        (socket-connect nil nil
+                        :protocol :datagram
+                        :local-port *default-port*)
+  "A UDP socket listening on *DEFAULT-PORT* for DHT communication.")
+
 (defvar *use-implied-port-p* nil
   "Whether peers should use the visible port (T) or the given port (NIL).
 Useful for NATs.")
@@ -16,9 +22,11 @@ Useful for NATs.")
   "A hash table storing valid, active transaction IDs we've generated.
 Maps to info_hash when applicable.")
 
-(defun send-bencoded-data (socket data)
+(defun send-bencoded-data (data ip port)
+  "Bencodes DATA and sends it to IP and PORT."
   (let ((bencoded-data (encode data nil)))
-    (socket-send socket bencoded-data (length bencoded-data))))
+    (socket-send *listening-dht-socket* bencoded-data (length bencoded-data)
+                 :host ip :port port)))
 
 (defun connect-listening-socket (ip port)
   "Connects a UDP socket to IP and PORT, binding it to the default port for
@@ -38,7 +46,7 @@ format."
 
 ;;; Queries
 
-(defun ping-node (socket transaction-id)
+(defun ping-node (ip port transaction-id)
   "Sends a ping message."
   (let ((query-dict (make-hash-table :test #'equal))
         (query-arguments (make-hash-table :test #'equal)))
@@ -50,9 +58,9 @@ format."
           (gethash "a" query-dict) query-arguments
 
           (gethash transaction-id *transactions*) t)
-    (send-bencoded-data socket query-dict)))
+    (send-bencoded-data query-dict ip port)))
 
-(defun find-node (socket node-id transaction-id)
+(defun find-node (ip port node-id transaction-id)
   "Asks for a node's contact information."
   (let ((query-dict (make-hash-table :test #'equal))
         (query-arguments (make-hash-table :test #'equal)))
@@ -65,9 +73,9 @@ format."
           (gethash "a" query-dict) query-arguments
 
           (gethash transaction-id *transactions*) node-id)
-    (send-bencoded-data socket query-dict)))
+    (send-bencoded-data query-dict ip port)))
 
-(defun get-peers (socket info-hash transaction-id)
+(defun get-peers (ip port info-hash transaction-id)
   "Asks for peers under INFO-HASH."
   (let ((query-dict (make-hash-table :test #'equal))
         (query-arguments (make-hash-table :test #'equal)))
@@ -80,9 +88,9 @@ format."
           (gethash "a" query-dict) query-arguments
 
           (gethash transaction-id *transactions*) info-hash)
-    (send-bencoded-data socket query-dict)))
+    (send-bencoded-data query-dict ip port)))
 
-(defun announce-peer (socket info-hash transaction-id token)
+(defun announce-peer (ip port info-hash transaction-id token)
   "Announces peer status under INFO-HASH."
   (let ((query-dict (make-hash-table :test #'equal))
         (query-arguments (make-hash-table :test #'equal)))
@@ -98,26 +106,25 @@ format."
           (gethash "a" query-dict) query-arguments
 
           (gethash transaction-id *transactions*) info-hash)
-    (send-bencoded-data socket query-dict)))
+    (send-bencoded-data query-dict ip port)))
 
 (defun send-message (type ip port transaction-id &key id info-hash)
   "Sends NODE a TYPE message. TYPE should be a keyword like
 :PING or :FIND_NODE."
-  (with-connected-socket (socket (connect-listening-socket ip port))
-    (handler-case (case type
-                    (:ping (ping-node socket transaction-id))
-                    (:store)
-                    (:find_node (find-node socket id transaction-id))
-                    (:find_value)
-                    (:get_peers (get-peers socket info-hash transaction-id))
-                    (:announce_peer (announce-peer socket info-hash
-                                                   transaction-id
-                                                   (gethash ip *token-ips*))))
-      (simple-error () (invoke-restart :continue)))))
+  (handler-case (case type
+                  (:ping (ping-node ip port transaction-id))
+                  (:store)
+                  (:find_node (find-node ip port id transaction-id))
+                  (:find_value)
+                  (:get_peers (get-peers ip port info-hash transaction-id))
+                  (:announce_peer (announce-peer ip port info-hash
+                                                 transaction-id
+                                                 (gethash ip *token-ips*))))
+    (simple-error () (invoke-restart :continue))))
 
 ;;; Responses to queries
 
-(defun dht-error (socket type dict)
+(defun dht-error (ip port type dict)
   "Sends a DHT error message."
   (let ((error-dict (make-hash-table :test #'equal)))
     (setf (gethash "t" error-dict) (gethash "t" dict)
@@ -127,9 +134,9 @@ format."
                                      (:server (list 202 "Server Error"))
                                      (:protocol (list 203 "Protocol Error"))
                                      (:method (list 204 "Method Unknown"))))
-    (send-bencoded-data socket error-dict)))
+    (send-bencoded-data error-dict ip port)))
 
-(defun respond-to-ping (socket dict node)
+(defun respond-to-ping (ip port dict node)
   "Responds to a ping query."
   (let ((response-dict (make-hash-table :test #'equal))
         (response-arguments (make-hash-table :test #'equal)))
@@ -138,9 +145,9 @@ format."
           (gethash "t" response-dict) (gethash "t" dict)
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-arguments)
-    (send-bencoded-data socket response-dict)))
+    (send-bencoded-data response-dict ip port)))
 
-(defun respond-to-find-node (socket dict node)
+(defun respond-to-find-node (ip port dict node)
   "Responds to a find_node query."
   (let ((response-dict (make-hash-table :test #'equal))
         (response-arguments (make-hash-table :test #'equal))
@@ -157,9 +164,9 @@ format."
           (gethash "t" response-dict) (gethash "t" dict)
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-arguments)
-    (send-bencoded-data socket response-dict)))
+    (send-bencoded-data response-dict ip port)))
 
-(defun respond-to-get-peers (socket dict node)
+(defun respond-to-get-peers (ip port dict node)
   "Responds to a get_peers query."
   (let* ((dict-arguments (gethash "a" dict))
          (hash (gethash "info_hash" dict-arguments))
@@ -177,9 +184,9 @@ format."
               (mapcar #'compact-peer-info peers))
         (setf (gethash "nodes" response-arguments)
               (pack-nodes-response hash)))
-    (send-bencoded-data socket response-dict)))
+    (send-bencoded-data response-dict ip port)))
 
-(defun respond-to-announce-peer (socket dict node source-port)
+(defun respond-to-announce-peer (ip port dict node source-port)
   "Responds to an announce_peer query. If the received token isn't valid,
 sends a protocol error message."
   (let* ((response-dict (make-hash-table :test #'equal))
@@ -201,24 +208,20 @@ sends a protocol error message."
                  (gethash "t" response-dict) (gethash "t" dict)
                  (gethash "y" response-dict) "r"
                  (gethash "r" response-dict) response-arguments)
-           (send-bencoded-data socket response-dict))
-          (t (dht-error socket :protocol dict)))))
+           (send-bencoded-data response-dict ip port))
+          (t (dht-error ip port :protocol dict)))))
 
 (defun send-response (type node dict &key error-type source-port)
   (let ((ip (node-ip node))
         (port (node-port node)))
-    (with-connected-socket (socket (connect-listening-socket ip port))
-      (handler-case (case type
-                      (:ping
-                       (respond-to-ping socket dict node))
-                      (:find_node
-                       (respond-to-find-node socket dict node))
-                      (:get_peers
-                       (respond-to-get-peers socket dict node))
-                      (:announce_peer
-                       (respond-to-announce-peer socket
-                                                 dict
-                                                 node
-                                                 source-port))
-                      (:dht_error (dht-error socket error-type dict)))
-        (simple-error () (invoke-restart :continue))))))
+    (handler-case (case type
+                    (:ping
+                     (respond-to-ping ip port dict node))
+                    (:find_node
+                     (respond-to-find-node ip port dict node))
+                    (:get_peers
+                     (respond-to-get-peers ip port dict node))
+                    (:announce_peer
+                     (respond-to-announce-peer ip port dict node source-port))
+                    (:dht_error (dht-error ip port error-type dict)))
+      (simple-error () (invoke-restart :continue)))))

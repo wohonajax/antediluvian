@@ -3,12 +3,6 @@
 
 (in-package #:dhticl)
 
-(defvar *listening-dht-socket*
-        (socket-connect nil nil
-                        :protocol :datagram
-                        :local-port *default-port*)
-  "A UDP socket listening on *DEFAULT-PORT* for DHT communication.")
-
 (defvar *replacement-cache* (list)
   "A list of nodes to potentially add to the routing table, should a bucket
 contain nodes that go stale.")
