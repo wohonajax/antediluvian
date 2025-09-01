@@ -239,7 +239,6 @@ node in the response."
          (transaction-id (gethash "t" dict))
          (arguments (gethash "a" dict))
          (id (gethash "id" arguments))
-         (info-hash (gethash "info_hash" arguments))
          ;; TOKEN comes from a get_peers response, needed for announce_peer
          (token (gethash "token" arguments))
          ;; NODES comes from a find_node or get_peers response
