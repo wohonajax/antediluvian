@@ -28,13 +28,6 @@ Maps to info_hash when applicable.")
     (socket-send *listening-dht-socket* bencoded-data (length bencoded-data)
                  :host ip :port port)))
 
-(defun connect-listening-socket (ip port)
-  "Connects a UDP socket to IP and PORT, binding it to the default port for
-listening."
-  (socket-connect ip port :local-port *default-port*
-                  :protocol :datagram
-                  :element-type '(unsigned-byte 8)))
-
 (defun generate-transaction-id ()
   "Creates a transaction ID and returns it as a byte-vector."
   (random-data 2))
