@@ -54,7 +54,3 @@ or :BAD."
   "Translate's NODE's ID, IP, and port into compact peer format."
   (concat-vec (node-id node)
               (compact-peer-info node)))
-
-(defun kill-node (node)
-  "Closes the socket associated with NODE."
-  (socket-close (node-socket node)))
