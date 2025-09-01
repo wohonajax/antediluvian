@@ -65,6 +65,9 @@
 (defun dht (&rest hashes)
   "Initiates the distributed hash table."
   (load-settings)
+  (setf *listening-dht-socket* (socket-connect nil nil
+                                               :protocol :datagram
+                                               :local-port *default-port*))
   (when hashes
     (mapc (lambda (hash) (push hash *hashes*))
           hashes))

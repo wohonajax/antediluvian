@@ -8,10 +8,7 @@
 (defvar *default-port* 6881
   "The default port to use when listening.")
 
-(defvar *listening-dht-socket*
-        (socket-connect nil nil
-                        :protocol :datagram
-                        :local-port *default-port*)
+(defvar *listening-dht-socket* nil
   "A UDP socket listening on *DEFAULT-PORT* for DHT communication.")
 
 (defvar *use-implied-port-p* nil
