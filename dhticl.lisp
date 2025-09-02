@@ -75,7 +75,6 @@
        (main-loop)
     (progn (iterate-table #'purge-bad-nodes)
            (iterate-table #'purge-stale-nodes)
-           (iterate-table #'kill-node :nodely t)
            (socket-close *listening-dht-socket*)
            (destroy-thread *secret-rotation-thread*)
            (save-settings))))
