@@ -29,8 +29,10 @@
                     (make-setting *hashes*))))))
 
 (defun bootstrap-node (host port)
+  "Bootstraps the routing table using a known node at HOST and PORT."
   (send-message :find_node host port (generate-transaction-id)
-                :info-hash *id*))
+                :info-hash *id*)
+  (parse-message))
 
 (defun initiate-lookups ()
   (mapc (lambda (hash)
