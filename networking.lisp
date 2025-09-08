@@ -29,10 +29,7 @@ NODE is bound in the test form."
   `(progn (map-into (bucket-nodes ,bucket)
                     (lambda (node)
                       (when node
-                        (if ,test
-                            (progn (kill-node node)
-                                   nil)
-                            node)))
+                        (if ,test nil node)))
                     (bucket-nodes ,bucket))
           (sort-bucket-by-age ,bucket)))
 
