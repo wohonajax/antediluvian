@@ -38,9 +38,8 @@ from find_node lookups.")
 (defun ping-lookup-results (target)
   "Begins lookups of TARGET using nodes in the intermediary results list."
   (loop for node in (gethash target *lookup-results-lists*)
-        while (< (hash-table-count *active-lookups*) +alpha+)
         do (lookup target node)
-           (pop (gethash target *lookup-results-lists*))))
+        finally (remhash target *lookup-results-lists*)))
 
 (defun push-to-best-results (node target)
   (insert node (gethash target *best-lookup-results*) #'<
