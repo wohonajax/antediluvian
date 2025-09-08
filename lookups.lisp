@@ -53,10 +53,11 @@ from find_node lookups.")
 (defun handle-lookup-response (transaction-id node target)
   "Handles a find_node response. Recursively calls find_node until the best
 results are the same as the previous best results."
-  (push-to-best-results node target)
   (remhash transaction-id *active-lookups*)
   (cond ((gethash target *lookup-results-lists*)
-         (ping-lookup-results target))
+         (mapc (lambda (node) (push-to-best-results node target))
+               (gethash target *lookup-results-lists*))
+         (remhash target *lookup-results-lists*))
         ;; if the previous results are the same
         ;; as the current results, stop recursion
         ((equalp (gethash target *best-lookup-results*)
