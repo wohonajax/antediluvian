@@ -62,7 +62,9 @@ results are the same as the previous best results."
         ;; as the current results, stop recursion
         ((equalp (gethash target *best-lookup-results*)
                  (gethash target *previous-best-lookup-results*)))
-        ;; FIXME: make sure we receive the K closest best results
+        ;; FIXME: make sure we receive the K closest
+        ;; best results from multiple lookup queries,
+        ;; not just the response we're handling now
         (t (shiftf (gethash target *previous-best-lookup-results*)
                    (gethash target *best-lookup-results*)
                    nil)
