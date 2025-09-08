@@ -63,7 +63,8 @@ results are the same as the previous best results."
         ((equalp (gethash target *best-lookup-results*)
                  (gethash target *previous-best-lookup-results*)))
         ;; FIXME: make sure we receive the K closest best results
-        (t (setf (gethash target *previous-best-lookup-results*)
-                 (gethash target *best-lookup-results*))
+        (t (shiftf (gethash target *previous-best-lookup-results*)
+                   (gethash target *best-lookup-results*)
+                   nil)
            (mapc (lambda (node) (lookup target node))
-                 (gethash target *best-lookup-results*)))))
+                 (gethash target *previous-best-lookup-results*)))))
