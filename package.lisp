@@ -26,6 +26,8 @@
                 #:fulfill
                 #:fulfilledp
                 #:promise)
+  (:import-from #:serapeum
+                #:firstn)
   (:import-from #:uiop
                 #:xdg-config-home)
   (:import-from #:usocket

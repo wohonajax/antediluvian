@@ -29,6 +29,12 @@ from find_node lookups.")
                   :id target)
     (setf (gethash transaction-id *active-lookups*) target)))
 
+(defun initiate-lookup (target)
+  "Initiates a lookup procedure for TARGET."
+  (let ((alpha-nodes (firstn +alpha+ (find-closest-nodes target))))
+    (mapc (lambda (node) (lookup target node))
+          alpha-nodes)))
+
 (defun ping-lookup-results (target)
   "Begins lookups of TARGET using nodes in the intermediary results list."
   (loop for node in (gethash target *lookup-results-lists*)

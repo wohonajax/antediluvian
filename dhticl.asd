@@ -22,5 +22,6 @@
                ironclad/core
                ironclad/digests
                lparallel
+               serapeum
                uiop
                usocket))
