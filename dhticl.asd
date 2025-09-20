@@ -1,7 +1,7 @@
 (asdf:defsystem #:dhticl
   :name "DHTiCL"
   :author "Hunter Chandler <wohonajax@gmail.com>"
-  :version "20250907"
+  :version "20250920"
   :maintainer "Hunter Chandler <wohonajax@gmail.com>"
   :license "MIT"
   :description "DHTiCL"
@@ -12,6 +12,7 @@
                (:file "tokens")
                (:file "buckets")
                (:file "krpc")
+               (:file "routing-table.lisp")
                (:file "lookups")
                (:file "networking")
                (:file "dhticl"))
