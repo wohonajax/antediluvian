@@ -44,18 +44,17 @@ NODE must be closer to us than the kth closest node in the routing table."
   (when (first-empty-slot bucket)
     ;; bucket isn't full; don't split it
     (return-from bucket-split-candidate-p))
-  (labels ((node-distance-from-us (node)
-             (calculate-node-distance node *id*))
-           (kth-closest-node-to-us ()
-             (extremum (find-closest-nodes *id*) #'>
-                       :key #'node-distance-from-us)))
+  (flet ((node-distance-from-us (node)
+           (calculate-node-distance node *id*)))
     (let ((id (node-id node))
           (lower-bound (bucket-min bucket))
-          (upper-bound (bucket-max bucket)))
+          (upper-bound (bucket-max bucket))
+          (kth-closest-node-to-us (extremum (find-closest-nodes *id*) #'>
+                                            :key #'node-distance-from-us)))
       (and (within (convert-id-to-int id) lower-bound upper-bound)
            (within (convert-id-to-int *id*) lower-bound upper-bound)
            (< (calculate-distance id *id*)
-              (node-distance-from-us (kth-closest-node-to-us)))))))
+              (node-distance-from-us kth-closest-node-to-us))))))
 
 (defun maybe-add-node (node)
   "Does nothing if NODE is already in the routing table. If it isn't, splits
