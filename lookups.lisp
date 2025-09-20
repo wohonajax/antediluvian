@@ -29,6 +29,15 @@ from find_node lookups.")
                   :id target)
     (setf (gethash transaction-id *active-lookups*) target)))
 
+(defun active-lookups (target)
+  "Returns the number of active lookups for TARGET that haven't completed yet."
+  (let ((count 0))
+    (maphash (lambda (id target-id)
+               (when (equalp target target-id)
+                 (incf count)))
+             *active-lookups*)
+    count))
+
 (defun initiate-lookup (target)
   "Initiates a lookup procedure for TARGET."
   (let ((alpha-closest-nodes (firstn +alpha+ (find-closest-nodes target))))
@@ -54,6 +63,8 @@ from find_node lookups.")
   "Handles a find_node response. Recursively calls find_node until the best
 results are the same as the previous best results."
   (remhash transaction-id *active-lookups*)
+  (unless (= 0 (active-lookups target))
+    (return-from handle-lookup-response))
   (cond ((gethash target *lookup-results-lists*)
          (mapc (lambda (node) (push-to-best-results node target))
                (gethash target *lookup-results-lists*))
