@@ -12,7 +12,7 @@
                (:file "tokens")
                (:file "buckets")
                (:file "krpc")
-               (:file "routing-table.lisp")
+               (:file "routing-table")
                (:file "lookups")
                (:file "networking")
                (:file "dhticl"))
