@@ -27,8 +27,10 @@
   (digest-sequence :sha1 byte-vector))
 
 (defmacro insert (item list predicate &key key)
-  "Inserts ITEM into LIST and sorts it according to PREDICATE."
-  `(setf ,list (sort (cons ,item ,list) ,predicate :key ,key)))
+  "Inserts ITEM into LIST and sorts it according to PREDICATE. Duplicates are
+not allowed."
+  `(setf ,list (remove-duplicates (sort (cons ,item ,list)
+                                        ,predicate :key ,key))))
 
 (defun concat-vec (x y)
   "Concatenates X and Y into a byte-vector."
