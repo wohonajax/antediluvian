@@ -129,10 +129,11 @@ format."
 (defun respond-to-ping (ip port dict node)
   "Responds to a ping query."
   (let ((response-dict (make-hash-table :test #'equal))
-        (response-arguments (make-hash-table :test #'equal)))
+        (response-arguments (make-hash-table :test #'equal))
+        (transaction-id (gethash "t" dict)))
     (setf (gethash "id" response-arguments) *id*
 
-          (gethash "t" response-dict) (gethash "t" dict)
+          (gethash "t" response-dict) transaction-id
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-arguments)
     (send-bencoded-data response-dict ip port)))
@@ -141,6 +142,7 @@ format."
   "Responds to a find_node query."
   (let ((response-dict (make-hash-table :test #'equal))
         (response-arguments (make-hash-table :test #'equal))
+        (transaction-id (gethash "t" dict))
         (dict-arguments (gethash "a" dict)))
     (setf (gethash "id" response-arguments) *id*
 
@@ -151,14 +153,15 @@ format."
                 (compact-node-info node-if-found)
                 (pack-nodes-response target)))
 
-          (gethash "t" response-dict) (gethash "t" dict)
+          (gethash "t" response-dict) transaction-id
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-arguments)
     (send-bencoded-data response-dict ip port)))
 
 (defun respond-to-get-peers (ip port dict node)
   "Responds to a get_peers query."
-  (let* ((dict-arguments (gethash "a" dict))
+  (let* ((transaction-id (gethash "t" dict))
+         (dict-arguments (gethash "a" dict))
          (hash (gethash "info_hash" dict-arguments))
          (peers (have-peers hash))
          (response-dict (make-hash-table :test #'equal))
@@ -166,7 +169,7 @@ format."
     (setf (gethash "id" response-arguments) *id*
           (gethash "token" response-arguments) (invent-token hash node)
 
-          (gethash "t" response-dict) (gethash "t" dict)
+          (gethash "t" response-dict) transaction-id
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-arguments)
     (if peers
@@ -181,6 +184,7 @@ format."
 sends a protocol error message."
   (let* ((response-dict (make-hash-table :test #'equal))
          (response-arguments (make-hash-table :test #'equal))
+         (transaction-id (gethash "t" dict))
          (dict-arguments (gethash "a" dict))
          (id (gethash "id" dict-arguments))
          (implied-port-p (gethash "implied_port" dict-arguments))
@@ -195,7 +199,7 @@ sends a protocol error message."
     (cond ((consider-token token info-hash node)
            (setf (gethash "id" response-arguments) *id*
 
-                 (gethash "t" response-dict) (gethash "t" dict)
+                 (gethash "t" response-dict) transaction-id
                  (gethash "y" response-dict) "r"
                  (gethash "r" response-dict) response-arguments)
            (send-bencoded-data response-dict ip port))
