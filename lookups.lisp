@@ -65,11 +65,11 @@ results are the same as the previous best results."
   (remhash transaction-id *active-lookups*)
   (unless (= 0 (active-lookups target))
     (return-from handle-lookup-response))
-  (cond ((gethash target *lookup-results-lists*)
-         (mapc (lambda (node) (push-to-best-results node target))
-               (gethash target *lookup-results-lists*))
-         (remhash target *lookup-results-lists*))
-        ;; if the previous results are the same as the
+  (when-let (results (gethash target *lookup-results-lists*))
+    (mapc (lambda (node) (push-to-best-results node target))
+          results)
+    (remhash target *lookup-results-lists*))
+  (cond ;; if the previous results are the same as the
         ;; current results, stop recursion. add the
         ;; best lookup results to the routing table
         ((equalp (gethash target *best-lookup-results*)
