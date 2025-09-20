@@ -187,8 +187,6 @@ node in the response."
         (handle-nodes-response nodes target))
       (when values
         (handle-values-response values target))
-      ;; FIXME: *active-lookups* currently maps transaction IDs to node objects.
-      ;; we need to maintain the target of our lookups, which will be a node ID
       (handle-lookup-response transaction-id node target))
     (when token
       (store-received-token token now transaction-id node))
