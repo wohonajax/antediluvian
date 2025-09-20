@@ -58,10 +58,14 @@ results are the same as the previous best results."
          (mapc (lambda (node) (push-to-best-results node target))
                (gethash target *lookup-results-lists*))
          (remhash target *lookup-results-lists*))
-        ;; if the previous results are the same
-        ;; as the current results, stop recursion
+        ;; if the previous results are the same as the
+        ;; current results, stop recursion. add the
+        ;; best lookup results to the routing table
         ((equalp (gethash target *best-lookup-results*)
-                 (gethash target *previous-best-lookup-results*)))
+                 (gethash target *previous-best-lookup-results*))
+         (remhash target *previous-best-lookup-results*)
+         (mapc #'maybe-add-node (gethash target *best-lookup-results*))
+         (remhash target *best-lookup-results*))
         ;; FIXME: make sure we receive the K closest
         ;; best results from multiple lookup queries,
         ;; not just the response we're handling now
