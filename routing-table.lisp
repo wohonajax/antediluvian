@@ -87,6 +87,6 @@ replacement cache."
                  (oldest-node (oldest-node-in-bucket bucket)))
             (and (> (minutes-since (bucket-last-changed bucket))
                     15)
-                 (>= (node-failed-rpcs oldest-node) 5)
+                 (node-stale-p oldest-node)
                  (node-replacement-check oldest-node node))))
         *replacement-cache*))
