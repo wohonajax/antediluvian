@@ -51,8 +51,7 @@ NODE is bound in the test form."
 
 (defun ping-oldest-node (bucket)
   "Pings the oldest node in BUCKET."
-  (sort-bucket-by-age bucket)
-  (let ((node (svref bucket 0)))
+  (let ((node (oldest-node-in-bucket bucket)))
     (send-message :ping (node-ip node) (node-port node)
                   (generate-transaction-id))))
 

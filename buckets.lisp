@@ -112,6 +112,11 @@ if successful, NIL otherwise."
                                #'node-last-activity
                                #'>))))))
 
+(defun oldest-node-in-bucket (bucket)
+  "Returns the node in BUCKET with the longest period of inactivity."
+  (sort-bucket-by-age bucket)
+  (svref (bucket-nodes bucket) 0))
+
 (defun seed-buckets (smaller larger seed)
   "Seeds the values of a bucket into 2 fresh buckets."
   (iterate-bucket

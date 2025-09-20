@@ -28,14 +28,13 @@ REPLACEMENT-CANDIDATE."
 bucket, otherwise checks whether to replace the least-recently-active node in
 that bucket."
   (let ((bucket (correct-bucket node)))
-    (sort-bucket-by-age bucket)
     (when-let (empty-slot-index (first-empty-slot bucket))
       (setf (svref bucket empty-slot-index) node)
       ;; we've added the node to the bucket; we're done
       (return-from maybe-add-to-table))
     ;; check whether to replace the least-recently-active
     ;; node in the bucket with the new node we're handling
-    (node-replacement-check (svref bucket 0) node)))
+    (node-replacement-check (oldest-node-in-bucket bucket) node)))
 
 (defun bucket-split-candidate-p (node bucket)
   "Tests whether BUCKET fits the criteria for being split or not. In order to
@@ -79,3 +78,15 @@ candidates or add those candidates to the replacement cache."
                    (response (push node *replacement-cache*)))
                  (remhash transaction-id *replacement-candidates*))))
            *replacement-candidates*))
+
+(defun maybe-replace-nodes ()
+  "Checks whether to replace stale nodes in the routing table with nodes in the
+replacement cache."
+  (mapc (lambda (node)
+          (let* ((bucket (correct-bucket node))
+                 (oldest-node (oldest-node-in-bucket bucket)))
+            (and (< (minutes-since (bucket-last-changed bucket))
+                     15)
+                 (>= (node-failed-rpcs oldest-node) 5)
+                 (node-replacement-check oldest-node node))))
+        *replacement-cache*))
