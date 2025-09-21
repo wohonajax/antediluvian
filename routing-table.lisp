@@ -88,5 +88,7 @@ replacement cache."
             (and (> (minutes-since (bucket-last-changed bucket))
                     15)
                  (node-stale-p oldest-node)
-                 (node-replacement-check oldest-node node))))
+                 (node-replacement-check oldest-node node)
+                 (setf *replacement-cache*
+                       (remove node *replacement-cache* :count 1)))))
         *replacement-cache*))
