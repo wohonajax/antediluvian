@@ -140,7 +140,9 @@ node in the response."
         for (node-id node-ip node-port) in node-list
         for node = (create-node :id node-id :ip node-ip :port node-port)
         do (push node (gethash target *lookup-results-lists*)))
-  (recurse-on-lookup-results target))
+  ;; don't recurse until all lookups for the target have returned
+  (unless (gethash target *active-lookups*)
+    (recurse-on-lookup-results target)))
 
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
