@@ -140,7 +140,7 @@ node in the response."
         for (node-id node-ip node-port) in node-list
         for node = (create-node :id node-id :ip node-ip :port node-port)
         do (push node (gethash target *lookup-results-lists*)))
-  (ping-lookup-results target))
+  (recurse-on-lookup-results target))
 
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."

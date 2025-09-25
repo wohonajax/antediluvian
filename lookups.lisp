@@ -45,7 +45,7 @@ from find_node lookups.")
     (mapc (lambda (node) (lookup target node))
           alpha-closest-nodes)))
 
-(defun ping-lookup-results (target)
+(defun recurse-on-lookup-results (target)
   "Begins lookups of TARGET using nodes in the intermediary results list."
   (loop for node in (gethash target *lookup-results-lists*)
         do (lookup target node)
