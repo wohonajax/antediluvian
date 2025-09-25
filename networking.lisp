@@ -147,13 +147,16 @@ node in the response."
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
   ;; parse-peers returns an alist of (peer-ip . peer-port) cons cells
-  (loop for (ip . port) in (parse-peers peers)
-      for peer = (mkpeer ip port) then (mkpeer ip port)
-      unless (member ip (gethash target *peer-list*)
-                        :key #'peer-ip :test #'equalp)
-        do (push (make-peer :ip ip :port port
-                            :socket (socket-connect ip port))
-                 (gethash target *peer-list*))))
+  (flet ((mkpeer (ip port)
+           (make-peer :ip ip :port port
+                      :socket (socket-connect ip port :timeout 5))))
+    (loop for (ip . port) in (parse-peers peers)
+          unless (member ip (gethash target *peer-list*)
+                         :key #'peer-ip :test #'equalp)
+            do (handler-case (let ((peer (mkpeer ip port)))
+                               (push peer (gethash target *peer-list*)))
+                 ;; if we can't connect to the peer, just pass over it
+                 (timeout-error ())))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."

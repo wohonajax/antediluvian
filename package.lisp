@@ -42,7 +42,8 @@
                 #:socket-listen
                 #:socket-receive
                 #:socket-send
-                #:socket-stream)
+                #:socket-stream
+                #:timeout-error)
   (:export #:dht
            #:*id*
            #:*default-port*
