@@ -6,8 +6,6 @@
   (xdg-config-home "dhticl/table.sexp"))
 (defvar *routing-table* (list))
 
-(defvar *peer-list* (make-hash-table :test #'equalp)
-  "A hash table containing info_hashes as keys and a list of nodes as values.")
 ;;; recommended bucket size limit is 8
 (defconstant +k+ 8
   "Replication parameter. Used for the bucket size limit, among other things.")
@@ -142,10 +140,3 @@ if successful, NIL otherwise."
           (remove bucket *routing-table* :test #'eql :count 1))
     (seed-buckets small-bucket large-bucket bucket)
     (sort-table)))
-
-(defun have-peers (info-hash)
-  "Returns a list of peers for INFO-HASH."
-  (let ((peer-list (gethash info-hash *peer-list*)))
-    (unless peer-list
-      (remhash info-hash *peer-list*))
-    peer-list))
