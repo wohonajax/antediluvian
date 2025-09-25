@@ -146,11 +146,14 @@ node in the response."
 
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
-  ;; TODO: add to *PEER-LIST*
-  (loop with peer-list = (parse-peers peers)
-        for (peer-ip . peer-port) in peer-list
-        do (send-message :ping peer-ip peer-port
-                         (generate-transaction-id))))
+  ;; parse-peers returns an alist of (peer-ip . peer-port) cons cells
+  (loop for (ip . port) in (parse-peers peers)
+      for peer = (mkpeer ip port) then (mkpeer ip port)
+      unless (member ip (gethash target *peer-list*)
+                        :key #'peer-ip :test #'equalp)
+        do (push (make-peer :ip ip :port port
+                            :socket (socket-connect ip port))
+                 (gethash target *peer-list*))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
