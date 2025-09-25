@@ -7,6 +7,7 @@
                 #:eswitch
                 #:extremum
                 #:lastcar
+                #:rcurry
                 #:switch
                 #:when-let
                 #:when-let*)
