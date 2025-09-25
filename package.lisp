@@ -35,11 +35,13 @@
                 #:+max-datagram-packet-size+
                 #:port-from-octet-buffer
                 #:port-to-octet-buffer
+                #:socket-accept
                 #:socket-close
                 #:socket-connect
+                #:socket-listen
                 #:socket-receive
                 #:socket-send
-                #:with-connected-socket)
+                #:socket-stream)
   (:export #:dht
            #:*id*
            #:*default-port*
