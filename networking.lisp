@@ -146,7 +146,6 @@ node in the response."
 
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
-  ;; parse-peers returns an alist of (peer-ip . peer-port) cons cells
   (flet ((mkpeer (ip port)
            (make-peer :ip ip :port port
                       :socket (socket-connect ip port :timeout 5))))
