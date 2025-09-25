@@ -157,6 +157,7 @@ node in the response."
             do (handler-case (let ((peer (mkpeer ip port)))
                                (push peer (gethash target *peer-list*)))
                  ;; if we can't connect to the peer, just pass over it
+                 (connection-refused-error ())
                  (timeout-error ())))))
 
 (defun parse-response (dict ip port)

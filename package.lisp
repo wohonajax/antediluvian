@@ -36,13 +36,17 @@
                 #:+max-datagram-packet-size+
                 #:port-from-octet-buffer
                 #:port-to-octet-buffer
-                #:socket-accept
-                #:socket-close
                 #:socket-connect
+                #:socket-close
+                ;; stream sockets (TCP)
+                #:socket-accept
                 #:socket-listen
+                #:socket-stream
+                ;; datagram sockets (UDP)
                 #:socket-receive
                 #:socket-send
-                #:socket-stream
+                ;; conditions
+                #:connection-refused-error
                 #:timeout-error)
   (:export #:dht
            #:*id*
