@@ -84,7 +84,7 @@
            (maphash (lambda (peers)
                       (map nil (lambda (peer)
                                  (socket-close (peer-socket peer)))
-                          peers))
+                           peers))
                     *peer-list*)
            (destroy-thread *secret-rotation-thread*)
            (save-settings))))
