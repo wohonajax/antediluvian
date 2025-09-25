@@ -81,5 +81,7 @@
            (iterate-table #'purge-stale-nodes)
            (socket-close *listening-dht-socket*)
            (socket-close *listening-peer-socket*)
+           (maphash (lambda (peers) (map nil (curry #'socket-close) peers))
+                    *peer-list*)
            (destroy-thread *secret-rotation-thread*)
            (save-settings))))
