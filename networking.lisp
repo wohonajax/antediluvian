@@ -148,7 +148,9 @@ node in the response."
   "Handle a list of peers that have been searched for."
   (flet ((mkpeer (ip port)
            (make-peer :ip ip :port port
-                      :socket (socket-connect ip port :timeout 5))))
+                      :socket (socket-connect ip port
+                                              :element-type '(unsigned-byte 8)
+                                              :timeout 5))))
     (loop for (ip . port) in (parse-peers peers)
           unless (member ip (gethash target *peer-list*)
                          :key #'peer-ip :test #'equalp)
