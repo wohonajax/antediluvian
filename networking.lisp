@@ -3,6 +3,8 @@
 
 (in-package #:dhticl)
 
+(defvar *peer-list-lock* (make-lock))
+
 (defun receive-data ()
   "Receive data from the listening socket."
   (socket-receive *listening-dht-socket* nil +max-datagram-packet-size+))
@@ -154,11 +156,15 @@ node in the response."
     (loop for (ip . port) in (parse-peers peers)
           unless (member ip (gethash target *peer-list*)
                          :key #'peer-ip :test #'equalp)
-            do (handler-case (let ((peer (mkpeer ip port)))
-                               (push peer (gethash target *peer-list*)))
-                 ;; if we can't connect to the peer, just pass over it
-                 (connection-refused-error ())
-                 (timeout-error ())))))
+            do (make-thread
+                (lambda ()
+                  (with-lock-held (*peer-list-lock*)
+                    (handler-case
+                        (let ((peer (mkpeer ip port)))
+                                (push peer (gethash target *peer-list*)))
+                      ;; if we can't connect to the peer, just pass over it
+                      (connection-refused-error ())
+                      (timeout-error ()))))))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."

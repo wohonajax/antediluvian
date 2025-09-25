@@ -16,8 +16,12 @@
                 #:decode
                 #:encode)
   (:import-from #:bordeaux-threads
+                ;; threads
                 #:destroy-thread
-                #:make-thread)
+                #:make-thread
+                ;; locks (mutexes)
+                #:make-lock
+                #:with-lock-held)
   (:import-from #:ironclad
                 #:digest-sequence
                 #:octets-to-integer
