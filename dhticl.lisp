@@ -72,13 +72,14 @@
   (setf *listening-dht-socket* (socket-connect nil nil
                                                :protocol :datagram
                                                :local-port *default-port*))
+  (setf *listening-peer-socket* (socket-listen *wildcard-host* *default-port*))
   (when hashes
     (mapc (lambda (hash) (push hash *hashes*))
           hashes))
-  (unwind-protect
-       (main-loop)
+  (unwind-protect (main-loop)
     (progn (iterate-table #'purge-bad-nodes)
            (iterate-table #'purge-stale-nodes)
            (socket-close *listening-dht-socket*)
+           (socket-close *listening-peer-socket*)
            (destroy-thread *secret-rotation-thread*)
            (save-settings))))

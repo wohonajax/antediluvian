@@ -32,6 +32,7 @@
   (:import-from #:uiop
                 #:xdg-config-home)
   (:import-from #:usocket
+                #:*wildcard-host*
                 #:+max-datagram-packet-size+
                 #:port-from-octet-buffer
                 #:port-to-octet-buffer

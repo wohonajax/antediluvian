@@ -6,6 +6,9 @@
   "A hash table containing info_hashes as keys and a list of peer objects as
 values.")
 
+(defvar *listening-peer-socket* nil
+  "A TCP socket listening for connections from peers.")
+
 (defun kill-peer (peer)
   "Closes the socket associated with PEER and removes the peer from the peer
 list."
