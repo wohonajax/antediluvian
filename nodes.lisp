@@ -44,12 +44,6 @@ or :BAD."
   (< (calculate-node-distance node1 goal)
      (calculate-node-distance node2 goal)))
 
-(defun compact-peer-info (node)
-  "Translates NODE's IP and port into compact format."
-  (let ((port-vec (make-array 2 :element-type '(unsigned-byte 8))))
-    (concat-vec (node-ip node)
-                (port-to-octet-buffer (node-port node) port-vec))))
-
 (defun compact-node-info (node)
   "Translate's NODE's ID, IP, and port into compact peer format."
   (concat-vec (node-id node)

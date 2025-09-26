@@ -22,6 +22,12 @@ values if the socket connection failed.")
           when socket ; if the connection failed, don't include that peer
             collect (cons ip (get-peer-port socket)))))
 
+(defun compact-peer-info (ip-port-cons)
+  "Translates IP-PORT-CONS into compact peer format."
+  (let ((port-vec (make-array 2 :element-type '(unsigned-byte 8))))
+    (concat-vec (car ip-port-cons)
+                (port-to-octet-buffer (cdr ip-port-cons) port-vec))))
+
 (defun get-peer-socket (ip info-hash)
   "Returns the socket object associated with IP for a peer under INFO-HASH.
 Returns NIL if there is no such peer or if the connection failed. Will block if
