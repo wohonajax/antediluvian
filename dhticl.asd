@@ -11,6 +11,7 @@
                (:file "nodes")
                (:file "tokens")
                (:file "buckets")
+               (:file "peers")
                (:file "krpc")
                (:file "routing-table")
                (:file "lookups")
