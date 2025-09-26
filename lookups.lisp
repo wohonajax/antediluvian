@@ -64,6 +64,9 @@ from find_node lookups.")
   "Handles a find_node response. Recursively calls find_node until the best
 results are the same as the previous best results."
   (remhash transaction-id *active-lookups*)
+  ;; if there are still active lookups for this
+  ;; target, don't process the "best results" yet,
+  ;; since we don't have all our results
   (unless (= 0 (active-lookups target))
     (return-from handle-lookup-response))
   (when-let (results (gethash target *lookup-results-lists*))
@@ -78,9 +81,8 @@ results are the same as the previous best results."
          (remhash target *previous-best-lookup-results*)
          (mapc #'maybe-add-node (gethash target *best-lookup-results*))
          (remhash target *best-lookup-results*))
-        ;; FIXME: make sure we receive the K closest
-        ;; best results from multiple lookup queries,
-        ;; not just the response we're handling now
+        ;; if the previous results aren't the same as the
+        ;; current results, recurse on the results we got
         (t (shiftf (gethash target *previous-best-lookup-results*)
                    (gethash target *best-lookup-results*)
                    nil)
