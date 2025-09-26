@@ -11,11 +11,16 @@ values if the socket connection failed.")
   "A TCP socket listening for connections from peers.")
 
 (defun have-peers (info-hash)
-  "Returns a list of peers for INFO-HASH."
-  (let ((peer-list (gethash info-hash *peer-list*)))
-    (unless peer-list
-      (remhash info-hash *peer-list*))
-    peer-list))
+  "Returns an alist of peer addresses and ports for INFO-HASH."
+  (let ((peers (gethash info-hash *peer-list*)))
+    (unless peers
+      (remhash info-hash *peer-list*)
+      (return-from have-peers))
+    (loop for socket-future being the hash-values of peers
+            using (hash-key ip)
+          for socket = (force socket-future)
+          when socket
+            collect (cons ip (get-peer-port socket)))))
 
 (defun get-peer-socket (ip info-hash)
   "Returns the socket object associated with IP for a peer under INFO-HASH, or

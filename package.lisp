@@ -39,6 +39,7 @@
   (:import-from #:usocket
                 #:*wildcard-host*
                 #:+max-datagram-packet-size+
+                #:get-peer-port
                 #:port-from-octet-buffer
                 #:port-to-octet-buffer
                 #:socket-connect
