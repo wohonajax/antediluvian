@@ -83,15 +83,17 @@ candidates or add those candidates to the replacement cache."
 (defun maybe-replace-nodes ()
   "Checks whether to replace stale nodes in the routing table with nodes in the
 replacement cache."
-  (mapc (lambda (node)
+  (mapc (lambda (replacement-candidate)
           (let* ((bucket (correct-bucket node))
                  (oldest-node (oldest-node-in-bucket bucket)))
             (and (> (minutes-since (bucket-last-changed bucket))
                     15)
                  (node-stale-p oldest-node)
-                 (node-replacement-check oldest-node node)
+                 (node-replacement-check oldest-node replacement-candidate)
                  ;; node will be added again if the replacement check fails
                  ;; if it doesn't fail, we don't want it in here anyway
                  (setf *replacement-cache*
-                       (remove node *replacement-cache* :count 1)))))
+                       (remove replacement-candidate
+                               *replacement-cache*
+                               :count 1)))))
         *replacement-cache*))
