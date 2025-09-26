@@ -70,8 +70,9 @@ procedure for potentially adding a node to a bucket."
   "Checks whether to replace potentially stale nodes with replacement
 candidates or add those candidates to the replacement cache."
   (maphash (lambda (transaction-id promise-node-cons)
-             (let ((promise (car promise-node-cons))
-                   (node (cdr promise-node-cons)))
+             (destructuring-bind (promise . node) promise-node-cons
+               ;; if the promise isn't fulfilled yet, do nothing,
+               ;; giving it more time to be fulfilled
                (when (fulfilledp promise)
                  (case (force promise)
                    (timeout (setf (svref (correct-bucket node) 0) node))
