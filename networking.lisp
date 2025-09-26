@@ -3,8 +3,6 @@
 
 (in-package #:dhticl)
 
-(defvar *peer-list-lock* (make-lock))
-
 (defun receive-data ()
   "Receive data from the listening socket."
   (socket-receive *listening-dht-socket* nil +max-datagram-packet-size+))
@@ -149,22 +147,18 @@ node in the response."
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
   (flet ((mkpeer (ip port)
-           (make-peer :ip ip :port port
-                      :socket (socket-connect ip port
-                                              :element-type '(unsigned-byte 8)
-                                              :timeout 5))))
-    (loop for (ip . port) in (parse-peers peers)
-          unless (member ip (gethash target *peer-list*)
-                         :key #'peer-ip :test #'equalp)
-            do (make-thread
-                (lambda ()
-                  (with-lock-held (*peer-list-lock*)
-                    (handler-case
-                        (let ((peer (mkpeer ip port)))
-                                (push peer (gethash target *peer-list*)))
-                      ;; if we can't connect to the peer, just pass over it
-                      (connection-refused-error ())
-                      (timeout-error ()))))))))
+           (socket-connect ip port
+                           :element-type '(unsigned-byte 8)
+                           :timeout 5)))
+    (loop with target-peers = (gethash target *peer-list*)
+          for (ip . port) in (parse-peers peers)
+          unless (force (gethash ip target-peers))
+            do (setf (gethash ip target-peers)
+                     (future (handler-case (mkpeer ip port)
+                               ;; if we can't connect to the peer,
+                               ;; just use NIL
+                               (connection-refused-error ())
+                               (timeout-error ())))))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."

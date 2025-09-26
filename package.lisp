@@ -30,6 +30,7 @@
                 #:force
                 #:fulfill
                 #:fulfilledp
+                #:future
                 #:promise)
   (:import-from #:serapeum
                 #:firstn)
