@@ -152,6 +152,10 @@ node in the response."
                            :timeout 5)))
     (loop with target-peers = (gethash target *peer-list*)
           for (ip . port) in (parse-peers peers)
+          ;; just because a peer failed to connect
+          ;; before doesn't mean it will this time
+          ;; also, force will give us nil
+          ;; if ip isn't in target-peers
           unless (force (gethash ip target-peers))
             do (setf (gethash ip target-peers)
                      (future (handler-case (mkpeer ip port)
