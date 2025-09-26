@@ -21,7 +21,7 @@ format."
   (let ((peers (gethash info-hash *peer-list*)))
     (unless peers
       (remhash info-hash *peer-list*)
-      (return-from have-peers))
+      (return-from pack-values-response))
     (loop for socket-future being the hash-values of peers
             using (hash-key ip)
           for socket = (force socket-future)
