@@ -64,6 +64,7 @@
                              (handle-questionable-nodes bucket)
                              (purge-bad-nodes bucket)
                              (ping-old-nodes bucket)))
+            (maybe-replace-nodes)
             (refresh-tokens))))
 
 (defun dht (&rest hashes)
