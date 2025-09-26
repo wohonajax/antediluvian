@@ -90,6 +90,8 @@ replacement cache."
                     15)
                  (node-stale-p oldest-node)
                  (node-replacement-check oldest-node node)
+                 ;; node will be added again if the replacement check fails
+                 ;; if it doesn't fail, we don't want it in here anyway
                  (setf *replacement-cache*
                        (remove node *replacement-cache* :count 1)))))
         *replacement-cache*))
