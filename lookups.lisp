@@ -60,7 +60,7 @@ from find_node lookups.")
       (setf (gethash target *best-lookup-results*)
             (subseq results-list 0 +k+)))))
 
-(defun handle-lookup-response (transaction-id node target)
+(defun handle-lookup-response (transaction-id target)
   "Handles a find_node response. Recursively calls find_node until the best
 results are the same as the previous best results."
   (remhash transaction-id *active-lookups*)

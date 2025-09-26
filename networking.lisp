@@ -196,7 +196,7 @@ node in the response."
         (handle-nodes-response nodes target))
       (when values
         (handle-values-response values target))
-      (handle-lookup-response transaction-id node target))
+      (handle-lookup-response transaction-id target))
     (when token
       (store-received-token token now transaction-id node))
     (remhash transaction-id *transactions*)))
