@@ -165,7 +165,7 @@ format."
   (let* ((transaction-id (gethash "t" dict))
          (dict-arguments (gethash "a" dict))
          (hash (gethash "info_hash" dict-arguments))
-         (peers (have-peers hash))
+         (peers (pack-values-response hash))
          (response-dict (make-hash-table :test #'equal))
          (response-arguments (make-hash-table :test #'equal)))
     (setf (gethash "id" response-arguments) *id*
@@ -175,8 +175,7 @@ format."
           (gethash "y" response-dict) "r"
           (gethash "r" response-dict) response-arguments)
     (if peers
-        (setf (gethash "values" response-arguments)
-              (mapcar #'compact-peer-info peers))
+        (setf (gethash "values" response-arguments) peers)
         (setf (gethash "nodes" response-arguments)
               (pack-nodes-response hash)))
     (send-bencoded-data response-dict ip port)))
