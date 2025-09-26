@@ -23,8 +23,8 @@ values if the socket connection failed.")
             collect (cons ip (get-peer-port socket)))))
 
 (defun get-peer-socket (ip info-hash)
-  "Returns the socket object associated with IP for a peer under INFO-HASH, or
-NIL if the connection failed. Returns NIL if there is no such peer or if the
-connection failed. Will block if the connection attempt is still in progress."
+  "Returns the socket object associated with IP for a peer under INFO-HASH.
+Returns NIL if there is no such peer or if the connection failed. Will block if
+the connection attempt is still in progress."
   (when-let (peers (gethash info-hash *peer-list*))
     (force (gethash ip peers))))
