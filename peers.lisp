@@ -19,7 +19,7 @@ values if the socket connection failed.")
     (loop for socket-future being the hash-values of peers
             using (hash-key ip)
           for socket = (force socket-future)
-          when socket
+          when socket ; if the connection failed, don't include that peer
             collect (cons ip (get-peer-port socket)))))
 
 (defun get-peer-socket (ip info-hash)
