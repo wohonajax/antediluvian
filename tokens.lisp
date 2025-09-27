@@ -70,9 +70,13 @@ token isn't found, returns NIL."
   "Checks whether TOKEN is valid for INFO-HASH and NODE or not."
   (and (member token (recall-tokens info-hash) :test #'equalp)
        (verify-token token node)))
-;;; TODO: handle *token-ips*
+
 (defun refresh-tokens ()
   "Deletes every token more than 10 minutes old."
+  (maphash (lambda (ip tokens)
+             (setf (gethash ip *token-ips*)
+                   (remove-if-not #'valid-token-p tokens)))
+           *token-ips*)
   (maphash (lambda (info-hash tokens)
              (mapc (lambda (token)
                      (unless (valid-token-p token)
