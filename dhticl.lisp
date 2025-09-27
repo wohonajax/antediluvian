@@ -67,30 +67,39 @@
             (maybe-replace-nodes)
             (refresh-tokens))))
 
-(defun dht (&rest hashes)
-  "Initiates the distributed hash table."
+(defun setup (hashes)
+  "Performs setup on program startup. Sets up initial variables, etc."
   (load-settings)
   (setf *listening-dht-socket* (socket-connect nil nil
                                                :protocol :datagram
-                                               :local-port *default-port*))
-  (setf *listening-peer-socket* (socket-listen *wildcard-host* *default-port*))
-  (setf *secret-rotation-thread* (start-sercret-rotation-thread))
-  (setf *peer-listener-thread* (start-listener-thread))
+                                               :local-port *default-port*)
+        *listening-peer-socket* (socket-listen *wildcard-host* *default-port*)
+        *secret-rotation-thread* (start-sercret-rotation-thread)
+        *peer-listener-thread* (start-listener-thread))
   (when hashes
     (mapc (lambda (hash) (push hash *hashes*))
-          hashes))
+          (remove-duplicates hashes :test #'equalp))))
+
+(defun cleanup ()
+  "Performs cleanup on program shutdown. Closes sockets, destroys threads, and
+saves settings."
+  (socket-close *listening-dht-socket*)
+  (socket-close *listening-peer-socket*)
+  (maphash (lambda (target peers-table)
+             (declare (ignore target))
+             (maphash (lambda (ip peer-future)
+                        (declare (ignore ip))
+                        (when-let (socket (force peer-future))
+                          (socket-close socket)))
+                      peers-table))
+           *peer-list*)
+  (mapc #'socket-close *accepted-connections*)
+  (destroy-thread *secret-rotation-thread*)
+  (destroy-thread *peer-listener-thread*)
+  (save-settings))
+
+(defun dht (&rest hashes)
+  "Initiates the distributed hash table."
+  (setup hashes)
   (unwind-protect (main-loop)
-    (socket-close *listening-dht-socket*)
-    (socket-close *listening-peer-socket*)
-    (maphash (lambda (target peers-table)
-               (declare (ignore target))
-               (maphash (lambda (ip peer-future)
-                          (declare (ignore ip))
-                          (when-let (socket (force peer-future))
-                            (socket-close socket)))
-                        peers-table))
-             *peer-list*)
-    (mapc #'socket-close *accepted-connections*)
-    (destroy-thread *secret-rotation-thread*)
-    (destroy-thread *peer-listener-thread*)
-    (save-settings)))
+    (cleanup)))
