@@ -32,7 +32,8 @@ port as multiple values."
                        (sleep 300)))
                :name "dht-secret-rotation"))
 
-(defvar *secret-rotation-thread* (start-sercret-rotation-thread))
+(defvar *secret-rotation-thread* nil
+  "A thread that rotates secrets for tokens every 5 minutes.")
 
 (defun hash-ip-and-secret (ip secret)
   "Returns the SHA1 hash of IP concatenated onto SECRET."

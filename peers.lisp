@@ -26,7 +26,8 @@ peer socket."
                             *accepted-connections*))
                     sockets)))))
 
-(defvar *peer-listener-thread* (start-listener-thread))
+(defvar *peer-listener-thread* nil
+  "A thread listening for incoming TCP connections.")
 
 (defun compact-peer-info (ip port)
   "Translates a peer's IP address and PORT into compact peer format."

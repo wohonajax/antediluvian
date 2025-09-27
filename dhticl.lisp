@@ -74,6 +74,8 @@
                                                :protocol :datagram
                                                :local-port *default-port*))
   (setf *listening-peer-socket* (socket-listen *wildcard-host* *default-port*))
+  (setf *secret-rotation-thread* (start-sercret-rotation-thread))
+  (setf *peer-listener-thread* (start-listener-thread))
   (when hashes
     (mapc (lambda (hash) (push hash *hashes*))
           hashes))
