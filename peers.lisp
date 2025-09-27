@@ -14,6 +14,20 @@ values if the socket connection failed.")
   "A list of sockets accepted using SOCKET-ACCEPT on the
 *LISTENING-PEER-SOCKET*.")
 
+(defun start-listener-thread ()
+  "Starts a thread that will listen for incoming connections on the listening
+peer socket."
+  (make-thread
+   (lambda ()
+     (loop for sockets = (wait-for-input *listening-peer-socket*
+                                         :ready-only t)
+           do (mapc (lambda (socket)
+                      (push (socket-accept socket)
+                            *accepted-connections*))
+                    sockets)))))
+
+(defvar *peer-listener-thread* (start-listener-thread))
+
 (defun compact-peer-info (ip port)
   "Translates a peer's IP address and PORT into compact peer format."
   (let ((port-vec (make-array 2 :element-type '(unsigned-byte 8))))

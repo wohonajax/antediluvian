@@ -90,4 +90,5 @@
              *peer-list*)
     (mapc #'socket-close *accepted-connections*)
     (destroy-thread *secret-rotation-thread*)
+    (destroy-thread *peer-listener-thread*)
     (save-settings)))
