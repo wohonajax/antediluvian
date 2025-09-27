@@ -21,7 +21,6 @@
   :depends-on (alexandria
                bencode
                bordeaux-threads
-               flexi-streams
                ironclad/core
                ironclad/digests
                lparallel

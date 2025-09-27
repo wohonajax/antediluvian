@@ -53,10 +53,10 @@ the connection attempt is still in progress."
 
 (defun perform-handshake (socket)
   "Sends a BitTorrent handshake over SOCKET."
-  (let* ((stream (socket-stream socket))
-         (ascii-stream (make-flexi-stream stream :external-format :ascii)))
+  (let ((stream (socket-stream socket)))
     (write-byte 19 stream)
-    (format ascii-stream "BitTorrent protocol")
+    (map nil (lambda (char) (write-byte (char-code char) stream))
+         "BitTorrent protocol")
     (dotimes (i 8)
       (write-byte 0 stream))
     (finish-output stream)))
