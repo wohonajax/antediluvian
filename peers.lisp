@@ -50,3 +50,13 @@ Returns NIL if there is no such peer or if the connection failed. Will block if
 the connection attempt is still in progress."
   (when-let (peers (gethash info-hash *peer-list*))
     (force (gethash ip peers))))
+
+(defun perform-handshake (socket)
+  "Sends a BitTorrent handshake over SOCKET."
+  (let* ((stream (socket-stream socket))
+         (ascii-stream (make-flexi-stream stream :external-format :ascii)))
+    (write-byte 19 stream)
+    (format ascii-stream "BitTorrent protocol")
+    (dotimes (i 8)
+      (write-byte 0 stream))
+    (finish-output stream)))

@@ -22,6 +22,8 @@
                 ;; locks (mutexes)
                 #:make-lock
                 #:with-lock-held)
+  (:import-from #:flexi-streams
+                #:make-flexi-stream)
   (:import-from #:ironclad
                 #:digest-sequence
                 #:octets-to-integer
