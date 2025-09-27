@@ -10,6 +10,10 @@ values if the socket connection failed.")
 (defvar *listening-peer-socket* nil
   "A TCP socket listening for connections from peers.")
 
+(defvar *accepted-connections* (list)
+  "A list of sockets accepted using SOCKET-ACCEPT on the
+*LISTENING-PEER-SOCKET*.")
+
 (defun compact-peer-info (ip port)
   "Translates a peer's IP address and PORT into compact peer format."
   (let ((port-vec (make-array 2 :element-type '(unsigned-byte 8))))
