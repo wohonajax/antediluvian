@@ -88,5 +88,6 @@
                             (socket-close socket)))
                         peers-table))
              *peer-list*)
+    (mapc #'socket-close *accepted-connections*)
     (destroy-thread *secret-rotation-thread*)
     (save-settings)))
