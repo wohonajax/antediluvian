@@ -1,7 +1,7 @@
 ;;;; Code related to the routing table
 
 (in-package #:dhticl)
-
+;;; TODO: the replacement cache and replacement candidates should be DHT-local
 (defvar *replacement-cache* (list)
   "A list of nodes to potentially add to the routing table, should a bucket
 contain nodes that go stale.")
@@ -23,11 +23,11 @@ REPLACEMENT-CANDIDATE."
                   (node-port deletion-candidate)
                   transaction-id)))
 
-(defun maybe-add-to-table (node)
-  "Adds NODE to the routing table if there's an empty slot in the appropriate
-bucket, otherwise checks whether to replace the least-recently-active node in
-that bucket."
-  (let ((bucket (correct-bucket node)))
+(defun maybe-add-to-table (node dht)
+  "Adds NODE to the routing table of DHT if there's an empty slot in the
+appropriate bucket, otherwise checks whether to replace the
+least-recently-active node in that bucket."
+  (let ((bucket (correct-bucket (node-id node) dht)))
     (when-let (empty-slot-index (first-empty-slot bucket))
       (setf (svref bucket empty-slot-index) node)
       ;; we've added the node to the bucket; we're done
@@ -55,15 +55,15 @@ NODE must be closer to us than the kth closest node in the routing table."
            (< (calculate-distance id *id*)
               (node-distance-from-us kth-closest-node-to-us))))))
 
-(defun maybe-add-node (node)
+(defun maybe-add-node (node dht)
   "Does nothing if NODE is already in the routing table. If it isn't, splits
 the bucket NODE fits into if it's a candidate for splitting. Initiates the
 procedure for potentially adding a node to a bucket."
-  (let ((bucket (correct-bucket node)))
+  (let ((bucket (correct-bucket (node-id node) dht)))
     (when (contains node bucket)
       (return-from maybe-add-node))
     (when (bucket-split-candidate-p node bucket)
-      (split-bucket bucket))
+      (split-bucket bucket dht))
     (maybe-add-to-table node)))
 
 (defun check-replacement-candidates ()
@@ -80,11 +80,11 @@ candidates or add those candidates to the replacement cache."
                  (remhash transaction-id *replacement-candidates*))))
            *replacement-candidates*))
 
-(defun maybe-replace-nodes ()
-  "Checks whether to replace stale nodes in the routing table with nodes in the
-replacement cache."
+(defun maybe-replace-nodes (dht)
+  "Checks whether to replace stale nodes in the routing table of DHT with nodes
+in the replacement cache."
   (mapc (lambda (replacement-candidate)
-          (let* ((bucket (correct-bucket node))
+          (let* ((bucket (correct-bucket (node-id replacement-candidate) dht))
                  (oldest-node (oldest-node-in-bucket bucket)))
             (and (> (minutes-since (bucket-last-changed bucket))
                     15)
