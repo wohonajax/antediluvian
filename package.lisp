@@ -47,11 +47,6 @@
                 #:port-to-octet-buffer
                 #:socket-connect
                 #:socket-close
-                ;; stream sockets (TCP)
-                #:socket-accept
-                #:socket-listen
-                #:socket-stream
-                #:wait-for-input
                 ;; datagram sockets (UDP)
                 #:socket-receive
                 #:socket-send
