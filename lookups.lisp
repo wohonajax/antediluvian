@@ -5,7 +5,8 @@
 ;;;; nodes are no closer than the previous k closest nodes.
 
 (in-package #:dhticl)
-
+;;; TODO: have lookups be DHT-local rather than
+;;; operating on one global routing table
 (defconstant +alpha+ 3
   "The number of simultaneous lookups to perform.")
 
@@ -79,7 +80,8 @@ results are the same as the previous best results."
         ((equalp (gethash target *best-lookup-results*)
                  (gethash target *previous-best-lookup-results*))
          (remhash target *previous-best-lookup-results*)
-         (mapc #'maybe-add-node (gethash target *best-lookup-results*))
+         (mapc (rcurry #'maybe-add-node (gethash target *hash-dhts*))
+               (gethash target *best-lookup-results*))
          (remhash target *best-lookup-results*))
         ;; if the previous results aren't the same as the
         ;; current results, recurse on the results we got
