@@ -2,8 +2,6 @@
 
 (in-package #:dhticl)
 
-(defvar *routing-table-location*
-  (xdg-config-home "dhticl/table.sexp"))
 (defvar *routing-table* (list))
 
 ;;; recommended bucket size limit is 8
