@@ -68,7 +68,9 @@ the connection attempt is still in progress."
 (defun write-handshake-header-reserved-bytes (stream)
   "Writes the reserved bytes of the handshake that indicate protocol
 extensions to STREAM."
-  (write-sequence (make-array 8 :element-type '(unsigned-byte 8)) stream))
+  (let ((vector (make-array 8 :element-type '(unsigned-byte 8)
+                            :initial-element 0)))
+    (write-sequence vector stream)))
 
 (defun perform-handshake (hash socket)
   "Performs a BitTorrent protocol handshake with the peer under HASH connected
