@@ -82,9 +82,8 @@ to SOCKET."
     (finish-output stream)
     ;; if we don't get the same hash back as
     ;; the one we send, sever the connection
-    (let ((peer-hash (read-sequence
-                      (make-array 20 :element-type '(unsigned-byte 8))
-                      stream)))
+    (let ((peer-hash (make-array 20 :element-type '(unsigned-byte 8))))
+      (read-sequence peer-hash stream)
       (unless (equalp hash peer-hash)
         (let ((ip (get-peer-address socket)))
           (socket-close socket)
