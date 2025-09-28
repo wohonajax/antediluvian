@@ -88,5 +88,5 @@ to SOCKET."
         (let ((ip (get-peer-address socket)))
           (socket-close socket)
           (remhash ip (gethash hash *peer-list*)))))
-    (write-sequence *my-peer-id* stream)
+    (write-sequence *peer-id* stream)
     (finish-output stream)))
