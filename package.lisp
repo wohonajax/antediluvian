@@ -48,7 +48,9 @@
                 ;; conditions
                 #:connection-refused-error
                 #:timeout-error)
-  (:export #:dht
+  (:export #:add-hash
+           #:dht
+           ;; variables
            #:*id*
            #:*peer-id*
            #:*default-port*

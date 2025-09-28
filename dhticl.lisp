@@ -32,9 +32,6 @@
   (send-message :find_node host port (generate-transaction-id)
                 :info-hash *id*)
   (parse-message))
-
-(defun initiate-lookups ()
-  (mapc #'initiate-lookup *hashes*))
 ;;; TODO: find_node each found node for nodes near the hash
 (defun main-loop ()
   ;; bootstrap the DHT with known nodes
@@ -46,8 +43,6 @@
   (bootstrap-node "dht.transmissionbt.com" 6881)
   (bootstrap-node "dht.aelitis.com" 6881)
   (bootstrap-node "bootstrap.jami.net" 4222)
-  ;; TODO: wait for bootstrapping before initiating lookups
-  (initiate-lookups)
   (loop with start-time = (get-universal-time)
         do (parse-message)
           ;; TODO: routing table upkeep
@@ -60,6 +55,11 @@
             (maybe-replace-nodes)
             (refresh-tokens))))
 
+(defun add-hash (hash)
+  "Adds HASH to the active hashes the DHT is using."
+  (pushnew hash *hashes* :test #'equalp)
+  (initiate-lookup hash))
+
 (defun setup (hashes)
   "Performs setup on program startup. Sets up initial variables, etc."
   (load-settings)
@@ -67,9 +67,7 @@
                                                :protocol :datagram
                                                :local-port *default-port*)
         *secret-rotation-thread* (start-sercret-rotation-thread))
-  (when hashes
-    (mapc (lambda (hash) (push hash *hashes*))
-          (remove-duplicates hashes :test #'equalp))))
+  (mapc #'add-hash hashes))
 
 (defun close-peer-sockets (peers-table)
   "Closes the all the open sockets in PEERS-TABLE."
