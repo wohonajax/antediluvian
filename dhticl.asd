@@ -21,7 +21,6 @@
   :depends-on (alexandria
                babel
                bencode
-               bitfield
                bordeaux-threads
                ironclad/core
                ironclad/digests
