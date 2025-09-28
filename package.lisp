@@ -57,6 +57,7 @@
                 #:timeout-error)
   (:export #:dht
            #:*id*
+           #:*peer-id*
            #:*default-port*
            #:*use-implied-port-p*
            #:*routing-table*

@@ -50,7 +50,7 @@ header."
   (concat-vec (map '(vector (unsigned-byte 8)) #'char-code "CL")
               (random-data 18)))
 
-(defvar *my-peer-id* (generate-peer-id)
+(defvar *peer-id* (generate-peer-id)
   "The peer ID for this session.")
 
 (defun get-peer-socket (ip info-hash)
