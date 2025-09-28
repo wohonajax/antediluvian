@@ -35,13 +35,7 @@
   (parse-message))
 
 (defun initiate-lookups ()
-  (mapc (lambda (hash)
-          (let ((node-list (find-closest-nodes hash)))
-            (dotimes (i +alpha+) ; FIXME: handle the whole list
-              (let ((node (nth i node-list)))
-                (send-message :find_node (node-ip node) (node-port node)
-                              (generate-transaction-id) :info-hash hash)))))
-        *hashes*))
+  (mapc #'initiate-lookup *hashes*))
 ;;; TODO: find_node each found node for nodes near the hash
 (defun main-loop ()
   ;; bootstrap the DHT with known nodes
