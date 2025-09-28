@@ -66,4 +66,5 @@
            #:*default-port*
            #:*use-implied-port-p*
            #:*routing-table*
+           #:*peer-list*
            #:*hashes*))
