@@ -79,6 +79,7 @@ to SOCKET."
     (write-handshake-header stream)
     (write-handshake-header-reserved-bytes stream)
     (write-sequence hash stream)
+    (finish-output stream)
     ;; if we don't get the same hash back as
     ;; the one we send, sever the connection
     (let ((peer-hash (read-sequence
@@ -88,4 +89,5 @@ to SOCKET."
         (let ((ip (get-peer-address socket)))
           (socket-close socket)
           (remhash ip (gethash hash *peer-list*)))))
-    (write-sequence *my-peer-id* stream)))
+    (write-sequence *my-peer-id* stream)
+    (finish-output stream)))
