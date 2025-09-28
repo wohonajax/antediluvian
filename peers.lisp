@@ -91,3 +91,30 @@ to SOCKET."
         (return-from perform-handshake)))
     (write-sequence *peer-id* stream)
     (finish-output stream)))
+
+(defun byte-for-message-type (type)
+  "Returns the byte to be sent to a peer for a TYPE message. Must be a
+keyword."
+  (case type
+    ;; no payload
+    (:choke 0)
+    (:unchoke 1)
+    (:interested 2)
+    (:not-interested 3)
+    ;; payload
+    (:have 4)
+    (:bitfield 5)
+    (:request 6)
+    (:piece 7)
+    (:cancel 8)))
+
+(defun send-message-with-no-payload (type socket)
+  "Sends a TYPE message to the peer connected to SOCKET."
+  (write-byte (byte-for-message-type type) (socket-stream socket)))
+
+(defun send-bitfield-message (socket)
+  "Sends a bitfield message to the peer connected to SOCKET."
+  (let ((stream (socket-stream socket)))
+    (write-byte (byte-for-message-type :bitfield) stream)
+    ;;TODO: figure out how to use the bitfield library for this
+    ))
