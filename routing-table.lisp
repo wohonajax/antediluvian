@@ -64,7 +64,7 @@ procedure for potentially adding a node to a bucket."
       (return-from maybe-add-node))
     (when (bucket-split-candidate-p node bucket)
       (split-bucket bucket dht))
-    (maybe-add-to-table node)))
+    (maybe-add-to-table node dht)))
 
 (defun check-replacement-candidates ()
   "Checks whether to replace potentially stale nodes with replacement
