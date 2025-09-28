@@ -63,14 +63,12 @@ the connection attempt is still in progress."
 (defun write-handshake-header (stream)
   "Writes the BitTorrent handshake header to STREAM."
   (write-byte 19 stream) ; length prefix
-  (map nil (lambda (char) (write-byte (char-code char) stream))
-       "BitTorrent protocol"))
+  (write-sequence (string-to-octets "BitTorrent protocol") stream))
 
 (defun write-handshake-header-reserved-bytes (stream)
   "Writes the reserved bytes of the handshake that indicate protocol
 extensions to STREAM."
-  (dotimes (i 8)
-    (write-byte 0 stream)))
+  (write-sequence (make-array 8 :element-type '(unsigned-byte 8)) stream))
 
 (defun perform-handshake (hash socket)
   "Performs a BitTorrent protocol handshake with the peer under HASH connected

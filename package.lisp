@@ -11,6 +11,8 @@
                 #:switch
                 #:when-let
                 #:when-let*)
+  (:import-from #:babel
+                #:string-to-octets)
   (:import-from #:bencode
                 #:*binary-key-p*
                 #:decode
