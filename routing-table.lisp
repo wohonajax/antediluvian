@@ -1,6 +1,9 @@
 ;;;; Code related to the routing table
 
 (in-package #:dhticl)
+
+(defvar *hash-dhts* (make-hash-table :test #'equalp)
+  "A hash table mapping info hashes to DHT objects.")
 ;;; TODO: the replacement cache and replacement candidates should be DHT-local
 (defvar *replacement-cache* (list)
   "A list of nodes to potentially add to the routing table, should a bucket
