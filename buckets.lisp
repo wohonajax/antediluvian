@@ -22,10 +22,10 @@
 
 (defun correct-bucket (id)
   "Returns the proper bucket for ID."
-  (let ((id-int (convert-id-to-int id)))
-    (dolist (bucket *routing-table*)
-      (when (within id-int (bucket-min bucket) (bucket-max bucket))
-        (return bucket)))))
+  (loop with id-int = (convert-id-to-int id)
+        for bucket in *routing-table*
+        when (within id-int (bucket-min bucket) (bucket-max bucket))
+          return bucket))
 
 (defun iterate-bucket (bucket action)
   "Funcalls ACTION on each node in BUCKET."
