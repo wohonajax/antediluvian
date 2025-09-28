@@ -10,9 +10,8 @@
 ;;; TODO: sanitize settings
 (defun load-settings ()
   "Loads settings."
-  (let ((file (probe-file *settings-location*)))
-    (when file
-      (load file))))
+  (when-let (file (probe-file *settings-location*))
+    (load file)))
 
 (defun save-settings ()
   "Saves settings."
