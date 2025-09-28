@@ -19,7 +19,6 @@
                (:file "dhticl"))
   :serial t
   :depends-on (alexandria
-               babel
                bencode
                bordeaux-threads
                ironclad/core
