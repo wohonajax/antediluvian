@@ -41,9 +41,7 @@
   (:import-from #:uiop
                 #:xdg-config-home)
   (:import-from #:usocket
-                #:*wildcard-host*
                 #:+max-datagram-packet-size+
-                #:get-peer-address
                 #:get-peer-port
                 #:port-from-octet-buffer
                 #:port-to-octet-buffer
@@ -67,4 +65,6 @@
            #:*use-implied-port-p*
            #:*routing-table*
            #:*peer-list*
-           #:*hashes*))
+           #:*hashes*
+           ;; util
+           #:concat-vec))

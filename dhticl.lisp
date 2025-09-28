@@ -73,9 +73,7 @@
   (setf *listening-dht-socket* (socket-connect nil nil
                                                :protocol :datagram
                                                :local-port *default-port*)
-        *listening-peer-socket* (socket-listen *wildcard-host* *default-port*)
-        *secret-rotation-thread* (start-sercret-rotation-thread)
-        *peer-listener-thread* (start-listener-thread))
+        *secret-rotation-thread* (start-sercret-rotation-thread))
   (when hashes
     (mapc (lambda (hash) (push hash *hashes*))
           (remove-duplicates hashes :test #'equalp))))
@@ -84,7 +82,6 @@
   "Performs cleanup on program shutdown. Closes sockets, destroys threads, and
 saves settings."
   (socket-close *listening-dht-socket*)
-  (socket-close *listening-peer-socket*)
   (maphash (lambda (target peers-table)
              (declare (ignore target))
              (maphash (lambda (ip peer-future)
@@ -93,9 +90,7 @@ saves settings."
                           (socket-close socket)))
                       peers-table))
            *peer-list*)
-  (mapc #'socket-close *accepted-connections*)
   (destroy-thread *secret-rotation-thread*)
-  (destroy-thread *peer-listener-thread*)
   (save-settings))
 
 (defun dht (&rest hashes)
