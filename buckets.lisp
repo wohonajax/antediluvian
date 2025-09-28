@@ -17,7 +17,7 @@
 (defun make-new-bucket (min max)
   "Adds a bucket to the routing table with a range from MIN to MAX."
   (let ((new-bucket (make-bucket :min min :max max)))
-    (push new-bucket *routing-table*)
+    (insert new-bucket *routing-table* #'< :key #'bucket-min)
     new-bucket))
 
 (defun correct-bucket (id)
@@ -69,13 +69,6 @@ if successful, NIL otherwise."
              (setf worst (calculate-node-distance (lastcar winners) id)))))
        :nodely t))
     winners))
-
-(defun sort-table ()
-  "Ensures the buckets of the routing table are sorted."
-  (setf *routing-table*
-        (sort *routing-table*
-              (lambda (x y)
-                (< (bucket-min x) (bucket-min y))))))
 
 (defun first-empty-slot (bucket)
   "Returns the index of the first empty slot in BUCKET."
@@ -136,5 +129,4 @@ if successful, NIL otherwise."
          (large-bucket (make-new-bucket (1+ mid) max)))
     (setf *routing-table*
           (remove bucket *routing-table* :test #'eql :count 1))
-    (seed-buckets small-bucket large-bucket bucket)
-    (sort-table)))
+    (seed-buckets small-bucket large-bucket bucket)))
