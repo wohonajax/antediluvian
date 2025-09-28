@@ -23,8 +23,7 @@
                           :if-exists :overwrite
                           :if-does-not-exist :create)
       (format file "~{~S~^~%~}"
-              (list (make-setting *routing-table-location*)
-                    (make-setting *default-port*)
+              (list (make-setting *default-port*)
                     (make-setting *use-implied-port-p*)
                     (make-setting *hashes*))))))
 
