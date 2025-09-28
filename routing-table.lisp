@@ -84,7 +84,7 @@ candidates or add those candidates to the replacement cache."
   "Checks whether to replace stale nodes in the routing table with nodes in the
 replacement cache."
   (mapc (lambda (replacement-candidate)
-          (let* ((bucket (correct-bucket node))
+          (let* ((bucket (correct-bucket replacement-candidate))
                  (oldest-node (oldest-node-in-bucket bucket)))
             (and (> (minutes-since (bucket-last-changed bucket))
                     15)
