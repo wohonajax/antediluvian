@@ -44,6 +44,15 @@ compact peer format."
           when socket ; if the connection failed, don't include that peer
             collect (compact-peer-info ip (get-peer-port socket)))))
 
+(defun generate-peer-id ()
+  "Generates a 20-byte peer ID for this session. Uses \"CL\" for the client
+header."
+  (concat-vec (map '(vector (unsigned-byte 8)) #'char-code "CL")
+              (random-data 18)))
+
+(defvar *my-peer-id* (generate-peer-id)
+  "The peer ID for this session.")
+
 (defun get-peer-socket (ip info-hash)
   "Returns the socket object associated with IP for a peer under INFO-HASH.
 Returns NIL if there is no such peer or if the connection failed. Will block if
