@@ -45,6 +45,9 @@
             (maybe-replace-nodes)
             (refresh-tokens))))
 
+(defvar *main-dht-thread* nil
+  "The thread that the main loop of the DHT is running in.")
+
 (defun add-hash (hash)
   "Adds HASH to the active hashes the DHT is using."
   (pushnew hash *hashes* :test #'equalp)
@@ -56,7 +59,8 @@
   (setf *listening-dht-socket* (socket-connect nil nil
                                                :protocol :datagram
                                                :local-port *default-port*)
-        *secret-rotation-thread* (start-sercret-rotation-thread))
+        *secret-rotation-thread* (start-sercret-rotation-thread)
+        *main-dht-thread* (make-thread #'main-loop))
   ;; bootstrap the DHT with known nodes
   ;; (taken from qbittorrent's bootstrap list)
   (bootstrap-node "router.bittorrent.com" 6881)
@@ -81,6 +85,7 @@ saves settings."
   (loop for peers-table being the hash-values of *peer-list*
         do (close-peer-sockets peers-table))
   (destroy-thread *secret-rotation-thread*)
+  (destroy-thread *main-dht-thread*)
   (save-settings))
 
 (defun dht (&rest hashes)
