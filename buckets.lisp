@@ -2,6 +2,8 @@
 
 (in-package #:dhticl)
 
+(defvar *routing-table* (list))
+
 ;;; recommended bucket size limit is 8
 (defconstant +k+ 8
   "Replication parameter. Used for the bucket size limit, among other things.")
@@ -12,46 +14,42 @@
   (nodes (make-array +k+ :initial-element nil))
   (last-changed (get-universal-time)))
 
-(defclass dht ()
-  ((hash :initarg :hash :accessor :hash :type '(vector (unsigned-byte 8)))
-   (routing-table :accessor :routing-table :initform (list (make-bucket)))))
-
-(defun make-new-bucket (min max dht)
-  "Adds a bucket to the routing table of DHT with a range from MIN to MAX."
+(defun make-new-bucket (min max)
+  "Adds a bucket to the routing table with a range from MIN to MAX."
   (let ((new-bucket (make-bucket :min min :max max)))
-    (insert new-bucket (routing-table dht) #'< :key #'bucket-min)
+    (insert new-bucket *routing-table* #'< :key #'bucket-min)
     new-bucket))
 
-(defun correct-bucket (id dht)
-  "Returns the proper bucket for ID from the routing table of DHT."
-  (loop with id-int = (convert-id-to-int id)
-        for bucket in (routing-table dht)
-        when (within id-int (bucket-min bucket) (bucket-max bucket))
-          return bucket))
+(defun correct-bucket (id)
+  "Returns the proper bucket for ID."
+  (let ((id-int (convert-id-to-int id)))
+    (dolist (bucket *routing-table*)
+      (when (within id-int (bucket-min bucket) (bucket-max bucket))
+        (return bucket)))))
 
 (defun iterate-bucket (bucket action)
   "Funcalls ACTION on each node in BUCKET."
   (loop for node across (bucket-nodes bucket)
         when node do (funcall action node)))
 
-(defun iterate-table (dht action &key nodely)
-  "Funcalls ACTION on each bucket in the routing table of DHT, or on each node
+(defun iterate-table (action &key nodely)
+  "Funcalls ACTION on each bucket in the routing table, or on each node
 if NODELY is non-NIL."
-  (dolist (bucket (routing-table dht))
+  (dolist (bucket *routing-table*)
     (if nodely
         (iterate-bucket bucket action)
         (funcall action bucket))))
 
-(defun find-node-in-table (id dht)
-  "Tries to find a node in the routing table of DHT based on its ID. Returns
-the node if successful, NIL otherwise."
-  (iterate-bucket (correct-bucket id dht)
+(defun find-node-in-table (id)
+  "Tries to find a node in the routing table based on its ID. Returns the node
+if successful, NIL otherwise."
+  (iterate-bucket (correct-bucket id)
                   (lambda (node)
                     (and (equalp id (node-id node))
                          (return-from find-node-in-table node)))))
 
-(defun find-closest-nodes (id dht)
-  "Returns a list of the K closest nodes to ID in the routing table of DHT."
+(defun find-closest-nodes (id)
+  "Returns a list of the K closest nodes to ID."
   (let (worst winners)
     (flet ((sorter (x y)
              (cond ((and x y) (< x y))
@@ -62,7 +60,6 @@ the node if successful, NIL otherwise."
                    (x t)
                    (y nil))))
       (iterate-table
-       dht
        (lambda (node)
          (let ((distance (calculate-node-distance node id)))
            (when (sorter distance worst)
@@ -123,13 +120,13 @@ the node if successful, NIL otherwise."
                       (first-empty-slot larger))
                node)))))
 
-(defun split-bucket (bucket dht)
-  "Splits BUCKET into two new buckets in the routing table of DHT."
+(defun split-bucket (bucket)
+  "Splits BUCKET into two new buckets."
   (let* ((min (bucket-min bucket))
          (max (bucket-max bucket))
          (mid (truncate max 2))
-         (small-bucket (make-new-bucket min mid dht))
-         (large-bucket (make-new-bucket (1+ mid) max dht)))
-    (setf (routing-table dht)
-          (remove bucket (routing-table dht) :test #'eql :count 1))
+         (small-bucket (make-new-bucket min mid))
+         (large-bucket (make-new-bucket (1+ mid) max)))
+    (setf *routing-table*
+          (remove bucket *routing-table* :test #'eql :count 1))
     (seed-buckets small-bucket large-bucket bucket)))
