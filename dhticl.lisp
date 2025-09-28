@@ -33,15 +33,6 @@
   (parse-message))
 ;;; TODO: find_node each found node for nodes near the hash
 (defun main-loop ()
-  ;; bootstrap the DHT with known nodes
-  ;; (taken from qbittorrent's bootstrap list)
-  (bootstrap-node "router.bittorrent.com" 6881)
-  (bootstrap-node "dht.libtorrent.org" 25401)
-  ;; FIXME: these 4 nodes don't seem to respond to pings
-  (bootstrap-node "router.utorrent.com" 6881)
-  (bootstrap-node "dht.transmissionbt.com" 6881)
-  (bootstrap-node "dht.aelitis.com" 6881)
-  (bootstrap-node "bootstrap.jami.net" 4222)
   (loop with start-time = (get-universal-time)
         do (parse-message)
           ;; TODO: routing table upkeep
@@ -66,6 +57,15 @@
                                                :protocol :datagram
                                                :local-port *default-port*)
         *secret-rotation-thread* (start-sercret-rotation-thread))
+  ;; bootstrap the DHT with known nodes
+  ;; (taken from qbittorrent's bootstrap list)
+  (bootstrap-node "router.bittorrent.com" 6881)
+  (bootstrap-node "dht.libtorrent.org" 25401)
+  ;; FIXME: these 4 nodes don't seem to respond to pings
+  (bootstrap-node "router.utorrent.com" 6881)
+  (bootstrap-node "dht.transmissionbt.com" 6881)
+  (bootstrap-node "dht.aelitis.com" 6881)
+  (bootstrap-node "bootstrap.jami.net" 4222)
   (mapc #'add-hash hashes))
 
 (defun close-peer-sockets (peers-table)
