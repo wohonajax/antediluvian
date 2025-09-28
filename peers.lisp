@@ -87,6 +87,7 @@ to SOCKET."
       (unless (equalp hash peer-hash)
         (let ((ip (get-peer-address socket)))
           (socket-close socket)
-          (remhash ip (gethash hash *peer-list*)))))
+          (remhash ip (gethash hash *peer-list*)))
+        (return-from perform-handshake)))
     (write-sequence *peer-id* stream)
     (finish-output stream)))
