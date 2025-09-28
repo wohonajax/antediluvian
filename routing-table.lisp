@@ -2,12 +2,6 @@
 
 (in-package #:dhticl)
 
-<<<<<<< HEAD
-(defvar *hash-dhts* (make-hash-table :test #'equalp)
-  "A hash table mapping info hashes to DHT objects.")
-;;; TODO: the replacement cache and replacement candidates should be DHT-local
-=======
->>>>>>> parent of 6a4e097 (Port routing-table.lisp to use different possible DHT objects rather than having everything be under one routing table)
 (defvar *replacement-cache* (list)
   "A list of nodes to potentially add to the routing table, should a bucket
 contain nodes that go stale.")
@@ -69,13 +63,8 @@ procedure for potentially adding a node to a bucket."
     (when (contains node bucket)
       (return-from maybe-add-node))
     (when (bucket-split-candidate-p node bucket)
-<<<<<<< HEAD
-      (split-bucket bucket dht))
-    (maybe-add-to-table node dht)))
-=======
       (split-bucket bucket))
     (maybe-add-to-table node)))
->>>>>>> parent of 6a4e097 (Port routing-table.lisp to use different possible DHT objects rather than having everything be under one routing table)
 
 (defun check-replacement-candidates ()
   "Checks whether to replace potentially stale nodes with replacement
