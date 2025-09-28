@@ -60,12 +60,32 @@ the connection attempt is still in progress."
   (when-let (peers (gethash info-hash *peer-list*))
     (force (gethash ip peers))))
 
-(defun perform-handshake (socket)
-  "Sends a BitTorrent handshake over SOCKET."
+(defun write-handshake-header (stream)
+  "Writes the BitTorrent handshake header to STREAM."
+  (write-byte 19 stream) ; length prefix
+  (map nil (lambda (char) (write-byte (char-code char) stream))
+       "BitTorrent protocol"))
+
+(defun write-handshake-header-reserved-bytes (stream)
+  "Writes the reserved bytes of the handshake that indicate protocol
+extensions to STREAM."
+  (dotimes (i 8)
+    (write-byte 0 stream)))
+
+(defun perform-handshake (hash socket)
+  "Performs a BitTorrent protocol handshake with the peer under HASH connected
+to SOCKET."
   (let ((stream (socket-stream socket)))
-    (write-byte 19 stream)
-    (map nil (lambda (char) (write-byte (char-code char) stream))
-         "BitTorrent protocol")
-    (dotimes (i 8)
-      (write-byte 0 stream))
-    (finish-output stream)))
+    (write-handshake-header stream)
+    (write-handshake-header-reserved-bytes stream)
+    (write-sequence hash stream)
+    ;; if we don't get the same hash back as
+    ;; the one we send, sever the connection
+    (let ((peer-hash (read-sequence
+                      (make-array 20 :element-type '(unsigned-byte 8))
+                      stream)))
+      (unless (equalp hash peer-hash)
+        (let ((ip (get-peer-address socket)))
+          (socket-close socket)
+          (remhash ip (gethash hash *peer-list*)))))
+    (write-sequence *my-peer-id* stream)))
