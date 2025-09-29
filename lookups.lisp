@@ -88,5 +88,5 @@ results are the same as the previous best results."
         (t (shiftf (gethash target *previous-best-lookup-results*)
                    (gethash target *best-lookup-results*)
                    nil)
-           (mapc (lambda (node) (lookup target node))
+           (mapc (curry #'lookup target)
                  (gethash target *previous-best-lookup-results*)))))
