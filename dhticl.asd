@@ -1,7 +1,7 @@
 (asdf:defsystem #:dhticl
   :name "DHTiCL"
   :author "Hunter Chandler <wohonajax@gmail.com>"
-  :version "20250928"
+  :version "20250929"
   :maintainer "Hunter Chandler <wohonajax@gmail.com>"
   :license "MIT"
   :description "DHTiCL"
