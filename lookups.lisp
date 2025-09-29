@@ -32,13 +32,9 @@ from find_node lookups.")
 
 (defun active-lookups (target)
   "Returns the number of active lookups for TARGET that haven't completed yet."
-  (let ((count 0))
-    (maphash (lambda (transaction-id target-id)
-               (declare (ignore transaction-id))
-               (when (equalp target target-id)
-                 (incf count)))
-             *active-lookups*)
-    count))
+  (loop for target-id being the hash-values of *active-lookups*
+        when (equalp target target-id)
+          count it))
 
 (defun initiate-lookup (target)
   "Initiates a lookup procedure for TARGET."
