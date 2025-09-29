@@ -16,8 +16,6 @@
                 #:*binary-key-p*
                 #:decode
                 #:encode)
-  (:import-from #:bitfield
-                #:define-bitfield)
   (:import-from #:bordeaux-threads
                 ;; threads
                 #:destroy-thread
