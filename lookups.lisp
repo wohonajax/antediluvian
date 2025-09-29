@@ -56,10 +56,8 @@ from find_node lookups.")
   (insert node (gethash target *best-lookup-results*) #'<
           :key (rcurry #'calculate-node-distance target))
   ;; we only want the k closest nodes
-  (let ((results-list (gethash target *best-lookup-results*)))
-    (when (> (length results-list) +k+)
-      (setf (gethash target *best-lookup-results*)
-            (subseq results-list 0 +k+)))))
+  (setf (gethash target *best-lookup-results*)
+        (firstn +k+ (gethash target *best-lookup-results*))))
 
 (defun handle-lookup-response (transaction-id target)
   "Handles a find_node response. Recursively calls find_node until the best
