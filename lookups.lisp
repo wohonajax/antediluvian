@@ -66,7 +66,7 @@ from find_node lookups.")
 results are the same as the previous best results."
   (remhash transaction-id *active-lookups*)
   ;; if there are still active lookups for this
-  ;; target, don't process the "best results" yet,
+  ;; target, don't process the lookup results yet,
   ;; since we don't have all our results
   (unless (= 0 (active-lookups target))
     (return-from handle-lookup-response))
