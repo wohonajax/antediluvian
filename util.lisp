@@ -26,7 +26,7 @@
   "Returns the hash of BYTE-VECTOR using the SHA1 algorithm."
   (digest-sequence :sha1 byte-vector))
 
-(defmacro insert (item list predicate &key key)
+(defmacro insert (item list predicate &key (key #'identity))
   "Inserts ITEM into LIST and sorts it according to PREDICATE. Duplicates are
 not allowed."
   (labels ((insert-item (itm lst)
