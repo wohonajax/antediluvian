@@ -80,10 +80,7 @@ fails, try ports 6881 through 6889."
   (load-settings)
   (try-ports *default-port*)
   (setf *default-port* (get-local-port *listening-dht-socket*))
-  (setf *listening-dht-socket* (socket-connect nil nil
-                                               :protocol :datagram
-                                               :local-port *default-port*)
-        *secret-rotation-thread* (start-sercret-rotation-thread)
+  (setf *secret-rotation-thread* (start-sercret-rotation-thread)
         *main-dht-thread* (make-thread #'main-loop))
   ;; bootstrap the DHT with known nodes
   ;; (taken from qbittorrent's bootstrap list)
