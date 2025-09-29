@@ -73,7 +73,7 @@ fails, try ports 6881 through 6889."
         do (setf *listening-dht-socket*
                  (connect-datagram-socket port-candidate)))
   (unless *listening-dht-socket*
-    (error "Unable to connect on port ~D" port)))
+    (error "Unable to connect on port ~D or on any default ports." port)))
 
 (defun setup (hashes)
   "Performs setup on program startup. Sets up initial variables, etc."
