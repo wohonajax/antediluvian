@@ -71,8 +71,7 @@ results are the same as the previous best results."
   (unless (= 0 (active-lookups target))
     (return-from handle-lookup-response))
   (when-let (results (gethash target *lookup-results-lists*))
-    (mapc (lambda (node) (push-to-best-results node target))
-          results)
+    (mapc (rcurry #'push-to-best-results target) results)
     (remhash target *lookup-results-lists*))
   (cond ;; if the previous results are the same as the
         ;; current results, stop recursion. add the
