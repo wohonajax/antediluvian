@@ -29,8 +29,15 @@
 (defmacro insert (item list predicate &key key)
   "Inserts ITEM into LIST and sorts it according to PREDICATE. Duplicates are
 not allowed."
-  `(setf ,list (remove-duplicates (sort (cons ,item ,list)
-                                        ,predicate :key ,key))))
+  (labels ((insert-item (itm lst)
+             (cond ((equalp itm (first lst)) lst)
+                   ((funcall predicate
+                             (funcall key itm)
+                             (funcall key (first lst)))
+                    (cons itm lst))
+                   (t (cons (first lst)
+                            (insert-item itm (rest lst)))))))
+    `(setf ,list (insert-item ,item ,list))))
 
 (defun concat-vec (x y)
   "Concatenates X and Y into a byte-vector."
