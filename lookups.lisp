@@ -39,8 +39,7 @@ from find_node lookups.")
 (defun initiate-lookup (target)
   "Initiates a lookup procedure for TARGET."
   (let ((alpha-closest-nodes (firstn +alpha+ (find-closest-nodes target))))
-    (mapc (lambda (node) (lookup target node))
-          alpha-closest-nodes)))
+    (mapc (curry #'lookup target) alpha-closest-nodes)))
 
 (defun recurse-on-lookup-results (target)
   "Begins lookups of TARGET using nodes in the intermediary results list."
