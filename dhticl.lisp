@@ -53,9 +53,33 @@
   (pushnew hash *hashes* :test #'equalp)
   (initiate-lookup hash))
 
+(defun connect-datagram-socket (port)
+  "Attempts to connect a UDP socket listening on PORT. Returns a usocket object
+if successful, NIL if it fails."
+  (handler-case (socket-connect nil nil :protocol :datagram :local-port port)
+    (error ())))
+
+(defun try-ports (port)
+  "Tries to create a listening UDP socket listening on PORT. If the attempt
+fails, try ports 6881 through 6889."
+  (setf *listening-dht-socket* (connect-datagram-socket port))
+  (when *listening-dht-socket*
+    (return-from try-port))
+  ;; if *listening-dht-socket* is nil,
+  ;; the connect operation failed.
+  ;; try ports 6881 through 6889
+  (loop for port-candidate from 6881 upto 6889
+        until *listening-dht-socket*
+        do (setf *listening-dht-socket*
+                 (connect-datagram-socket port-candidate)))
+  (unless *listening-dht-socket*
+    (error "Unable to connect on port ~D" port)))
+
 (defun setup (hashes)
   "Performs setup on program startup. Sets up initial variables, etc."
   (load-settings)
+  (try-ports *default-port*)
+  (setf *default-port* (get-local-port *listening-dht-socket*))
   (setf *listening-dht-socket* (socket-connect nil nil
                                                :protocol :datagram
                                                :local-port *default-port*)

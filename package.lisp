@@ -36,6 +36,7 @@
                 #:xdg-config-home)
   (:import-from #:usocket
                 #:+max-datagram-packet-size+
+                #:get-local-port
                 #:get-peer-port
                 #:port-from-octet-buffer
                 #:port-to-octet-buffer
