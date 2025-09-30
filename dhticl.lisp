@@ -62,13 +62,11 @@ if successful, NIL if it fails."
 (defun try-ports (port)
   "Tries to create a listening UDP socket listening on PORT. If the attempt
 fails, try ports 6881 through 6889."
-  (setf *listening-dht-socket* (connect-datagram-socket port))
-  (when *listening-dht-socket*
-    (return-from try-ports))
-  ;; if *listening-dht-socket* is nil,
-  ;; the connect operation failed.
-  ;; try ports 6881 through 6889
-  (loop for candidate-port from 6881 upto 6889
+  (loop initially (setf *listening-dht-socket* (connect-datagram-socket port))
+        ;; if *listening-dht-socket* is nil,
+        ;; the connect operation failed.
+        ;; try a few default ports as well
+        for candidate-port from 6881 upto 6889
         until *listening-dht-socket*
         do (setf *listening-dht-socket*
                  (connect-datagram-socket candidate-port)))
