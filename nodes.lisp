@@ -2,7 +2,8 @@
 
 (in-package #:dhticl)
 
-(defvar *id* (make-hash (random-data 20)))
+(defvar *id* (make-hash (random-data 20))
+  "The node ID for this session.")
 
 (defclass node ()
   ((id :initarg :id :accessor node-id)
