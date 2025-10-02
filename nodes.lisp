@@ -25,8 +25,10 @@
 
 (defun calculate-elapsed-inactivity (node)
   "Returns the time in minutes since NODE's last seen activity."
-  (let ((last-activity (node-last-activity node)))
-    (and last-activity (minutes-since last-activity))))
+  ;; make sure we don't try to calculate the time since nil,
+  ;; just in case the last-activity slot hasn't been updated
+  (when-let (last-activity (node-last-activity node))
+    (minutes-since last-activity)))
 
 (defun calculate-node-health (node)
   "Returns the node's health as a keyword, either :GOOD, :QUESTIONABLE,
