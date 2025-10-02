@@ -50,8 +50,9 @@
 
 (defun add-hash (hash)
   "Adds HASH to the active hashes the DHT is using."
-  (pushnew hash *hashes* :test #'equalp)
-  (initiate-lookup hash))
+  (unless (member hash *hashes* :test #'equalp)
+    (push hash *hashes*)
+    (initiate-lookup hash)))
 
 (defun connect-datagram-socket (port)
   "Attempts to connect a UDP socket listening on PORT. Returns a usocket object
