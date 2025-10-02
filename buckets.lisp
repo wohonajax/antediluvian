@@ -62,6 +62,9 @@ if successful, NIL otherwise."
       (iterate-table
        (lambda (node)
          (let ((distance (calculate-node-distance node id)))
+           ;; if worst is set, check if the node's distance is closer
+           ;; than the worst so far. if worst isn't set, the node's distance
+           ;; is closer since there are no nodes in winners farther away
            (when (sorter distance worst)
              (insert node winners #'list-sorter)
              (when (> (length winners) +k+)
