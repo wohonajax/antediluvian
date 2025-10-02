@@ -8,10 +8,10 @@
   :long-description "Mainline DHT in Common Lisp"
   :components ((:file "package")
                (:file "util")
+               (:file "peers")
                (:file "nodes")
                (:file "tokens")
                (:file "buckets")
-               (:file "peers")
                (:file "krpc")
                (:file "routing-table")
                (:file "lookups")
