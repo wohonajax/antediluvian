@@ -56,9 +56,10 @@ port as multiple values."
 
 (defun valid-token-p (token)
   "Determines whether TOKEN is valid or not."
-  (let ((token-birth (gethash token *token-births*)))
-    (and token-birth
-         (< (minutes-since token-birth) 10))))
+  ;; make sure we don't try to calculate the time elapsed
+  ;; since nil, in case the token isn't in the hash table
+  (when-let (token-birth (gethash token *token-births*))
+    (< (minutes-since token-birth) 10)))
 
 (defun recall-tokens (info-hash)
   "Retrieves the token values associated with INFO-HASH. If a recent enough
