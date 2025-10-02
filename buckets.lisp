@@ -45,8 +45,8 @@ if NODELY is non-NIL."
 if successful, NIL otherwise."
   (iterate-bucket (correct-bucket id)
                   (lambda (node)
-                    (and (equalp id (node-id node))
-                         (return-from find-node-in-table node)))))
+                    (when (equalp id (node-id node))
+                      (return-from find-node-in-table node)))))
 
 (defun find-closest-nodes (id)
   "Returns a list of the K closest nodes to ID."
