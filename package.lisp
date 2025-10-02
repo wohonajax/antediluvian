@@ -3,7 +3,6 @@
 (defpackage #:dhticl
   (:use #:cl)
   (:import-from #:alexandria
-                #:clamp
                 #:curry
                 #:eswitch
                 #:extremum
