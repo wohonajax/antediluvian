@@ -13,7 +13,7 @@ values if the socket connection failed.")
     (concat-vec ip (port-to-octet-buffer port port-vec))))
 
 (defun pack-values-response (info-hash)
-  "Returns a list of address/port byte-vectors for peers under INFO-HASH in
+  "Returns a list of address/port byte vectors for peers under INFO-HASH in
 compact peer format."
   (when-let (peers (gethash info-hash *peer-list*))
     (loop for socket-future being the hash-values of peers

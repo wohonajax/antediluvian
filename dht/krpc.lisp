@@ -19,7 +19,7 @@ Maps to info_hash when applicable.")
                  :host ip :port port)))
 
 (defun generate-transaction-id ()
-  "Creates a transaction ID and returns it as a byte-vector."
+  "Creates a transaction ID and returns it as a byte vector."
   (random-data 4))
 ;;; TODO: potentially include our own contact information
 (defun pack-nodes-response (target)

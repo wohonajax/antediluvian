@@ -128,7 +128,7 @@ connection fails or times out."
                                                :error-type :protocol)))))))
 
 (defun parse-nodes (byte-vector)
-  "Parses a list of nodes out of a byte-vector of compact node info
+  "Parses a list of nodes out of a byte vector of compact node info
 substrings."
   (let (nodes)
     (handler-case
@@ -146,7 +146,7 @@ substrings."
       (error () (return-from parse-nodes nodes)))))
 
 (defun parse-peers (peers-list)
-  "Parses a list of peers out of a list of compact peer info byte-vectors."
+  "Parses a list of peers out of a list of compact peer info byte vectors."
   (let (peers)
     (handler-case
         (mapc (lambda (byte-vector)
@@ -220,7 +220,7 @@ node in the response."
     (remhash transaction-id *transactions*)))
 
 (defun binary-key-test (keys)
-  "Tests whether KEYS suits decoding as a byte-vector rather than a string."
+  "Tests whether KEYS suits decoding as a byte vector rather than a string."
   (or (equal keys '("t"))
       (equal keys '("id" "a"))
       (equal keys '("target" "a"))

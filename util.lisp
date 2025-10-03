@@ -11,7 +11,7 @@
   (logxor a b))
 
 (defun convert-id-to-int (id)
-  "Converts a node ID from an ID byte-vector to a decimal integer."
+  "Converts a node ID from an ID byte vector to a decimal integer."
   (octets-to-integer id))
 
 (defmacro insert (item list predicate &key (key #'identity))
@@ -28,7 +28,7 @@ not allowed."
     `(setf ,list (insert-item ,item ,list))))
 
 (defun concat-vec (x y)
-  "Concatenates X and Y into a byte-vector."
+  "Concatenates X and Y into a byte vector."
   (concatenate '(vector (unsigned-byte 8)) x y))
 
 (defun contains (item vector &key (test #'eql))

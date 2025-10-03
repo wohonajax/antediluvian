@@ -13,7 +13,7 @@
   "A hash table mapping IP addresses to tokens valid for them.")
 
 (defun parse-node-ip (byte-vector)
-  "Takes a byte-vector in compact peer format and returns an IP address and
+  "Takes a byte vector in compact peer format and returns an IP address and
 port as multiple values."
   (assert (= (length byte-vector) 6)) ; TODO: support IPv6
   (values (subseq byte-vector 0 4)
