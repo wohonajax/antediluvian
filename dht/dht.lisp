@@ -13,7 +13,7 @@
 (defun main-loop ()
   (loop with start-time = (get-universal-time)
         do (parse-message)
-          ;; TODO: routing table upkeep
+          ;; FIXME: MOD might be too exact if PARSE-MESSAGE blocks for a while
           (when (= 0 (mod (minutes-since start-time) 10))
             (iterate-table (lambda (bucket)
                              (purge-stale-nodes bucket)
