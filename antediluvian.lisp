@@ -26,16 +26,18 @@
     (setf (gethash "info" dict) (gethash "info" torrent-file-dict))
     (digest-sequence :sha1 (bencode:encode dict nil))))
 
+(defun parse-source (source)
+  "Parses SOURCE into a SHA1 hash. SOURCE should be a magnet link, filespec to
+a torrent file, or a SHA1 hash."
+  (cond ((magnet-link-p source)
+         (extract-sha1-from-magnet-link source))
+        ((or (stringp source) (pathnamep source))
+         (get-info-hash-from-torrent-file (truenamize source)))
+        (t source)))
+
 (defun parse-sources (list-of-sources)
   "Converts every source in LIST-OF-SOURCES to a SHA1 hash."
-  (mapcar (lambda (source)
-            (cond ((magnet-link-p source)
-                   (extract-sha1-from-magnet-link source))
-                  ((or (stringp source)
-                       (pathnamep source))
-                   (get-info-hash-from-torrent-file (truenamize source)))
-                  (t source)))
-          list-of-sources))
+  (mapcar #'parse-source list-of-sources))
 
 (defun setup (sources)
   "Sets up antediluvian and initiates the DHT using SOURCES, which should be a
