@@ -11,13 +11,12 @@
                 #:switch
                 #:when-let
                 #:when-let*)
-  (:import-from #:babel
-                #:string-to-octets)
   (:import-from #:bordeaux-threads
                 ;; threads
                 #:destroy-thread
                 #:make-thread)
   (:import-from #:ironclad
+                #:ascii-string-to-byte-array
                 #:digest-sequence
                 #:octets-to-integer
                 #:random-data)

@@ -5,7 +5,7 @@
 (defun generate-peer-id ()
   "Generates a 20-byte peer ID for this session. Uses \"AD\" for the client
 header (for AnteDiluvian)."
-  (concat-vec (string-to-octets "AD") (random-data 18)))
+  (concat-vec (ascii-string-to-byte-array "AD") (random-data 18)))
 
 (defvar *peer-id* (generate-peer-id)
   "The peer ID for this session.")
@@ -43,7 +43,7 @@ the connection attempt is still in progress."
 (defun write-handshake-header (stream)
   "Writes the BitTorrent handshake header to STREAM."
   (write-byte 19 stream) ; length prefix
-  (write-sequence (string-to-octets "BitTorrent protocol") stream))
+  (write-sequence (ascii-string-to-byte-array "BitTorrent protocol") stream))
 
 (defun write-handshake-header-reserved-bytes (stream)
   "Writes the reserved bytes of the handshake that indicate protocol

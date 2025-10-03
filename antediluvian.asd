@@ -1,6 +1,6 @@
 (asdf:defsystem #:antediluvian
   :name "antediluvian"
-  :version "20251002"
+  :version "20251003"
   :description "antediluvian"
   :long-description "Torrent client in Common Lisp"
   :author "Hunter Chandler <wohonajax@gmail.com>"
@@ -23,7 +23,6 @@
                (:file "antediluvian"))
   :serial t
   :depends-on (alexandria
-               babel
                bencode
                bordeaux-threads
                ironclad/core
