@@ -137,7 +137,8 @@ substrings."
           (multiple-value-bind (parsed-ip parsed-port)
               (parse-node-ip (subseq byte-vector (+ i 20) (+ i 26)))
             ;; (list node-id node-ip node-port)
-            (push (list (subseq byte-vector i (+ i 20)) parsed-ip parsed-port)
+            (push (create-node :id (subseq byte-vector i (+ i 20))
+                               :ip parsed-ip :port parsed-port)
                   nodes)))
       ;; TODO: error handling for out-of-bounds
       ;; (node's health may be bad--malformed response sent?)
@@ -160,9 +161,7 @@ substrings."
 (defun handle-nodes-response (nodes target)
   "Handle a nodes response from a find_node or get_peers query by pinging every
 node in the response."
-  (loop with node-list = (parse-nodes nodes)
-        for (node-id node-ip node-port) in node-list
-        for node = (create-node :id node-id :ip node-ip :port node-port)
+  (loop for node in (parse-nodes nodes)
         do (push node (gethash target *lookup-results-lists*)))
   ;; don't recurse until all lookups for the target have returned
   (unless (gethash target *active-lookups*)
