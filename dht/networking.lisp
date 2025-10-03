@@ -79,6 +79,17 @@ then tries to add it to the routing table. Returns the node object."
       
           (gethash (node-ip node) *token-ips*) token)))
 
+(defun make-peer (ip port)
+  "Creates a future containing a socket connected to IP and PORT, or NIL if the
+connection fails or times out."
+  (future (handler-case (socket-connect ip port
+                                        :element-type '(unsigned-byte 8)
+                                        :timeout 5)
+            ;; if we can't connect to the peer,
+            ;; just have the future contain nil
+            (connection-refused-error ())
+            (timeout-error ()))))
+
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
   (let* ((now (get-universal-time))
@@ -143,17 +154,6 @@ node in the response."
   ;; don't recurse until all lookups for the target have returned
   (unless (gethash target *active-lookups*)
     (recurse-on-lookup-results target)))
-
-(defun make-peer (ip port)
-  "Creates a future containing a socket connected to IP and PORT, or NIL if the
-connection fails or times out."
-  (future (handler-case (socket-connect ip port
-                                        :element-type '(unsigned-byte 8)
-                                        :timeout 5)
-            ;; if we can't connect to the peer,
-            ;; just have the future contain nil
-            (connection-refused-error ())
-            (timeout-error ()))))
 
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
