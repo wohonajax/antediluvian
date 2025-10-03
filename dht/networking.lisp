@@ -146,14 +146,16 @@ substrings."
 
 (defun parse-peers (peers-list)
   "Parses a list of peers out of a list of compact peer info byte-vectors."
-  (handler-case
-      (mapcar (lambda (byte-vector)
-                (multiple-value-call #'cons (parse-node-ip byte-vector)))
-              peers-list)
-    ;; TODO: error handling for out-of-bounds
-    ;; (node's health may be bad--malformed response sent?)
-    ;; also possibly sending IPv6 addresses
-    (error () (return-from parse-peers))))
+  (let (peers)
+    (handler-case
+        (mapc (lambda (byte-vector)
+                (push (multiple-value-call #'cons (parse-node-ip byte-vector))
+                      peers)
+              peers-list))
+      ;; TODO: error handling for out-of-bounds
+      ;; (node's health may be bad--malformed response sent?)
+      ;; also possibly sending IPv6 addresses
+      (error () (return-from parse-peers peers)))))
 
 (defun handle-nodes-response (nodes target)
   "Handle a nodes response from a find_node or get_peers query by pinging every
