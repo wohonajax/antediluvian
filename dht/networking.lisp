@@ -56,7 +56,7 @@ NODE is bound in the test form."
                   (generate-transaction-id))))
 
 (defun handle-node-bookkeeping (node time implied-port peer-port id ip port)
-  "Either adjust NODE's settings or create a node based on those settings,
+  "Either adjusts NODE's settings or creates a node based on those settings,
 then tries to add it to the routing table. Returns the node object."
   (cond (node (setf (node-last-activity node) time
                     (node-health node) :good)
