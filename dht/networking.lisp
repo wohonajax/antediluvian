@@ -112,7 +112,9 @@ connection fails or times out."
       ("get_peers" (send-response :get_peers node dict))
       ("announce_peer" (cond ((member token (recall-tokens info-hash)
                                       :test #'equalp)
-                              (push node (gethash info-hash *peer-list*))
+                              (setf (gethash ip (gethash info-hash
+                                                         *peer-list*))
+                                    (make-peer ip port))
                               (send-response :announce_peer node dict
                                              :source-port port))
                              (t (send-response :dht_error node dict
