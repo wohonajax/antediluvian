@@ -22,7 +22,7 @@
                 #:random-data)
   (:import-from #:lparallel
                 ;; kernel
-                #:destroy-kernel
+                #:end-kernel
                 #:make-kernel
                 ;; futures and promises
                 #:force

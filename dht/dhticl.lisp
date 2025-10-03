@@ -86,7 +86,7 @@ saves settings."
         do (close-peer-sockets peers-table))
   (destroy-thread *secret-rotation-thread*)
   (destroy-thread *main-dht-thread*)
-  (destroy-kernel lparallel:*kernel*)
+  (end-kernel)
   (save-settings))
 
 (defun dht (&rest hashes)
