@@ -31,7 +31,7 @@ NODE is bound in the test form."
 
 (defun purge-bad-nodes (bucket)
   "Removes all nodes of bad health from BUCKET and from the list of nodes."
-  (replace-bucket bucket (eq :bad (node-health node))))
+  (replace-bucket bucket (eq (node-health node) :bad)))
 ;;; TODO: can this be done better?
 (defun handle-questionable-node (node)
   "Checks the health of NODE."
@@ -46,7 +46,7 @@ NODE is bound in the test form."
   "Handles all nodes in BUCKET that are of questionable health."
   (iterate-bucket bucket
                   (lambda (node)
-                    (when (eql :questionable (node-health node))
+                    (when (eq (node-health node) :questionable)
                       (handle-questionable-node node)))))
 
 (defun ping-oldest-node (bucket)
