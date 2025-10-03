@@ -13,7 +13,9 @@
   "A hash table mapping lookup targets to lists containing nodes received from
 find_node queries.")
 
-(defvar *previous-best-lookup-results* (make-hash-table :test #'equalp))
+(defvar *previous-best-lookup-results* (make-hash-table :test #'equalp)
+  "A hash table mapping lookup targets to lists containing the k best results
+from the previous iterations of find_node lookups.")
 
 (defvar *best-lookup-results* (make-hash-table :test #'equalp)
   "A hash table mapping lookup targets to lists containing the k best results
