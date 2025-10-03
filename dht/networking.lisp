@@ -144,25 +144,28 @@ node in the response."
   (unless (gethash target *active-lookups*)
     (recurse-on-lookup-results target)))
 
+(defun make-peer (ip port)
+  "Creates a future containing a socket connected to IP and PORT, or NIL if the
+connection fails or times out."
+  (future (handler-case (socket-connect ip port
+                                        :element-type '(unsigned-byte 8)
+                                        :timeout 5)
+            ;; if we can't connect to the peer,
+            ;; just have the future contain nil
+            (connection-refused-error ())
+            (timeout-error ()))))
+
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
-  (flet ((mkpeer (ip port)
-           (socket-connect ip port
-                           :element-type '(unsigned-byte 8)
-                           :timeout 5)))
-    (loop with target-peers = (gethash target *peer-list*)
-          for (ip . port) in (parse-peers peers)
-          ;; just because a peer failed to connect
-          ;; before doesn't mean it will this time
-          ;; also, force will give us nil
-          ;; if ip isn't in target-peers
-          unless (force (gethash ip target-peers))
-            do (setf (gethash ip target-peers)
-                     (future (handler-case (mkpeer ip port)
-                               ;; if we can't connect to the peer,
-                               ;; just use NIL
-                               (connection-refused-error ())
-                               (timeout-error ())))))))
+  (loop with target-peers = (gethash target *peer-list*)
+        for (ip . port) in (parse-peers peers)
+        ;; just because a peer failed to connect
+        ;; before doesn't mean it will this time
+        ;; also, force will give us nil
+        ;; if ip isn't in target-peers
+        unless (force (gethash ip target-peers))
+          do (setf (gethash ip target-peers)
+                   (make-peer ip port))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
