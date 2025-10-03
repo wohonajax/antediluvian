@@ -164,8 +164,7 @@ connection fails or times out."
         ;; also, force will give us nil
         ;; if ip isn't in target-peers
         unless (force (gethash ip target-peers))
-          do (setf (gethash ip target-peers)
-                   (make-peer ip port))))
+          do (setf (gethash ip target-peers) (make-peer ip port))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
