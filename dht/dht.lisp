@@ -59,7 +59,7 @@ fails, try ports 6881 through 6889."
   (try-ports *default-port*)
   (setf *default-port* (get-local-port *listening-dht-socket*))
   (setf *secret-rotation-thread* (start-sercret-rotation-thread)
-        *main-dht-thread* (make-thread #'main-loop))
+        *main-dht-thread* (make-thread #'main-loop :name "Main DHT thread"))
   ;; bootstrap the DHT with known nodes
   (bootstrap-node "router.bittorrent.com" 6881)
   (bootstrap-node "dht.libtorrent.org" 25401)
