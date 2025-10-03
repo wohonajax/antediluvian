@@ -110,7 +110,7 @@ connection fails or times out."
          (node (find-node-in-table id)))
     (setf (gethash transaction-id *transactions*) (or info-hash t))
     (setf node
-          (handle-node-bookkeeping node now implied-port peer-port id ip port))
+          (handle-node-bookkeeping node now implied-port given-port id ip port))
     (when token
       (store-received-token token now transaction-id node))
     (switch ((gethash "q" dict) :test #'string=)
