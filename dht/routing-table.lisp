@@ -86,14 +86,14 @@ replacement cache."
   (mapc (lambda (replacement-candidate)
           (let* ((bucket (correct-bucket replacement-candidate))
                  (oldest-node (oldest-node-in-bucket bucket)))
-            (and (> (minutes-since (bucket-last-changed bucket))
-                    15)
-                 (node-stale-p oldest-node)
-                 (node-replacement-check oldest-node replacement-candidate)
-                 ;; node will be added again if the replacement check fails
-                 ;; if it doesn't fail, we don't want it in here anyway
-                 (setf *replacement-cache*
-                       (remove replacement-candidate
-                               *replacement-cache*
-                               :count 1)))))
+            (when (and (> (minutes-since (bucket-last-changed bucket))
+                          15)
+                       (node-stale-p oldest-node))
+              (node-replacement-check oldest-node replacement-candidate)
+              ;; the replacement candidate will be added again if the
+              ;; replacement check fails. if it doesn't, we don't want
+              ;; it in the replacement cache anyway
+              (setf *replacement-cache* (remove replacement-candidate
+                                                *replacement-cache*
+                                                :count 1)))))
         *replacement-cache*))
