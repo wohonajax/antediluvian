@@ -43,6 +43,10 @@
                 ;; datagram sockets (UDP)
                 #:socket-receive
                 #:socket-send
+                ;; stream sockets (TCP)
+                #:socket-accept
+                #:socket-listen
+                #:socket-stream
                 ;; conditions
                 #:connection-refused-error
                 #:timeout-error)
