@@ -188,7 +188,7 @@ node in the response."
          (token (gethash "token" arguments))
          ;; NODES comes from a find_node or get_peers response
          (nodes (gethash "nodes" arguments))
-         ;; VALUES is a list of strings which are compact peer info
+         ;; VALUES is a list of byte vectors which are compact peer info
          ;; Comes from a get_peers response
          (values (gethash "values" arguments))
          (node (find-node-in-table id)))
