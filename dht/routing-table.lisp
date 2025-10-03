@@ -1,6 +1,6 @@
 ;;;; Code related to the routing table
 
-(in-package #:dhticl)
+(in-package #:antediluvian)
 
 (defvar *replacement-cache* (list)
   "A list of nodes to potentially add to the routing table, should a bucket

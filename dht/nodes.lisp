@@ -1,8 +1,8 @@
 ;;;; Code related to nodes
 
-(in-package #:dhticl)
+(in-package #:antediluvian)
 
-(defvar *id* (make-hash (random-data 20))
+(defvar *id* (digest-sequence :sha1 (random-data 20))
   "The node ID for this session.")
 
 (defclass node ()

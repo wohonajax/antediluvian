@@ -1,4 +1,4 @@
-(in-package #:dhticl)
+(in-package #:antediluvian)
 
 ;;;; TODO: general interface
 (defvar *settings-location*

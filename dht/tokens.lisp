@@ -1,4 +1,4 @@
-(in-package #:dhticl)
+(in-package #:antediluvian)
 
 (defvar *current-secret* nil)
 (defvar *previous-secret* nil)

@@ -4,9 +4,8 @@
 ;;;; find_node queries to each of those nodes, continuing until the k closest
 ;;;; nodes are no closer than the previous k closest nodes.
 
-(in-package #:dhticl)
-;;; TODO: have lookups be DHT-local rather than
-;;; operating on one global routing table
+(in-package #:antediluvian)
+
 (defconstant +alpha+ 3
   "The number of simultaneous lookups to perform.")
 

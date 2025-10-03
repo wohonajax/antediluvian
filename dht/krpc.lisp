@@ -3,7 +3,7 @@
 ;;;; over the network, including queries,
 ;;;; responses, and error messages.
 
-(in-package #:dhticl)
+(in-package #:antediluvian)
 
 (defvar *default-port* 6881
   "The default port to use when listening.")

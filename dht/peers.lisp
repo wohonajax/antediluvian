@@ -1,6 +1,6 @@
 ;;;; Code related to peers
 
-(in-package #:dhticl)
+(in-package #:antediluvian)
 
 (defvar *peer-list* (make-hash-table :test #'equalp)
   "A hash table containing info_hashes as keys and hash tables mapping IP

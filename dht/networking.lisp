@@ -1,7 +1,7 @@
 ;;;; Code related to communicating
 ;;;; with nodes over the network
 
-(in-package #:dhticl)
+(in-package #:antediluvian)
 
 (defun receive-data ()
   "Receive data from the listening socket."

@@ -1,6 +1,6 @@
 ;;;; Code related to Kademlia kbuckets
 
-(in-package #:dhticl)
+(in-package #:antediluvian)
 
 (defvar *routing-table* (list))
 
