@@ -55,18 +55,25 @@ NODE is bound in the test form."
     (send-message :ping (node-ip node) (node-port node)
                   (generate-transaction-id))))
 
+(defun set-node-port (node implied-port peer-port port)
+  "Sets NODE's port slot based on the potential IMPLIED-PORT setting. A value
+of NIL or 0 means to use the provided PEER-PORT. A value of 1 means to use the
+source PORT of the UDP packet."
+  (setf (node-port node)
+        (cond ((and implied-port (= implied-port 1))
+               port)
+              (peer-port peer-port))))
+
 (defun handle-node-bookkeeping (node time implied-port peer-port id ip port)
   "Either adjusts NODE's settings or creates a node based on those settings,
 then tries to add it to the routing table. Returns the node object."
-  (cond (node (setf (node-last-activity node) time
-                    (node-health node) :good)
-              ;; when implied_port is 1, use the source port of the UDP packet
-              (cond ((and implied-port (= implied-port 1))
-                     (setf (node-port node) port))
-                    (peer-port (setf (node-port node) peer-port))))
-        (t (setf node (create-node :id id :ip ip :port port
-                                   :last-activity time
-                                   :health :good))))
+  (if node
+      (setf (node-last-activity node) time
+            (node-health node) :good)
+      (setf node (create-node :id id :ip ip :port port
+                              :last-activity time
+                              :health :good)))
+  (set-node-port node implied-port peer-port port)
   (maybe-add-node node)
   node)
 
