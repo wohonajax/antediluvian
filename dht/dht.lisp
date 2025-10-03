@@ -7,8 +7,7 @@
 (defun bootstrap-node (host port)
   "Bootstraps the routing table using a known node at HOST and PORT."
   (send-message :find_node host port (generate-transaction-id)
-                :info-hash *id*)
-  (parse-message))
+                :info-hash *id*))
 ;;; TODO: find_node each found node for nodes near the hash
 (defun main-loop ()
   (loop with start-time = (get-universal-time)
@@ -62,7 +61,6 @@ fails, try ports 6881 through 6889."
   (setf *secret-rotation-thread* (start-sercret-rotation-thread)
         *main-dht-thread* (make-thread #'main-loop))
   ;; bootstrap the DHT with known nodes
-  ;; (taken from qbittorrent's bootstrap list)
   (bootstrap-node "router.bittorrent.com" 6881)
   (bootstrap-node "dht.libtorrent.org" 25401)
   ;; FIXME: these 4 nodes don't seem to respond to pings
