@@ -47,6 +47,11 @@ list of SHA1 hashes, magnet links, or torrent file paths."
   ;; FIXME: handle magnet links
   (apply #'dht (parse-sources sources)))
 
+(defun add-torrent (source)
+  "Adds a torrent from SOURCE, which should be a magnet link, a filespec to a
+torrent file, or a SHA1 hash."
+  (add-hash (parse-source source)))
+
 (defun cleanup ()
   "Performs cleanup on shutdown."
   (socket-close *listening-peer-socket*)
