@@ -1,10 +1,5 @@
 (in-package #:antediluvian)
 
-(defun within (number first-bound end-bound)
-  "Tests whether NUMBER is contained within the range bounded by FIRST-BOUND
-  and END-BOUND."
-  (<= first-bound number end-bound))
-
 (defun minutes-since (time)
   "Returns the time in minutes that has elapsed since TIME."
   (/ (- (get-universal-time)

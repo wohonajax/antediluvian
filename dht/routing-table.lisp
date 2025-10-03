@@ -50,8 +50,8 @@ NODE must be closer to us than the kth closest node in the routing table."
           (upper-bound (bucket-max bucket))
           (kth-closest-node-to-us (extremum (find-closest-nodes *id*) #'>
                                             :key #'node-distance-from-us)))
-      (and (within (convert-id-to-int id) lower-bound upper-bound)
-           (within (convert-id-to-int *id*) lower-bound upper-bound)
+      (and (<= lower-bound (convert-id-to-int id) upper-bound)
+           (<= lower-bound (convert-id-to-int *id*) upper-bound)
            (< (calculate-distance id *id*)
               (node-distance-from-us kth-closest-node-to-us))))))
 
