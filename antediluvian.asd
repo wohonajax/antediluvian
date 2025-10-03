@@ -7,6 +7,7 @@
   :maintainer "Hunter Chandler <wohonajax@gmail.com>"
   :license "MIT"
   :components ((:file "package")
+               (:file "settings")
                (:file "util")
                (:module "dht"
                         :serial t

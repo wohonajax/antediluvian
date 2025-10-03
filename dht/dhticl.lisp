@@ -1,30 +1,8 @@
 (in-package #:antediluvian)
 
 ;;;; TODO: general interface
-(defvar *settings-location*
-  (xdg-config-home "dhticl/settings.sexp"))
-
 (defvar *hashes* (list)
   "The list of info_hashes the DHT program will use.")
-
-;;; TODO: sanitize settings
-(defun load-settings ()
-  "Loads settings."
-  (when-let (file (probe-file *settings-location*))
-    (load file)))
-
-(defun save-settings ()
-  "Saves settings."
-  (macrolet ((make-setting (setting)
-               `(list 'setf ',setting ,setting)))
-    (with-open-file (file *settings-location*
-                          :direction :output
-                          :if-exists :overwrite
-                          :if-does-not-exist :create)
-      (format file "~{~S~^~%~}"
-              (list (make-setting *default-port*)
-                    (make-setting *use-implied-port-p*)
-                    (make-setting *hashes*))))))
 
 (defun bootstrap-node (host port)
   "Bootstraps the routing table using a known node at HOST and PORT."

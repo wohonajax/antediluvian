@@ -5,15 +5,8 @@
 
 (in-package #:antediluvian)
 
-(defvar *default-port* 6881
-  "The default port to use when listening.")
-
 (defvar *listening-dht-socket* nil
   "A UDP socket listening on *DEFAULT-PORT* for DHT communication.")
-
-(defvar *use-implied-port-p* nil
-  "Whether peers should use the visible port (T) or the given port (NIL).
-Useful for NATs.")
 
 (defvar *transactions* (make-hash-table :test #'equalp)
   "A hash table storing valid, active transaction IDs we've generated.
