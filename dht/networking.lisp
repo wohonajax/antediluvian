@@ -141,6 +141,7 @@ substrings."
                   nodes)))
       ;; TODO: error handling for out-of-bounds
       ;; (node's health may be bad--malformed response sent?)
+      ;; also possibly sending IPv6 addresses
       (error () (return-from parse-nodes nodes)))))
 
 (defun parse-peers (peers-list)
@@ -151,6 +152,7 @@ substrings."
               peers-list)
     ;; TODO: error handling for out-of-bounds
     ;; (node's health may be bad--malformed response sent?)
+    ;; also possibly sending IPv6 addresses
     (error () (return-from parse-peers))))
 
 (defun handle-nodes-response (nodes target)
