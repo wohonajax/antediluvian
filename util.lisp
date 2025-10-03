@@ -1,4 +1,4 @@
-(in-package #:dhticl)
+(in-package #:antediluvian)
 
 (defun within (number first-bound end-bound)
   "Tests whether NUMBER is contained within the range bounded by FIRST-BOUND
