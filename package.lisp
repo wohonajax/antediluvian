@@ -52,15 +52,4 @@
                 ;; conditions
                 #:connection-refused-error
                 #:timeout-error)
-  (:export #:add-hash
-           #:dht
-           ;; variables
-           #:*id*
-           #:*peer-id*
-           #:*default-port*
-           #:*use-implied-port-p*
-           #:*routing-table*
-           #:*peer-list*
-           #:*hashes*
-           ;; util
-           #:concat-vec))
+  (:export #:add-torrent))
