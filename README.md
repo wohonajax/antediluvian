@@ -1,4 +1,3 @@
-DHTiCL
-======
+# antediluvian
 
-Mainline DHT in Common Lisp
+Torrent client in Common Lisp
