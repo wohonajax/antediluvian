@@ -51,22 +51,17 @@ if successful, NIL otherwise."
 (defun find-closest-nodes (id)
   "Returns a list of the K closest nodes to ID."
   (let (worst winners)
-    (flet ((sorter (x y)
+    (flet ((lessp (x y)
              (cond ((and x y) (< x y))
-                   (x t)
-                   (t nil)))
-           (list-sorter (x y)
-             (cond ((and x y) (node-closer-p id x y))
-                   (x t)
-                   (y nil))))
+                   (x t))))
       (iterate-table
        (lambda (node)
          (let ((distance (calculate-node-distance node id)))
            ;; if worst is set, check if the node's distance is closer
            ;; than the worst so far. if worst isn't set, the node's distance
            ;; is closer since there are no nodes in winners farther away
-           (when (sorter distance worst)
-             (insert node winners #'list-sorter)
+           (when (lessp distance worst) ; if worst is nil, this returns t
+             (insert node winners (curry #'node-closer-p id))
              (when (> (length winners) +k+)
                (setf winners (butlast winners)))
              (setf worst (calculate-node-distance (lastcar winners) id)))))
