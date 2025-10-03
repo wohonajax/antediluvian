@@ -21,7 +21,7 @@ Maps to info_hash when applicable.")
 
 (defun send-bencoded-data (data ip port)
   "Bencodes DATA and sends it to IP and PORT."
-  (let ((bencoded-data (encode data nil)))
+  (let ((bencoded-data (bencode:encode data nil)))
     (socket-send *listening-dht-socket* bencoded-data (length bencoded-data)
                  :host ip :port port)))
 

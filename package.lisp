@@ -1,6 +1,6 @@
 (cl:in-package #:cl-user)
 
-(defpackage #:dhticl
+(defpackage #:antediluvian
   (:use #:cl)
   (:import-from #:alexandria
                 #:curry
@@ -11,10 +11,6 @@
                 #:switch
                 #:when-let
                 #:when-let*)
-  (:import-from #:bencode
-                #:*binary-key-p*
-                #:decode
-                #:encode)
   (:import-from #:bordeaux-threads
                 ;; threads
                 #:destroy-thread
@@ -31,7 +27,10 @@
                 #:promise)
   (:import-from #:serapeum
                 #:firstn)
+  (:import-from #:str
+                #:starts-with-p)
   (:import-from #:uiop
+                #:truenamize
                 #:xdg-config-home)
   (:import-from #:usocket
                 #:+max-datagram-packet-size+
