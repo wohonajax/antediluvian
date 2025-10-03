@@ -21,6 +21,10 @@
                 #:octets-to-integer
                 #:random-data)
   (:import-from #:lparallel
+                ;; kernel
+                #:destroy-kernel
+                #:make-kernel
+                ;; futures and promises
                 #:force
                 #:fulfill
                 #:fulfilledp
