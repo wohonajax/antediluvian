@@ -98,9 +98,7 @@ format."
 :PING or :FIND_NODE."
   (handler-case (case type
                   (:ping (ping-node ip port transaction-id))
-                  (:store)
                   (:find_node (find-node ip port id transaction-id))
-                  (:find_value)
                   (:get_peers (get-peers ip port info-hash transaction-id))
                   (:announce_peer (announce-peer ip port info-hash
                                                  transaction-id
