@@ -19,7 +19,7 @@
                                      (:file "routing-table")
                                      (:file "lookups")
                                      (:file "networking")
-                                     (:file "dhticl")))
+                                     (:file "dht")))
                (:file "peers")
                (:file "antediluvian"))
   :serial t
