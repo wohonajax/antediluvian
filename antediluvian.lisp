@@ -5,13 +5,15 @@
 (defun setup (sources)
   "Sets up antediluvian and initiates the DHT using SOURCES, which should be a
 list of SHA1 hashes, magnet links, or torrent file paths."
+  (dht-setup)
   (setf *listening-peer-socket* (socket-listen *wildcard-host* *default-port*)
         *peer-listener-thread* (start-listener-thread))
-  ;; FIXME: handle magnet links
-  (apply #'dht (parse-sources sources)))
+  ;; FIXME: Figure out a better interface than the DHT function
+  (apply #'dht (mapcar #'torrent-info-hash (parse-sources sources))))
 
 (defun cleanup ()
   "Performs cleanup on shutdown."
+  (dht-cleanup)
   (socket-close *listening-peer-socket*)
   (mapc #'socket-close *accepted-connections*)
   (destroy-thread *peer-listener-thread*))

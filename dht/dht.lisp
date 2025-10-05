@@ -51,8 +51,8 @@ fails, try ports 6881 through 6889."
   (unless *listening-dht-socket*
     (error "Unable to connect on port ~D or on any default ports." port)))
 
-(defun setup (hashes)
-  "Performs setup on program startup. Sets up initial variables, etc."
+(defun dht-setup (hashes)
+  "Performs DHT setup on program startup. Sets up initial variables, etc."
   (load-settings)
   ;; TODO: expose number of worker threads as a setting
   (setf lparallel:*kernel* (make-kernel 1))
@@ -77,7 +77,7 @@ fails, try ports 6881 through 6889."
         do (when-let (socket (force peer-future))
              (socket-close socket))))
 
-(defun cleanup ()
+(defun dht-cleanup ()
   "Performs cleanup on program shutdown. Closes sockets, destroys threads, and
 saves settings."
   (socket-close *listening-dht-socket*)
