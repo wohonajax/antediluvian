@@ -36,3 +36,7 @@ not allowed."
   (loop for elt across vector
         when (funcall test item elt)
           return t))
+
+(defun filespecp (object)
+  "Determines whether OBJECT is a file specifier or not."
+  (or (stringp source) (pathnamep source)))
