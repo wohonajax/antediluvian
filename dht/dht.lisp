@@ -90,4 +90,4 @@ saves settings."
 
 (defun dht (&rest hashes)
   "Initiates the distributed hash table with given HASHES."
-  (setup hashes))
+  (dht-setup hashes))
