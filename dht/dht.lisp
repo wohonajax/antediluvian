@@ -9,7 +9,7 @@
   (send-message :find_node host port (generate-transaction-id)
                 :info-hash *id*))
 ;;; TODO: find_node each found node for nodes near the hash
-(defun main-loop ()
+(defun main-dht-loop ()
   (loop with start-time = (get-universal-time)
         do (parse-message)
           ;; FIXME: MOD might be too exact if PARSE-MESSAGE blocks for a while
@@ -59,7 +59,8 @@ fails, try ports 6881 through 6889."
   (try-ports *default-port*)
   (setf *default-port* (get-local-port *listening-dht-socket*))
   (setf *secret-rotation-thread* (start-sercret-rotation-thread)
-        *main-dht-thread* (make-thread #'main-loop :name "Main DHT thread"))
+        *main-dht-thread* (make-thread #'main-dht-loop
+                                       :name "Main DHT thread"))
   ;; bootstrap the DHT with known nodes
   (bootstrap-node "router.bittorrent.com" 6881)
   (bootstrap-node "dht.libtorrent.org" 25401)
