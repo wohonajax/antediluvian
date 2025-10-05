@@ -55,4 +55,5 @@
                 ;; conditions
                 #:connection-refused-error
                 #:timeout-error)
-  (:export #:add-torrent))
+  (:export #:add-torrent
+           #:start))
