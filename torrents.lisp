@@ -40,7 +40,7 @@ a filespec to a torrent file, or a SHA1 hash."
   (let* ((parsed-source (cond ((magnet-link-p source)
                                (magnet:parse source))
                               ((filespecp source)
-                               (bdecode-torrent-file (uiop:truenamize source)))
+                               (bdecode-torrent-file (truenamize source)))
                               (t source)))
          (hash (cond ((magnet-link-p source)
                       (extract-sha1-from-parsed-magnet-link parsed-source))
