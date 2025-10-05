@@ -19,8 +19,6 @@ list of SHA1 hashes, magnet links, or torrent file paths."
   (destroy-thread *peer-listener-thread*))
 
 (defun start (&rest sources)
-  "Starts up the torrent client with SOURCES, which should be SHA1 hashes or
-magnet links."
-  (setup sources)
-  (unwind-protect (main-loop)
-    (cleanup)))
+  "Starts up the torrent client with SOURCES, which should be SHA1 hashes,
+magnet links, or torrent file specifiers."
+  (setup sources))
