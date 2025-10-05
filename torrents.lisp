@@ -48,6 +48,8 @@ a filespec to a torrent file, or a SHA1 hash."
                       (get-info-hash-from-bdecoded-torrent-file parsed-source))
                      (t source)))
          (name (cond ((magnet-link-p source)
+                      ;; all parameters in a parsed
+                      ;; magnet link have list values
                       (first (gethash :dn parsed-source)))
                      ((filespecp source)
                       (gethash "name" (gethash "info" parsed-source))))))
