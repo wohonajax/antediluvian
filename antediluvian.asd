@@ -21,6 +21,7 @@
                                      (:file "networking")
                                      (:file "dht")))
                (:file "peers")
+               (:file "torrents")
                (:file "antediluvian"))
   :serial t
   :depends-on (alexandria
