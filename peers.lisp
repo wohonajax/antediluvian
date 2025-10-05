@@ -23,12 +23,9 @@ peer socket."
   (make-thread
    (lambda ()
      ;; FIXME: wait for input in a separate thread
-     (loop for sockets = (wait-for-input *listening-peer-socket*
+     (loop for socket in (wait-for-input *listening-peer-socket*
                                          :ready-only t)
-           do (mapc (lambda (socket)
-                      (push (socket-accept socket)
-                            *accepted-connections*))
-                    sockets)))))
+           do (push (socket-accept socket) *accepted-connections*)))))
 
 (defvar *peer-listener-thread* nil
   "A thread listening for incoming TCP connections.")
