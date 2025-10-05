@@ -89,8 +89,5 @@ saves settings."
   (save-settings))
 
 (defun dht (&rest hashes)
-  "Initiates the distributed hash table."
-  (setup hashes)
-  ;; FIXME: MAIN-LOOP is already in its own thread
-  (unwind-protect (main-loop)
-    (cleanup)))
+  "Initiates the distributed hash table with given HASHES."
+  (setup hashes))
