@@ -46,7 +46,7 @@ the connection attempt is still in progress."
   "Writes the reserved bytes of the handshake that indicate protocol
 extensions to STREAM."
   (let ((vector (make-array 8 :element-type '(unsigned-byte 8)
-                  :initial-element 0)))
+                            :initial-element 0)))
     (write-sequence vector stream)))
 
 (defun perform-handshake (hash socket)
@@ -70,7 +70,7 @@ to SOCKET."
     (finish-output stream)))
 
 (defun byte-for-message-type (type)
-  "Returns the byte to be sent to a peer for a TYPE message. Must be a
+  "Returns the byte to be sent to a peer for a TYPE message. TYPE must be a
 keyword."
   (case type
     ;; no payload
