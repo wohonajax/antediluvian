@@ -1,2 +1,4 @@
 *.lisp~
 *.asd~
+.vscode
+system-index.txt
