@@ -29,5 +29,4 @@ Useful for NATs.")
       (format file "~{~S~^~%~}"
               (list (make-setting *default-port*)
                     (make-setting *use-implied-port-p*)
-                    (make-setting *hashes*)
                     (make-setting *default-download-directory*))))))

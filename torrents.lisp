@@ -7,6 +7,9 @@
    (name :initarg :name :accessor torrent-name)
    (destination-path :initarg :destination :accessor torrent-destination)))
 
+(defvar *torrents* (list)
+  "The list of added torrents.")
+
 (defun magnet-link-p (item)
   "Tests whether ITEM is a magnet link."
   (and (stringp item) (starts-with-p "magnet:?" item)))
@@ -63,4 +66,7 @@ a filespec to a torrent file, or a SHA1 hash."
 (defun add-torrent (source)
   "Adds a torrent from SOURCE, which should be a magnet link, a filespec to a
 torrent file, or a SHA1 hash."
-  (add-hash (torrent-info-hash (parse-source source))))
+  (let ((torrent (parse-source source)))
+    (unless (member torrent *torrents* :test #'equalp)
+      (push torrent *torrents*)
+      (add-hash (torrent-info-hash torrent)))))
