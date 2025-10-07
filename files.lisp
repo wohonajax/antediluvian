@@ -24,7 +24,12 @@ we don't have the piece, or if PIECE-INDEX is out of bounds."
   "Writes the given PIECE-INDEXth PIECE of TORRENT to its file."
   (let* ((file-destination-path (torrent-destination torrent))
          (info-dictionary (gethash "info" (torrent-info torrent)))
+         (pieces (gethash "pieces" info-dictionary))
+         (sha1-index (* piece-index 20))
          (piece-length (gethash "piece length" info-dictionary)))
+    (unless (equalp (digest-sequence :sha1 piece)
+                    (subseq pieces sha1-index (+ sha1-index 20)))
+      (return-from write-piece))
     (with-open-file (file-stream file-destination-path
                                  :direction :output
                                  :if-exists :overwrite
