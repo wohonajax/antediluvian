@@ -21,6 +21,7 @@
                                      (:file "networking")
                                      (:file "dht")))
                (:file "torrents")
+               (:file "files")
                (:file "peers")
                (:file "antediluvian"))
   :serial t
