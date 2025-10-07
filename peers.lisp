@@ -91,7 +91,17 @@ keyword."
 
 (defun send-bitfield-message (socket)
   "Sends a bitfield message to the peer connected to SOCKET."
-  (let ((stream (socket-stream socket)))
+  (let ((stream (socket-stream socket))
+        (bitfield 0))
     (write-byte (byte-for-message-type :bitfield) stream)
-    ;;TODO: figure out how to use the bitfield library for this
-    ))
+    ;;TODO: figure out how to calculate the bitfield to send
+    ;; (it's based on the pieces we already have)
+    ;; we'll need to send many bytes, so we need to figure out
+    ;; how to construct a list of bitfields, then do
+    ;; (mapc (rcurry #'write-byte stream) list-of-bitfields)
+    ;; contstructing the list could be done via something like
+    ;; (loop for i below (ceiling (/ file-length 8))
+    ;;       collect (let ((bitfield 0))
+    ;;                 (setf (ldb (byte 1 x) bitfield) 1)
+    ;;                 bitfield))
+    (write-byte bitfield stream)))
