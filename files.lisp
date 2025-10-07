@@ -19,3 +19,16 @@ we don't have the piece, or if PIECE-INDEX is out of bounds."
         (handler-case (read-sequence result file-stream)
           (end-of-file () (return-from have-piece-p)))
         (equalp sha1-hash (digest-sequence :sha1 result))))))
+
+(defun write-piece (piece piece-index torrent)
+  "Writes the given PIECE-INDEXth PIECE of TORRENT to its file."
+  (let* ((file-destination-path (torrent-destination torrent))
+         (info-dictionary (gethash "info" (torrent-info torrent)))
+         (piece-length (gethash "piece length" info-dictionary)))
+    (with-open-file (file-stream file-destination-path
+                                 :direction :output
+                                 :if-exists :overwrite
+                                 :if-does-not-exist :create
+                                 :element-type '(unsigned-byte 8))
+      (file-position file-stream (* piece-index piece-length))
+      (write-sequence piece file-stream))))
