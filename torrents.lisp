@@ -5,7 +5,8 @@
 (defclass torrent ()
   ((info-hash :initarg :info-hash :accessor torrent-info-hash)
    (name :initarg :name :accessor torrent-name)
-   (destination-path :initarg :destination :accessor torrent-destination)))
+   (destination-path :initarg :destination :accessor torrent-destination)
+   (info :initarg :info :accessor torrent-info)))
 
 (defvar *torrents* (list)
   "The list of added torrents.")
@@ -55,9 +56,13 @@ a filespec to a torrent file, or a SHA1 hash."
                       ;; magnet link have list values
                       (first (gethash :dn parsed-source)))
                      ((filespecp source)
-                      (gethash "name" (gethash "info" parsed-source))))))
+                      (gethash "name" (gethash "info" parsed-source)))))
+         (info (when (and (not magnet-link-p source)
+                          (filespecp source))
+                 parsed-source)))
     (make-instance 'torrent :info-hash hash :name name
-                            :destination (make-download-pathname name))))
+                            :destination (make-download-pathname name)
+                            :info info)))
 
 (defun parse-sources (list-of-sources)
   "Converts every source in LIST-OF-SOURCES to a SHA1 hash."
@@ -70,3 +75,15 @@ torrent file, or a SHA1 hash."
     (unless (member torrent *torrents* :test #'equalp)
       (push torrent *torrents*)
       (add-hash (torrent-info-hash torrent)))))
+
+(defun torrent-pieces (torrent)
+  "Gets the pieces from the metainfo for TORRENT."
+  (when-let (metainfo (torrent-info torrent))
+    (gethash "pieces" (gethash "info" metainfo))))
+
+(defun number-of-pieces (torrent)
+  "Returns the number of pieces for TORRENT."
+  ;; the "pieces" entry in an info dictionary is a vector of SHA1 hashes,
+  ;; so divide the length of the "pieces" value by 20 (bytes per hash)
+  (/ (length (torrent-pieces torrent))
+     20))

@@ -94,7 +94,9 @@ keyword."
 Bitfield messages essentially communicate which pieces of a torrent we already
 have."
   (let* ((stream (socket-stream socket))
-         (pieces-length (ceiling (torrent-pieces torrent) 8))
+         ;; we want the ceiling so we don't lose pieces.
+         ;; extra bits are zeros
+         (pieces-length (ceiling (number-of-pieces torrent) 8))
          (bitfield-vector (make-array pieces-length :initial-element 0)))
     (loop with piece-index = 0
           for vector-index below pieces-length
