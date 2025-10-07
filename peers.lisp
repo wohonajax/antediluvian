@@ -109,3 +109,10 @@ have."
                                  bitfield)))
     (write-byte (byte-for-message-type :bitfield) stream)
     (write-sequence bitfield-vector stream)))
+
+(defun send-have-message (piece-index socket)
+  "Sends a have message to the peer connected to SOCKET stating that we have
+the PIECE-INDEXth piece of a torrent."
+  (let ((stream (socket-stream socket)))
+    (write-byte (byte-for-message-type :have) stream)
+    (write-byte piece-index stream)))
