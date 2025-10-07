@@ -87,7 +87,9 @@ keyword."
 
 (defun send-message-with-no-payload (type socket)
   "Sends a TYPE message to the peer connected to SOCKET."
-  (write-byte (byte-for-message-type type) (socket-stream socket)))
+  (let ((stream (socket-stream socket)))
+    (write-byte (byte-for-message-type type) stream)
+    (finish-output stream)))
 
 (defun send-bitfield-message (torrent socket)
   "Sends a bitfield message to the peer connected to SOCKET regarding TORRENT.
@@ -108,11 +110,13 @@ have."
                    finally (setf (svref bitfield-vector vector-index)
                                  bitfield)))
     (write-byte (byte-for-message-type :bitfield) stream)
-    (write-sequence bitfield-vector stream)))
+    (write-sequence bitfield-vector stream)
+    (finish-output stream)))
 
 (defun send-have-message (piece-index socket)
   "Sends a have message to the peer connected to SOCKET stating that we have
 the PIECE-INDEXth piece of a torrent."
   (let ((stream (socket-stream socket)))
     (write-byte (byte-for-message-type :have) stream)
-    (write-byte piece-index stream)))
+    (write-byte piece-index stream)
+    (finish-output stream)))
