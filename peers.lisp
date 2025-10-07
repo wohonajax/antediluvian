@@ -97,13 +97,13 @@ have."
          (pieces-length (ceiling (torrent-pieces torrent) 8))
          (bitfield-vector (make-array pieces-length :initial-element 0)))
     (loop with piece-index = 0
-          with vector-index = 0
+          for vector-index below pieces-length
           do (loop with bitfield = 0
                    for i from 7 downto 0
                    do (when (have-piece-p piece-index torrent)
                         (setf (ldb (byte 1 i) bitfield) 1))
                      (incf piece-index)
-                   finally (setf (svref bitfield-vector vector-index) bitfield
-                                 vector-index (1+ vector-index))))
+                   finally (setf (svref bitfield-vector vector-index)
+                                 bitfield)))
     (write-byte (byte-for-message-type :bitfield) stream)
     (write-sequence bitfield-vector stream)))
