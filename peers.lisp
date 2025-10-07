@@ -89,19 +89,18 @@ keyword."
   "Sends a TYPE message to the peer connected to SOCKET."
   (write-byte (byte-for-message-type type) (socket-stream socket)))
 
-(defun send-bitfield-message (socket)
-  "Sends a bitfield message to the peer connected to SOCKET."
-  (let ((stream (socket-stream socket))
-        (bitfield 0))
+(defun send-bitfield-message (torrent socket)
+  "Sends a bitfield message to the peer connected to SOCKET regarding TORRENT.
+Bitfield messages essentially communicate which pieces of a torrent we already
+have."
+  (let* ((stream (socket-stream socket))
+         (pieces-length (ceiling (torrent-pieces torrent) 8))
+         (bitfield-vector (make-array pieces-length :initial-element 0)))
+    (loop with piece-index = 0
+          for bitfield across bitfield-vector
+          do (loop for i from 7 downto 0
+                   do (when (have-piece-p piece-index torrent)
+                        (setf (ldb (byte 1 i) bitfield) 1))
+                     (incf piece-index)))
     (write-byte (byte-for-message-type :bitfield) stream)
-    ;;TODO: figure out how to calculate the bitfield to send
-    ;; (it's based on the pieces we already have)
-    ;; we'll need to send many bytes, so we need to figure out
-    ;; how to construct a list of bitfields, then do
-    ;; (mapc (rcurry #'write-byte stream) list-of-bitfields)
-    ;; contstructing the list could be done via something like
-    ;; (loop for i below (ceiling (/ file-length 8))
-    ;;       collect (let ((bitfield 0))
-    ;;                 (setf (ldb (byte 1 x) bitfield) 1)
-    ;;                 bitfield))
-    (write-byte bitfield stream)))
+    (write-sequence bitfield-vector stream)))
