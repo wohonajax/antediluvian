@@ -15,5 +15,7 @@ we don't have the piece, or if PIECE-INDEX is out of bounds."
     (with-open-file (file-stream file-destination-path :element-type '(unsigned-byte 8))
       (file-position file-stream (* piece-index piece-length))
       (let ((result (make-array piece-length :element-type '(unsigned-byte 8))))
-        (read-sequence result file-stream)
+        ;; if we get an end-of-file error, we're out of bounds. return nil
+        (handler-case (read-sequence result file-stream)
+          (end-of-file () (return-from have-piece-p)))
         (equalp sha1-hash (digest-sequence :sha1 result))))))
