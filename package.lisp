@@ -18,6 +18,7 @@
   (:import-from #:ironclad
                 #:ascii-string-to-byte-array
                 #:digest-sequence
+                #:integer-to-octets
                 #:octets-to-integer
                 #:random-data)
   (:import-from #:lparallel

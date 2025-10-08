@@ -37,6 +37,11 @@ the connection attempt is still in progress."
   (when-let (peers (gethash info-hash *peer-list*))
     (force (gethash ip peers))))
 
+;;;; Peer wire protocol
+
+(defconstant +length-offset+ (expt 2 14)
+  "The length offset to use for request and cancel messages.")
+
 (defun write-handshake-header (stream)
   "Writes the BitTorrent handshake header to STREAM."
   (write-byte 19 stream) ; length prefix
@@ -85,38 +90,82 @@ keyword."
     (:piece 7)
     (:cancel 8)))
 
-(defun send-message-with-no-payload (type socket)
-  "Sends a TYPE message to the peer connected to SOCKET."
-  (let ((stream (socket-stream socket)))
-    (write-byte (byte-for-message-type type) stream)
-    (finish-output stream)))
+(defun pad-integer-to-octets (integer length)
+  "Converts INTEGER to a big-endian vector of octets of length LENGTH. Pads
+with zeros from the left."
+  (let ((integer-vector (integer-to-octets integer)))
+    (concat-vec (make-array (- (length integer-vector) length)
+                            :initial-element 0)
+                integer-vector)))
+
+(defmacro with-socket-stream ((stream-var socket) &body body)
+  "Binds STREAM-VAR to the socket stream of SOCKET, executes BODY with
+STREAM-VAR bound, and finally calls FINISH-OUTPUT on the stream."
+  `(let ((,stream-var (socket-stream ,socket)))
+     ,@body
+     (finish-output ,stream-var)))
+
+(defun send-peer-message-length-header (length socket)
+  "Sends a peer wire protocol message length header to the peer connected to
+SOCKET."
+  (with-socket-stream (stream socket)
+    (write-sequence (pad-integer-to-octets length 4) stream)))
+
+(defun send-keep-alive-message (socket)
+  "Sends a keep-alive message to the peer connected to SOCKET."
+  (send-peer-message-length-header 0 socket))
+
+(defun send-choke-message (socket)
+  "Sends a choke message to the peer connected to SOCKET."
+  (send-peer-message-length-header 1 socket)
+  (with-socket-stream (stream socket)
+    (write-byte (byte-for-message-type :choke) stream)))
+
+(defun send-unchoke-message (socket)
+  "Sends an unchoke message to the peer connected to SOCKET."
+  (send-peer-message-length-header 1 socket)
+  (with-socket-stream (stream socket)
+    (write-byte (byte-for-message-type :unchoke) stream)))
+
+(defun send-interested-message (socket)
+  "Sends an interested message to the peer connected to SOCKET."
+  (send-peer-message-length-header 1 socket)
+  (with-socket-stream (stream socket)
+    (write-byte (byte-for-message-type :interested) stream)))
+
+(defun send-not-interested-message (socket)
+  "Sends a not interested message to the peer connected to SOCKET."
+  (send-peer-message-length-header 1 socket)
+  (with-socket-stream (stream socket)
+    (write-byte (byte-for-message-type :not-interested) stream)))
+
+(defun send-have-message (piece-index socket)
+  "Sends a have message to the peer connected to SOCKET stating that we have
+the PIECE-INDEXth piece of a torrent."
+  (send-peer-message-length-header 5 socket)
+  (with-socket-stream (stream socket)
+    (write-byte (byte-for-message-type :have) stream)
+    (write-sequence (pad-integer-to-octets piece-index 4) stream)))
 
 (defun send-bitfield-message (torrent socket)
   "Sends a bitfield message to the peer connected to SOCKET regarding TORRENT.
 Bitfield messages essentially communicate which pieces of a torrent we already
 have."
-  (let* ((stream (socket-stream socket))
-         ;; we want the ceiling so we don't lose pieces.
-         ;; extra bits are zeros
-         (pieces-length (ceiling (number-of-pieces torrent) 8))
-         (bitfield-vector (make-array pieces-length :initial-element 0)))
-    (loop with piece-index = 0
-          for vector-index below pieces-length
-          do (loop with bitfield = 0
-                   for i from 7 downto 0
-                   do (when (have-piece-p piece-index torrent)
-                        (setf (ldb (byte 1 i) bitfield) 1))
-                     (incf piece-index)
-                   finally (setf (svref bitfield-vector vector-index)
-                                 bitfield)))
-    (write-byte (byte-for-message-type :bitfield) stream)
-    (write-sequence bitfield-vector stream)
-    (finish-output stream)))
-
-(defun send-have-message (piece-index socket)
-  "Sends a have message to the peer connected to SOCKET stating that we have
-the PIECE-INDEXth piece of a torrent."
-  (let ((stream (socket-stream socket)))
-    (write-byte (byte-for-message-type :have) stream)
-    (write-byte piece-index stream)
-    (finish-output stream)))
+  (with-socket-stream (stream socket)
+    (let* ((number-of-pieces (number-of-pieces torrent))
+           ;; we want the ceiling so we don't lose pieces.
+           ;; extra bits are zeros
+           (pieces-length (ceiling number-of-pieces 8))
+           (bitfield-vector (make-array pieces-length :initial-element 0)))
+      (loop with piece-index = 0
+            for vector-index below pieces-length
+            do (loop with bitfield = 0
+                     for i from 7 downto 0
+                     do (when (have-piece-p piece-index torrent)
+                          (setf (ldb (byte 1 i) bitfield) 1))
+                       (incf piece-index)
+                     finally (setf (svref bitfield-vector vector-index)
+                                   bitfield)))
+      (send-peer-message-length-header (1+ number-of-pieces) socket)
+      (write-byte (byte-for-message-type :bitfield) stream)
+      (write-sequence bitfield-vector stream))))
