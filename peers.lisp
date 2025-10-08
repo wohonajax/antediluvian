@@ -88,7 +88,8 @@ keyword."
     (:bitfield 5)
     (:request 6)
     (:piece 7)
-    (:cancel 8)))
+    (:cancel 8)
+    (:port 9)))
 
 (defun pad-integer-to-octets (integer length)
   "Converts INTEGER to a big-endian vector of octets of length LENGTH. Pads
@@ -169,3 +170,46 @@ have."
       (send-peer-message-length-header (1+ number-of-pieces) socket)
       (write-byte (byte-for-message-type :bitfield) stream)
       (write-sequence bitfield-vector stream))))
+
+(defun send-request-message (piece-index begin length socket)
+  "Sends a request message for PIECE-INDEX, with a BEGIN byte offset within the
+piece and a LENGTH byte offset from BEGIN, to the peer connected to SOCKET."
+  (with-socket-stream (stream socket)
+    (send-peer-message-length-header 13 socket)
+    (write-byte (byte-for-message-type :request) stream)
+    (write-sequence (pad-integer-to-octets piece-index) stream)
+    (write-sequence (pad-integer-to-octets begin) stream)
+    (write-sequence (pad-integer-to-octets length) stream)))
+
+(defun send-piece-message (piece-index begin block socket)
+  "Sends a piece message where PIECE-INDEX is the piece index, BEGIN is the
+byte offset within the piece, and BLOCK is a subset of the PIECE-INDEXth
+piece."
+  (with-socket-stream (stream socket)
+    (let ((block-length (length block)))
+      (send-peer-message-length-header (+ 9 block-length) socket)
+      (write-byte (byte-for-message-type :piece) stream)
+      (write-sequence (pad-integer-to-octets piece-index) stream)
+      (write-sequence (pad-integer-to-octets begin) stream)
+      (write-sequence block stream))))
+
+(defun send-cancel-message (piece-index begin length socket)
+  "Sends a cancel message where PIECE-INDEX is the piece index, BEGIN is the
+byte offset within thepiece, and length is the length of the block to cancel,
+to the peer connected to SOCKET."
+  (with-socket-stream (stream socket)
+    (send-peer-message-length-header 13 socket)
+    (write-byte (byte-for-message-type :cancel) stream)
+    (write-sequence (pad-integer-to-octets piece-index) stream)
+    (write-sequence (pad-integer-to-octets begin) stream)
+    (write-sequence (pad-integer-to-octets length) stream)))
+
+(defun send-port-message (socket)
+  "Sends a port message to the peer connected to SOCKET, indicating the port
+this DHT node is listening on."
+  (with-socket-stream (stream socket)
+    (send-peer-message-length-header 3 socket)
+    (write-byte (byte-for-message-type :port) stream)
+    (write-sequence (port-to-octet-buffer *default-port*
+                                          (make-array 2 :element-type '(unsigned-byte 8)))
+                    stream)))
