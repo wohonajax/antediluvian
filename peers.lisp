@@ -22,9 +22,7 @@ header (for AnteDiluvian)."
 peer socket."
   (make-thread
    (lambda ()
-     ;; FIXME: wait for input in a separate thread
-     (loop for socket in (wait-for-input *listening-peer-socket*
-                                         :ready-only t)
+     (loop for socket in (wait-for-input *listening-peer-socket* :ready-only t)
            do (push (socket-accept socket) *accepted-connections*)))))
 
 (defvar *peer-listener-thread* nil
