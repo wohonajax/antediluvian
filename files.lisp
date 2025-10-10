@@ -37,3 +37,18 @@ we don't have the piece, or if PIECE-INDEX is out of bounds."
                                  :element-type '(unsigned-byte 8))
       (file-position file-stream (* piece-index piece-length))
       (write-sequence piece file-stream))))
+
+(defun write-block (block piece-index begin torrent)
+  "Writes a BLOCK starting at a BEGIN offset within the PIECE-INDEXth piece of
+TORRENT to the appropriate file."
+  (let* ((file-destination-path (torrent-destination torrent))
+         (info-dictionary (gethash "info" (torrent-info torrent)))
+         (piece-length (gethash "piece-length" info-dictionary)))
+    (with-open-file (file-stream file-destination-path
+                                 :direction :output
+                                 :if-exists :overwrite
+                                 :if-does-not-exist :create
+                                 :element-type '(unsigned-byte 8))
+      (file-position file-stream (+ (* piece-index piece-length)
+                                    begin))
+      (write-sequence block file-stream))))
