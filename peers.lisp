@@ -177,9 +177,9 @@ piece and a LENGTH byte offset from BEGIN, to the peer connected to SOCKET."
   (with-socket-stream (stream socket)
     (send-peer-message-length-header 13 socket)
     (write-byte (byte-for-message-type :request) stream)
-    (write-sequence (pad-integer-to-octets piece-index) stream)
-    (write-sequence (pad-integer-to-octets begin) stream)
-    (write-sequence (pad-integer-to-octets length) stream)))
+    (write-sequence (pad-integer-to-octets piece-index 4) stream)
+    (write-sequence (pad-integer-to-octets begin 4) stream)
+    (write-sequence (pad-integer-to-octets length 4) stream)))
 
 (defun send-piece-message (piece-index begin block socket)
   "Sends a piece message where PIECE-INDEX is the piece index, BEGIN is the
@@ -189,8 +189,8 @@ piece."
     (let ((block-length (length block)))
       (send-peer-message-length-header (+ 9 block-length) socket)
       (write-byte (byte-for-message-type :piece) stream)
-      (write-sequence (pad-integer-to-octets piece-index) stream)
-      (write-sequence (pad-integer-to-octets begin) stream)
+      (write-sequence (pad-integer-to-octets piece-index 4) stream)
+      (write-sequence (pad-integer-to-octets begin 4) stream)
       (write-sequence block stream))))
 
 (defun send-cancel-message (piece-index begin length socket)
@@ -200,9 +200,9 @@ to the peer connected to SOCKET."
   (with-socket-stream (stream socket)
     (send-peer-message-length-header 13 socket)
     (write-byte (byte-for-message-type :cancel) stream)
-    (write-sequence (pad-integer-to-octets piece-index) stream)
-    (write-sequence (pad-integer-to-octets begin) stream)
-    (write-sequence (pad-integer-to-octets length) stream)))
+    (write-sequence (pad-integer-to-octets piece-index 4) stream)
+    (write-sequence (pad-integer-to-octets begin 4) stream)
+    (write-sequence (pad-integer-to-octets length 4) stream)))
 
 (defun send-port-message (socket)
   "Sends a port message to the peer connected to SOCKET, indicating the port
