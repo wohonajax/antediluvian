@@ -52,3 +52,28 @@ TORRENT to the appropriate file."
       (file-position file-stream (+ (* piece-index piece-length)
                                     begin))
       (write-sequence block file-stream))))
+
+(defstruct write-instruction torrent block piece-index byte-offset length)
+
+(defvar *write-instructions-channel* (chanl:make-channel))
+
+(defun write-instruction-values (write-instruction)
+  "Returns a block to write, its piece index location, its byte offset from
+that piece index, and the torrent the instruction corresponds to as multiple
+values."
+  (values (write-instruction-block write-instruction)
+          (write-instruction-piece-index write-instruction)
+          (write-instruction-byte-offset write-instruction)
+          (write-instruction-torrent write-instruction)))
+
+(defun start-file-writer-thread ()
+  "Starts a thread that manages writing files to disk."
+  (make-thread
+   (lambda ()
+     (loop (multiple-value-call #'write-block
+                                (write-instruction-values
+                                 (chanl:recv *write-instructions-channel*)))))
+   :name "file-writer"))
+
+(defvar *file-writer-thread* nil
+  "A thread managing file write operations.")
