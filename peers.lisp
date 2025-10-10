@@ -12,7 +12,7 @@ header (for AnteDiluvian)."
 
 (defvar *listening-peer-socket* nil
   "A TCP socket listening for connections from peers.")
-
+;;; TODO: listen to each accepted connection in its own thread
 (defvar *accepted-connections* (list)
   "A list of sockets accepted using SOCKET-ACCEPT on the
 *LISTENING-PEER-SOCKET*.")
