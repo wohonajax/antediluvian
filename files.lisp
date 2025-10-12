@@ -55,7 +55,7 @@ TORRENT to the appropriate file."
 
 (defstruct write-instruction torrent block piece-index byte-offset length)
 
-(defvar *write-instructions-channel* (chanl:make-channel))
+(defvar *write-instructions-channel* (make-instance 'chanl:channel))
 
 (defun write-instruction-values (write-instruction)
   "Returns a block to write, its piece index location, its byte offset from
