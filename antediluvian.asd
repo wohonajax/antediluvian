@@ -9,6 +9,7 @@
   :components ((:file "package")
                (:file "settings")
                (:file "util")
+               (:file "peers")
                (:module "dht"
                         :serial t
                         :components ((:file "peers")
@@ -22,7 +23,7 @@
                                      (:file "dht")))
                (:file "torrents")
                (:file "files")
-               (:file "peers")
+               (:file "peer-wire")
                (:file "antediluvian"))
   :serial t
   :depends-on (alexandria
