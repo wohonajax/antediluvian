@@ -30,14 +30,15 @@ header (for AnteDiluvian)."
           (9 . :port))
   "Alist mapping message byte IDs to message type keywords.")
 
+(defun read-4-bytes-to-integer (stream)
+  "Reads 4 big-endian bytes from STREAM and converts the result to an integer."
+  (let ((vector (make-array 4 :element-type '(unsigned-byte 8))))
+    (read-sequence vector stream :end 4)
+    (octets-to-integer vector)))
+
 (defun read-peer-wire-length-header (stream)
   "Reads a 4-byte peer wire message length header from STREAM."
-  (let ((length-vector (make-array 4 :element-type '(unsigned-byte 8)
-                                   :initial-contents (list (read-byte stream)
-                                                           (read-byte stream)
-                                                           (read-byte stream)
-                                                           (read-byte stream)))))
-    (octets-to-integer length-vector)))
+  (read-4-bytes-to-integer stream))
 
 (defun message-id-to-message-type (id)
   "Translates a message ID byte to a keyword denoting the message type."
