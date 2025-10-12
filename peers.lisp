@@ -17,6 +17,58 @@ header (for AnteDiluvian)."
   "A list of sockets accepted using SOCKET-ACCEPT on the
 *LISTENING-PEER-SOCKET*.")
 
+(defvar *message-id-to-message-type-alist*
+        '((0 . :choke)
+          (1 . :unchoke)
+          (2 . :interested)
+          (3 . :not-interested)
+          (4 . :have)
+          (5 . :bitfield)
+          (6 . :request)
+          (7 . :piece)
+          (8 . :cancel)
+          (9 . :port))
+  "Alist mapping message byte IDs to message type keywords.")
+
+(defun read-peer-wire-length-header (stream)
+  "Reads a 4-byte peer wire message length header from STREAM."
+  (let ((length-vector (make-array 4 :element-type '(unsigned-byte 8)
+                                   :initial-contents (list (read-byte stream)
+                                                           (read-byte stream)
+                                                           (read-byte stream)
+                                                           (read-byte stream)))))
+    (octets-to-integer length-vector)))
+
+(defun message-id-to-message-type (id)
+  "Translates a message ID byte to a keyword denoting the message type."
+  (cdr (assoc id *message-id-to-message-type-alist*)))
+
+(defun read-peer-wire-message (stream)
+  "Reads a peer wire protocol message from STREAM."
+  (let* ((length (read-peer-wire-length-header stream))
+         (message-bytes (make-array length :element-type '(unsigned-byte 8))))
+    (read-sequence message-bytes stream :end length)
+    (case (message-id-to-message-type (aref message-bytes 0))
+      (:choke )
+      (:unchoke )
+      (:interested )
+      (:not-interested )
+      (:have )
+      (:bitfield )
+      (:request )
+      (:piece )
+      (:cancel )
+      (:port ))))
+
+(defun accept-peer-connection (socket)
+  "Accepts a socket connection from a SOCKET and listens in a new thread."
+  (push (make-thread (lambda ()
+                       (loop with accepted-socket = (socket-accept socket)
+                             with stream = (socket-stream accepted-socket)
+                             ;; FIXME: wait for input?
+                             do (read-peer-wire-message stream))))
+        *accepted-connections*))
+
 (defun start-listener-thread ()
   "Starts a thread that will listen for incoming connections on the listening
 peer socket."
@@ -72,22 +124,10 @@ to SOCKET."
     (write-sequence *peer-id* stream)
     (finish-output stream)))
 
-(defun byte-for-message-type (type)
+(defun message-id-for-message-type (type)
   "Returns the byte to be sent to a peer for a TYPE message. TYPE must be a
 keyword."
-  (case type
-    ;; no payload
-    (:choke 0)
-    (:unchoke 1)
-    (:interested 2)
-    (:not-interested 3)
-    ;; payload
-    (:have 4)
-    (:bitfield 5)
-    (:request 6)
-    (:piece 7)
-    (:cancel 8)
-    (:port 9)))
+  (car (rassoc type *message-id-to-message-type-alist*)))
 
 (defun pad-integer-to-octets (integer length)
   "Converts INTEGER to a big-endian vector of octets of length LENGTH. Pads
@@ -118,32 +158,32 @@ SOCKET."
   "Sends a choke message to the peer connected to SOCKET."
   (send-peer-message-length-header 1 socket)
   (with-socket-stream (stream socket)
-    (write-byte (byte-for-message-type :choke) stream)))
+    (write-byte (message-id-for-message-type :choke) stream)))
 
 (defun send-unchoke-message (socket)
   "Sends an unchoke message to the peer connected to SOCKET."
   (send-peer-message-length-header 1 socket)
   (with-socket-stream (stream socket)
-    (write-byte (byte-for-message-type :unchoke) stream)))
+    (write-byte (message-id-for-message-type :unchoke) stream)))
 
 (defun send-interested-message (socket)
   "Sends an interested message to the peer connected to SOCKET."
   (send-peer-message-length-header 1 socket)
   (with-socket-stream (stream socket)
-    (write-byte (byte-for-message-type :interested) stream)))
+    (write-byte (message-id-for-message-type :interested) stream)))
 
 (defun send-not-interested-message (socket)
   "Sends a not interested message to the peer connected to SOCKET."
   (send-peer-message-length-header 1 socket)
   (with-socket-stream (stream socket)
-    (write-byte (byte-for-message-type :not-interested) stream)))
+    (write-byte (message-id-for-message-type :not-interested) stream)))
 
 (defun send-have-message (piece-index socket)
   "Sends a have message to the peer connected to SOCKET stating that we have
 the PIECE-INDEXth piece of a torrent."
   (send-peer-message-length-header 5 socket)
   (with-socket-stream (stream socket)
-    (write-byte (byte-for-message-type :have) stream)
+    (write-byte (message-id-for-message-type :have) stream)
     (write-sequence (pad-integer-to-octets piece-index 4) stream)))
 
 (defun send-bitfield-message (torrent socket)
@@ -166,7 +206,7 @@ have."
                      finally (setf (svref bitfield-vector vector-index)
                                    bitfield)))
       (send-peer-message-length-header (1+ number-of-pieces) socket)
-      (write-byte (byte-for-message-type :bitfield) stream)
+      (write-byte (message-id-for-message-type :bitfield) stream)
       (write-sequence bitfield-vector stream))))
 
 (defun send-request-message (piece-index begin length socket)
@@ -174,7 +214,7 @@ have."
 piece and a LENGTH byte offset from BEGIN, to the peer connected to SOCKET."
   (with-socket-stream (stream socket)
     (send-peer-message-length-header 13 socket)
-    (write-byte (byte-for-message-type :request) stream)
+    (write-byte (message-id-for-message-type :request) stream)
     (write-sequence (pad-integer-to-octets piece-index 4) stream)
     (write-sequence (pad-integer-to-octets begin 4) stream)
     (write-sequence (pad-integer-to-octets length 4) stream)))
@@ -186,7 +226,7 @@ piece."
   (with-socket-stream (stream socket)
     (let ((block-length (length block)))
       (send-peer-message-length-header (+ 9 block-length) socket)
-      (write-byte (byte-for-message-type :piece) stream)
+      (write-byte (message-id-for-message-type :piece) stream)
       (write-sequence (pad-integer-to-octets piece-index 4) stream)
       (write-sequence (pad-integer-to-octets begin 4) stream)
       (write-sequence block stream))))
@@ -197,7 +237,7 @@ byte offset within thepiece, and length is the length of the block to cancel,
 to the peer connected to SOCKET."
   (with-socket-stream (stream socket)
     (send-peer-message-length-header 13 socket)
-    (write-byte (byte-for-message-type :cancel) stream)
+    (write-byte (message-id-for-message-type :cancel) stream)
     (write-sequence (pad-integer-to-octets piece-index 4) stream)
     (write-sequence (pad-integer-to-octets begin 4) stream)
     (write-sequence (pad-integer-to-octets length 4) stream)))
@@ -207,7 +247,7 @@ to the peer connected to SOCKET."
 this DHT node is listening on."
   (with-socket-stream (stream socket)
     (send-peer-message-length-header 3 socket)
-    (write-byte (byte-for-message-type :port) stream)
+    (write-byte (message-id-for-message-type :port) stream)
     (write-sequence (port-to-octet-buffer *default-port*
                                           (make-array 2 :element-type '(unsigned-byte 8)))
                     stream)))
