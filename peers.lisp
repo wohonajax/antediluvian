@@ -3,7 +3,7 @@
 (in-package #:antediluvian)
 
 (defclass peer ()
-  (socket :accessor peer-socket)
-  (had-pieces :accessor had-pieces)
-  (requested-pieces :accessor requested-pieces)
-  (chokedp :accessor chokedp))
+  (socket :initarg :socket :accessor peer-socket)
+  (had-pieces :initarg :had-pieces :accessor had-pieces)
+  (requested-pieces :initarg :requested-pieces :accessor requested-pieces)
+  (chokedp :initarg :chokedp :accessor chokedp))
