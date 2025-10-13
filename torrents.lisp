@@ -6,6 +6,7 @@
   ((info-hash :initarg :info-hash :accessor torrent-info-hash)
    (name :initarg :name :accessor torrent-name)
    (destination-path :initarg :destination :accessor torrent-destination)
+   (file-list :initarg :file-list :accessor torrent-file-list)
    (info :initarg :info :accessor torrent-info)))
 
 (defvar *torrents* (list)
@@ -35,8 +36,18 @@
     (digest-sequence :sha1 (bencode:encode dict nil))))
 
 (defun make-download-pathname (filename)
-  "Creates a download destination pathname from FILENAME."
-  (uiop:truenamize (merge-pathnames filename *default-download-directory*)))
+  "Creates a download destination directory pathname from FILENAME."
+  (merge-pathnames (concatenate 'string filename "/")
+                   *default-download-directory*))
+
+(defun get-file-list (info-dictionary root-path)
+  "Returns a list of pathnames specifying download locations relative
+to ROOT-PATH for a given torrent's INFO-DICTIONARY."
+  (when-let (files (gethash "files" info-dictionary))
+    (mapcar (lambda (file-dictionary)
+              (merge-pathnames (first (gethash "path" file-dictionary))
+                               root-path))
+            files)))
 
 (defun parse-source (source)
   "Parses SOURCE into a torrent object. SOURCE should be a magnet link,
@@ -59,9 +70,11 @@ a filespec to a torrent file, or a SHA1 hash."
                       (gethash "name" (gethash "info" parsed-source)))))
          (info (when (and (not magnet-link-p source)
                           (filespecp source))
-                 parsed-source)))
+                 parsed-source))
+         (download-path (make-download-pathname name)))
     (make-instance 'torrent :info-hash hash :name name
-                            :destination (make-download-pathname name)
+                            :destination download-path
+                            :file-list (get-file-list info download-path)
                             :info info)))
 
 (defun parse-sources (list-of-sources)
