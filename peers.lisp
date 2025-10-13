@@ -7,9 +7,9 @@
   ;; wrapped in a future (need to use (force (peer-socket peer)))
   (socket :initarg :socket :accessor peer-socket)
   ;; list of pieces this peer already has
-  (had-pieces :initarg :had-pieces :accessor had-pieces)
+  (had-pieces :initform '() :accessor had-pieces)
   ;; list of piece indices this peer has requested
-  (requested-pieces :initarg :requested-pieces :accessor requested-pieces)
+  (requested-pieces :initform '() :accessor requested-pieces)
   ;; whether we have choked this peer
   (chokedp :initform t :accessor chokedp)
   ;; whether this peer has choked us
