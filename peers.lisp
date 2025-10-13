@@ -40,3 +40,11 @@ connection fails or times out."
   "Creates a peer object with a socket future that attempts to connect to IP
 and PORT."
   (make-instance 'peer :socket (make-peer-socket-future ip port)))
+
+(defun clear-peer-list ()
+  "Removes any peer whose socket connection failed."
+  (loop for peer-table being the hash-values of *peer-list*
+        do (loop for peer being the hash-values of peer-table
+                   using (hash-key ip)
+                 unless (force (peer-socket peer))
+                   do (remhash ip peer-table))))
