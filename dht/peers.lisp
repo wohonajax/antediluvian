@@ -2,11 +2,6 @@
 
 (in-package #:antediluvian)
 
-(defvar *peer-list* (make-hash-table :test #'equalp)
-  "A hash table containing info_hashes as keys and hash tables mapping IP
-addresses to socket object futures as values. These futures will have NIL
-values if the socket connection failed.")
-
 (defun compact-peer-info (ip port)
   "Translates a peer's IP address and PORT into compact peer format."
   (let ((port-vec (make-array 2 :element-type '(unsigned-byte 8))))

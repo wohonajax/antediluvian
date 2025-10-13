@@ -19,3 +19,24 @@
   ;; whether this peer is interested in something we have
   ;; if true then requests will be incoming when we unchoke
   (interested-in-us-p :initform nil :accessor interested-in-us-p))
+
+(defvar *peer-list* (make-hash-table :test #'equalp)
+  "A hash table containing info_hashes as keys and hash tables mapping IP
+addresses to peer objects as values. Peer object socket slots contain futures.
+These futures will have NIL values if the socket connection failed.")
+
+(defun make-peer-socket-future (ip port)
+  "Creates a future containing a socket connected to IP and PORT, or NIL if the
+connection fails or times out."
+  (future (handler-case (socket-connect ip port
+                                        :element-type '(unsigned-byte 8)
+                                        :timeout 5)
+            ;; if we can't connect to the peer,
+            ;; just have the future contain nil
+            (connection-refused-error ())
+            (timeout-error ()))))
+
+(defun make-peer (ip port)
+  "Creates a peer object with a socket future that attempts to connect to IP
+and PORT."
+  (make-instance 'peer :socket (make-peer-socket-future ip port)))

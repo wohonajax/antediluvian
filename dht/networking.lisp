@@ -86,17 +86,6 @@ then tries to add it to the routing table. Returns the node object."
       
           (gethash (node-ip node) *token-ips*) token)))
 
-(defun make-peer (ip port)
-  "Creates a future containing a socket connected to IP and PORT, or NIL if the
-connection fails or times out."
-  (future (handler-case (socket-connect ip port
-                                        :element-type '(unsigned-byte 8)
-                                        :timeout 5)
-            ;; if we can't connect to the peer,
-            ;; just have the future contain nil
-            (connection-refused-error ())
-            (timeout-error ()))))
-
 (defun parse-query (dict ip port)
   "Parses a Bencoded query dictionary."
   (let* ((now (get-universal-time))
@@ -117,15 +106,12 @@ connection fails or times out."
       ("ping" (send-response :ping node dict))
       ("find_node" (send-response :find_node node dict))
       ("get_peers" (send-response :get_peers node dict))
-      ("announce_peer" (cond ((member token (recall-tokens info-hash)
-                                      :test #'equalp)
-                              (setf (gethash ip (gethash info-hash
-                                                         *peer-list*))
-                                    (make-peer ip port))
-                              (send-response :announce_peer node dict
-                                             :source-port port))
-                             (t (send-response :dht_error node dict
-                                               :error-type :protocol)))))))
+      ("announce_peer"
+       (cond ((member token (recall-tokens info-hash) :test #'equalp)
+              (setf (gethash ip (gethash info-hash *peer-list*))
+                    (make-peer ip port))
+              (send-response :announce_peer node dict :source-port port))
+             (t (send-response :dht_error node dict :error-type :protocol)))))))
 
 (defun parse-nodes (byte-vector)
   "Parses a list of nodes out of a byte vector of compact node info
@@ -175,7 +161,7 @@ node in the response."
         ;; before doesn't mean it will this time
         ;; also, force will give us nil
         ;; if ip isn't in target-peers
-        unless (force (gethash ip target-peers))
+        unless (force (peer-socket (gethash ip target-peers)))
           do (setf (gethash ip target-peers) (make-peer ip port))))
 
 (defun parse-response (dict ip port)
