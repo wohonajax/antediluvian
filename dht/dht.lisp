@@ -71,18 +71,10 @@ fails, try ports 6881 through 6889."
   (bootstrap-node "bootstrap.jami.net" 4222)
   (mapc #'add-hash hashes))
 
-(defun close-peer-sockets (peers-table)
-  "Closes the all the open sockets in PEERS-TABLE."
-  (loop for peer-future being the hash-values of peers-table
-        do (when-let (socket (force peer-future))
-             (socket-close socket))))
-
 (defun dht-cleanup ()
   "Performs cleanup on program shutdown. Closes sockets, destroys threads, and
 saves settings."
   (socket-close *listening-dht-socket*)
-  (loop for peers-table being the hash-values of *peer-list*
-        do (close-peer-sockets peers-table))
   (destroy-thread *secret-rotation-thread*)
   (destroy-thread *main-dht-thread*)
   (end-kernel)
