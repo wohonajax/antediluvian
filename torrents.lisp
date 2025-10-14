@@ -45,7 +45,9 @@
 to ROOT-PATH for a given torrent's INFO-DICTIONARY."
   (when-let (files (gethash "files" info-dictionary))
     (mapcar (lambda (file-dictionary)
-              (merge-pathnames (first (gethash "path" file-dictionary))
+              ;; the path entry will be a list of (sub-)directories
+              ;; and the filename. potentially only the filename
+              (merge-pathnames (join "/" (gethash "path" file-dictionary))
                                root-path))
             files)))
 

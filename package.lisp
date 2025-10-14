@@ -34,6 +34,7 @@
   (:import-from #:serapeum
                 #:firstn)
   (:import-from #:str
+                #:join
                 #:starts-with-p)
   (:import-from #:uiop
                 #:truenamize
