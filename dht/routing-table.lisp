@@ -10,17 +10,16 @@ contain nodes that go stale.")
   "A hash table mapping transaction IDs to a cons whose car is a promise and
 whose cdr is the node to add to the bucket.")
 
-(defun node-replacement-check (deletion-candidate replacement-candidate)
-  "Initiates a check for whether to replace DELETION-CANDIDATE with
-REPLACEMENT-CANDIDATE."
+(defun node-replacement-check (incumbent candidate)
+  "Initiates a check for whether to replace INCUMBENT with CANDIDATE."
   (let ((transaction-id (generate-transaction-id))
         (promise (promise)))
     (setf (gethash transaction-id *replacement-candidates*)
-          (cons promise replacement-candidate))
+          (cons promise candidate))
     ;; if the promise isn't fulfilled after 10 seconds, consider it failed
     (make-thread (lambda () (sleep 10) (fulfill promise 'timeout)))
-    (send-message :ping (node-ip deletion-candidate)
-                  (node-port deletion-candidate)
+    (send-message :ping (node-ip incumbent)
+                  (node-port incumbent)
                   transaction-id)))
 
 (defun maybe-add-to-table (node)
@@ -83,17 +82,17 @@ candidates or add those candidates to the replacement cache."
 (defun maybe-replace-nodes ()
   "Checks whether to replace stale nodes in the routing table with nodes in the
 replacement cache."
-  (mapc (lambda (replacement-candidate)
-          (let* ((bucket (correct-bucket replacement-candidate))
-                 (oldest-node (oldest-node-in-bucket bucket)))
+  (mapc (lambda (candidate)
+          (let* ((bucket (correct-bucket candidate))
+                 (incumbent (oldest-node-in-bucket bucket)))
             (when (and (> (minutes-since (bucket-last-changed bucket))
                           15)
-                       (node-stale-p oldest-node))
-              (node-replacement-check oldest-node replacement-candidate)
+                       (node-stale-p incumbent))
+              (node-replacement-check incumbent candidate)
               ;; the replacement candidate will be added again if the
               ;; replacement check fails. if it doesn't, we don't want
               ;; it in the replacement cache anyway
-              (setf *replacement-cache* (remove replacement-candidate
+              (setf *replacement-cache* (remove candidate
                                                 *replacement-cache*
                                                 :count 1)))))
         *replacement-cache*))
