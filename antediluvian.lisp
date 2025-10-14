@@ -19,7 +19,8 @@ list of SHA1 hashes, magnet links, or torrent file paths."
   (mapc #'socket-close *accepted-connections*)
   (loop for peer-table being the hash-values of *peer-list*
         do (loop for peer being the hash-values of peer-table
-                 do (socket-close (force (peer-socket peer)))))
+                 do (when-let (socket (force (peer-socket peer)))
+                      (socket-close socket))))
   (destroy-thread *file-writer-thread*))
 
 (defun start (&rest sources)
