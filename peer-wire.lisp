@@ -43,32 +43,33 @@ extensions to STREAM."
   (let ((vector (make-octets 8 :initial-element 0)))
     (write-sequence vector stream)))
 
-(defun receive-handshake (socket)
+(defun receive-handshake (torrent socket)
+  "Receives a BitTorrent protocol handshake for TORRENT from a peer connected
+to SOCKET."
   (macrolet ((close-unless (test)
                `(unless ,test
                   (socket-close socket)
                   (return-from receive-handshake))))
-    (with-socket-stream (stream socket)
-      (close-unless (= (read-byte stream) 19))
-      (let ((protocol-vector (make-octets 19)))
-        (read-sequence protocol-vector stream)
-        (close-unless (string= (byte-array-to-ascii-string protocol-vector)
-                               "BitTorrent protocol")))
-      (write-sequence hash stream)
-      (finish-output stream)
-      (let ((peer-hash (make-octets 20)))
-        (read-sequence peer-hash stream)
-        (close-unless (member peer-hash *torrents*
-                              :key #'torrent-info-hash
-                              :test #'equalp))
-        (let ((ip (get-peer-address socket)))
-          (push (make-instance 'peer :ip ip :port (get-peer-port socket)
-                               :id (lret ((peer-id (make-octets 20)))
-                                     (read-sequence peer-id stream))
-                               :socket socket)
-                (gethash ip (gethash peer-hash *peer-list*)))
-          ;; return t so we can check whether the handshake succeeded or not
-          t)))))
+    (let ((hash (torrent-info-hash torrent)))
+      (with-socket-stream (stream socket)
+        (close-unless (= (read-byte stream) 19))
+        (let ((protocol-vector (make-octets 19)))
+          (read-sequence protocol-vector stream)
+          (close-unless (string= (byte-array-to-ascii-string protocol-vector)
+                                 "BitTorrent protocol")))
+        (write-sequence hash stream)
+        (finish-output stream)
+        (let ((peer-hash (make-octets 20)))
+          (read-sequence peer-hash stream)
+          (close-unless (equalp hash peer-hash))
+          (let ((ip (get-peer-address socket)))
+            (push (make-instance 'peer :ip ip :port (get-peer-port socket)
+                                 :id (lret ((peer-id (make-octets 20)))
+                                       (read-sequence peer-id stream))
+                                 :socket socket)
+                  (gethash ip (gethash peer-hash *peer-list*)))
+            ;; return t so we can check whether the handshake succeeded or not
+            t))))))
 
 (defvar *message-id-to-message-type-alist*
         '((0 . :choke)
