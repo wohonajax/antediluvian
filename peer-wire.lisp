@@ -16,10 +16,9 @@ header (for AnteDiluvian). Uses an Azureus-style client ID string."
 
 (defvar *listening-peer-socket* nil
   "A TCP socket listening for connections from peers.")
-;;; TODO: listen to each accepted connection in its own thread
-(defvar *accepted-connections* (list)
-  "A list of sockets accepted using SOCKET-ACCEPT on the
-*LISTENING-PEER-SOCKET*.")
+
+(defvar *listening-threads* (list)
+  "A list of threads listening to peer sockets.")
 
 (defun get-peer-socket (ip info-hash)
   "Returns the socket object associated with IP for a peer under INFO-HASH.
@@ -118,12 +117,16 @@ extensions to STREAM."
 
 (defun accept-peer-connection (socket)
   "Accepts a socket connection from a SOCKET and listens in a new thread."
-  (push (make-thread (lambda ()
-                       (loop with accepted-socket = (socket-accept socket)
-                             with stream = (socket-stream accepted-socket)
-                             ;; FIXME: wait for input?
-                             do (read-peer-wire-message stream))))
-        *accepted-connections*))
+  (let ((accepted-socket (socket-accept socket)))
+    ;; if the handshake succeeds, do nothing
+    (cond ((receive-handshake accepted-socket))
+          (t (socket-close accepted-socket)
+             (return-from accept-peer-connection)))
+    (push (make-thread (lambda ()
+                         (loop with stream = (socket-stream accepted-socket)
+                               ;; FIXME: wait for input?
+                               do (read-peer-wire-message stream))))
+          *listening-threads*)))
 
 (defun start-listener-thread ()
   "Starts a thread that will listen for incoming connections on the listening
