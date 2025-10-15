@@ -54,8 +54,6 @@ and PORT."
 
 (defun clear-peer-list ()
   "Removes any peer whose socket connection failed."
-  (loop for peer-table being the hash-values of *peer-list*
-        do (loop for peer being the hash-values of peer-table
-                   using (hash-key ip)
-                 unless (force (peer-socket peer))
-                   do (remhash ip peer-table))))
+  (loop for peer in *peer-list*
+        unless (force (peer-socket peer))
+          do (setf *peer-list* (remove peer *peer-list* :count 1))))
