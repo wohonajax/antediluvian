@@ -50,4 +50,4 @@ or :BAD."
 (defun compact-node-info (node)
   "Translate's NODE's ID, IP, and port into compact peer format."
   (concat-vec (node-id node)
-              (compact-peer-info node)))
+              (compact-peer-info (node-ip node) (node-port node))))
