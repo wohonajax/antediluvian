@@ -39,10 +39,11 @@ connection fails or times out."
             (connection-refused-error ())
             (timeout-error ()))))
 
-(defun make-peer (ip port)
+(defun make-peer (ip port hash)
   "Creates a peer object with a socket future that attempts to connect to IP
 and PORT."
-  (make-instance 'peer :socket (make-peer-socket-future ip port)))
+  (make-instance 'peer :socket (make-peer-socket-future ip port)
+                 :torrents (gethash hash *torrent-hashes*)))
 
 (defun add-peer-to-peer-list (hash socket id)
   "Adds a peer with the given SOCKET and ID to the peer list under HASH."
