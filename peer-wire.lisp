@@ -47,7 +47,7 @@ extensions to STREAM."
   (macrolet ((close-unless (test)
                `(unless ,test
                   (socket-close socket)
-                  (return-from read-handshake))))
+                  (return-from receive-handshake))))
     (with-socket-stream (stream socket)
       (close-unless (= (read-byte stream) 19))
       (let ((protocol-vector (make-octets 19)))
