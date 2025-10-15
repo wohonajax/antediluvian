@@ -89,9 +89,11 @@ a filespec to a torrent file, or a SHA1 hash."
 (defun add-torrent (source)
   "Adds a torrent from SOURCE, which should be a magnet link, a filespec to a
 torrent file, or a SHA1 hash."
-  (let ((torrent (parse-source source)))
-    (unless (member torrent *torrents* :test #'equalp)
+  (let* ((torrent (parse-source source))
+         (info-hash (torrent-info-hash torrent)))
+    (unless (member torrent *torrents* :key #'torrent-info-hash :test #'equalp)
       (push torrent *torrents*)
+      (setf (gethash info-hash *torrent-hashes*) torrent)
       (add-hash (torrent-info-hash torrent)))))
 
 (defun torrent-pieces (torrent)
