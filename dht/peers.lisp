@@ -9,9 +9,11 @@
 (defun pack-values-response (info-hash)
   "Returns a list of address/port byte vectors for peers under INFO-HASH in
 compact peer format."
-  (when-let (peers (gethash info-hash *peer-list*))
-    (loop for peer being the hash-values of peers
-            using (hash-key ip)
-          for socket = (force (peer-socket peer))
-          when socket ; if the connection failed, don't include that peer
-            collect (compact-peer-info ip (get-peer-port socket)))))
+  (loop for peer in *peer-list*
+        for socket = (force (peer-socket peer))
+        when (and socket ; if the connection failed, don't include that peer
+                  (member info-hash (peer-torrents peer)
+                          :key #'torrent-info-hash
+                          :test #'equalp))
+          collect (compact-peer-info (get-peer-address socket)
+                                     (get-peer-port socket))))

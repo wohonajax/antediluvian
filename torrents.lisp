@@ -12,6 +12,9 @@
 (defvar *torrents* (list)
   "The list of added torrents.")
 
+(defvar *torrent-hashes* (make-hash-table :test #'equalp)
+  "A hash table mapping info hashes to torrent objects.")
+
 (defun magnet-link-p (item)
   "Tests whether ITEM is a magnet link."
   (and (stringp item) (starts-with-p "magnet:?" item)))
@@ -86,9 +89,11 @@ a filespec to a torrent file, or a SHA1 hash."
 (defun add-torrent (source)
   "Adds a torrent from SOURCE, which should be a magnet link, a filespec to a
 torrent file, or a SHA1 hash."
-  (let ((torrent (parse-source source)))
-    (unless (member torrent *torrents* :test #'equalp)
+  (let* ((torrent (parse-source source))
+         (info-hash (torrent-info-hash torrent)))
+    (unless (member torrent *torrents* :key #'torrent-info-hash :test #'equalp)
       (push torrent *torrents*)
+      (setf (gethash info-hash *torrent-hashes*) torrent)
       (add-hash (torrent-info-hash torrent)))))
 
 (defun torrent-pieces (torrent)

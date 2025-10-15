@@ -24,10 +24,9 @@
    ;; if true then requests will be incoming when we unchoke
    (interested-in-us-p :initform nil :accessor interested-in-us-p)))
 
-(defvar *peer-list* (make-hash-table :test #'equalp)
-  "A hash table containing info_hashes as keys and hash tables mapping IP
-addresses to peer objects as values. Peer object socket slots contain futures.
-These futures will have NIL values if the socket connection failed.")
+(defvar *peer-list* (list)
+  "A list of peer objects corresponding to peers for torrents we're downloading
+or uploading.")
 
 (defun make-peer-socket-future (ip port)
   "Creates a future containing a socket connected to IP and PORT, or NIL if the
@@ -40,20 +39,21 @@ connection fails or times out."
             (connection-refused-error ())
             (timeout-error ()))))
 
-(defun make-peer (ip port)
+(defun make-peer (ip port hash)
   "Creates a peer object with a socket future that attempts to connect to IP
 and PORT."
-  (make-instance 'peer :socket (make-peer-socket-future ip port)))
+  (make-instance 'peer :socket (make-peer-socket-future ip port)
+                 :torrents (gethash hash *torrent-hashes*)))
 
 (defun add-peer-to-peer-list (hash socket id)
   "Adds a peer with the given SOCKET and ID to the peer list under HASH."
-  (setf (gethash (get-peer-address socket) (gethash hash *peer-list*))
-        (make-instance 'peer :socket socket :id id)))
+  (pushnew (make-instance 'peer :socket socket :id id
+                          :torrents (gethash hash *torrent-hashes*))
+           *peer-list*
+           :key #'peer-id :test #'equalp))
 
 (defun clear-peer-list ()
   "Removes any peer whose socket connection failed."
-  (loop for peer-table being the hash-values of *peer-list*
-        do (loop for peer being the hash-values of peer-table
-                   using (hash-key ip)
-                 unless (force (peer-socket peer))
-                   do (remhash ip peer-table))))
+  (loop for peer in *peer-list*
+        unless (force (peer-socket peer))
+          do (setf *peer-list* (remove peer *peer-list* :count 1))))
