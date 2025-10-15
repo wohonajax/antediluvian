@@ -21,6 +21,55 @@ header (for AnteDiluvian). Uses an Azureus-style client ID string."
   "A list of sockets accepted using SOCKET-ACCEPT on the
 *LISTENING-PEER-SOCKET*.")
 
+(defun get-peer-socket (ip info-hash)
+  "Returns the socket object associated with IP for a peer under INFO-HASH.
+Returns NIL if there is no such peer or if the connection failed. Will block if
+the connection attempt is still in progress."
+  (when-let (peers (gethash info-hash *peer-list*))
+    (force (gethash ip peers))))
+
+;;;; Peer wire protocol
+
+(defconstant +length-offset+ (expt 2 14)
+  "The length offset to use for request and cancel messages.")
+
+(defun write-handshake-header (stream)
+  "Writes the BitTorrent handshake header to STREAM."
+  (write-byte 19 stream) ; length prefix
+  (write-sequence (ascii-string-to-byte-array "BitTorrent protocol") stream))
+
+(defun write-handshake-header-reserved-bytes (stream)
+  "Writes the reserved bytes of the handshake that indicate protocol
+extensions to STREAM."
+  (let ((vector (make-octets 8 :initial-element 0)))
+    (write-sequence vector stream)))
+
+(defun receive-handshake (socket)
+  (macrolet ((close-unless (test)
+               `(unless ,test
+                  (socket-close socket)
+                  (return-from read-handshake))))
+    (with-socket-stream (stream socket)
+      (close-unless (= (read-byte stream) 19))
+      (let ((protocol-vector (make-octets 19)))
+        (read-sequence protocol-vector stream)
+        (close-unless (string= (byte-array-to-ascii-string protocol-vector)
+                               "BitTorrent protocol")))
+      (write-sequence hash stream)
+      (finish-output stream)
+      (let ((peer-hash (make-octets 20)))
+        (read-sequence peer-hash stream)
+        (close-unless (member peer-hash *torrents*
+                              :key #'torrent-info-hash
+                              :test #'equalp))
+        (let ((ip (get-peer-address socket)))
+          (push (make-instance 'peer :ip ip :port (get-peer-port socket)
+                               :id (let ((peer-id (make-octets 20)))
+                                     (read-sequence peer-id stream)
+                                     peer-id)
+                               :socket socket)
+                (gethash ip (gethash peer-hash *peer-list*))))))))
+
 (defvar *message-id-to-message-type-alist*
         '((0 . :choke)
           (1 . :unchoke)
@@ -84,29 +133,6 @@ peer socket."
 
 (defvar *peer-listener-thread* nil
   "A thread listening for incoming TCP connections.")
-
-(defun get-peer-socket (ip info-hash)
-  "Returns the socket object associated with IP for a peer under INFO-HASH.
-Returns NIL if there is no such peer or if the connection failed. Will block if
-the connection attempt is still in progress."
-  (when-let (peers (gethash info-hash *peer-list*))
-    (force (gethash ip peers))))
-
-;;;; Peer wire protocol
-
-(defconstant +length-offset+ (expt 2 14)
-  "The length offset to use for request and cancel messages.")
-
-(defun write-handshake-header (stream)
-  "Writes the BitTorrent handshake header to STREAM."
-  (write-byte 19 stream) ; length prefix
-  (write-sequence (ascii-string-to-byte-array "BitTorrent protocol") stream))
-
-(defun write-handshake-header-reserved-bytes (stream)
-  "Writes the reserved bytes of the handshake that indicate protocol
-extensions to STREAM."
-  (let ((vector (make-octets 8 :initial-element 0)))
-    (write-sequence vector stream)))
 
 (defun perform-handshake (hash socket)
   "Performs a BitTorrent protocol handshake with the peer under HASH connected
