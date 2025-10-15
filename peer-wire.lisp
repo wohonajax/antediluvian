@@ -42,12 +42,12 @@ the connection attempt is still in progress."
 extensions to STREAM."
   (let ((reserved-bytes (make-octets 8 :initial-element 0)))
     (flet ((set-bit (nth-bit nth-byte)
-             (let ((integer (aref reserved-bytes nth-byte)))
-               ;; nth-bit is "big-endian"; a value of 7 means the 8th bit from
-               ;; left to right (i.e., setting bit 7 will result in 1 and
-               ;; setting bit 0 will result in 128)
-               (setf (ldb (byte 8 (- 7 nth-bit)) integer) 1)
-               (setf (aref reserved-bytes nth-byte) integer))))
+             ;; nth-bit is "big-endian"; a value of 7 means the 8th bit from
+             ;; left to right (i.e., setting bit 7 will result in 1 and
+             ;; setting bit 0 will result in 128)
+             (setf (ldb (byte 8 (- 7 nth-bit))
+                        (aref reserved-bytes nth-byte))
+                   1)))
       (set-bit 7 7) ; DHT extension (the last bit in the last reserved byte)
       (write-sequence reserved-bytes stream))))
 
