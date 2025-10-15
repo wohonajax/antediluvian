@@ -43,6 +43,7 @@
   (:import-from #:usocket
                 #:+max-datagram-packet-size+
                 #:get-local-port
+                #:get-peer-address
                 #:get-peer-port
                 #:port-from-octet-buffer
                 #:port-to-octet-buffer
