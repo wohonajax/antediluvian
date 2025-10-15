@@ -17,10 +17,10 @@ list of SHA1 hashes, magnet links, or torrent file paths."
   (socket-close *listening-peer-socket*)
   (destroy-thread *peer-listener-thread*)
   (mapc #'destroy-thread *listening-threads*)
-  (loop for peer-table being the hash-values of *peer-list*
-        do (loop for peer being the hash-values of peer-table
-                 do (when-let (socket (force (peer-socket peer)))
-                      (socket-close socket))))
+  (mapc (lambda (peer)
+          (when-let (socket (force (peer-socket peer)))
+            (socket-close socket)))
+        *peer-list*)
   (destroy-thread *file-writer-thread*))
 
 (defun start (&rest sources)
