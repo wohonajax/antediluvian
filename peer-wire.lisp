@@ -80,7 +80,7 @@ peer socket."
   (make-thread
    (lambda ()
      (loop for socket in (wait-for-input *listening-peer-socket* :ready-only t)
-           do (push (socket-accept socket) *accepted-connections*)))))
+           do (accept-peer-connection socket)))))
 
 (defvar *peer-listener-thread* nil
   "A thread listening for incoming TCP connections.")
