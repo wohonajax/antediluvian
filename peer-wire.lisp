@@ -68,7 +68,9 @@ extensions to STREAM."
                                      (read-sequence peer-id stream)
                                      peer-id)
                                :socket socket)
-                (gethash ip (gethash peer-hash *peer-list*))))))))
+                (gethash ip (gethash peer-hash *peer-list*)))
+          ;; return t so we can check whether the handshake succeeded or not
+          t)))))
 
 (defvar *message-id-to-message-type-alist*
         '((0 . :choke)
