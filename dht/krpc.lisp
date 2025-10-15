@@ -71,8 +71,6 @@ format."
           (gethash "a" query-dict) query-arguments
 
           (gethash transaction-id *transactions*) info-hash)
-    (unless (gethash info-hash *peer-list*)
-      (setf (gethash info-hash *peer-list*) (make-hash-table :test #'equalp)))
     (send-bencoded-data query-dict ip port)))
 
 (defun announce-peer (ip port info-hash transaction-id token)
