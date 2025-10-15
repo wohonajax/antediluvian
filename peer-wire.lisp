@@ -119,8 +119,8 @@ to SOCKET. Returns the peer's ID, or NIL if the handshake failed."
       (:cancel )
       (:port ))))
 
-(defun accept-peer-connection (socket)
-  "Accepts a socket connection from a SOCKET and listens in a new thread."
+(defun accept-peer-connection (torrent socket)
+  "Accepts a TORRENT peer connection from a SOCKET and listens in a new thread."
   (let* ((accepted-socket (socket-accept socket))
          (peer-id (receive-handshake torrent accepted-socket)))
     ;; FIXME: associate peers with info hashes
@@ -142,7 +142,8 @@ peer socket."
   (make-thread
    (lambda ()
      (loop for socket in (wait-for-input *listening-peer-socket* :ready-only t)
-           do (accept-peer-connection socket)))))
+           ;; FIXME: associate peers with torrents
+           do (accept-peer-connection torrent socket)))))
 
 (defvar *peer-listener-thread* nil
   "A thread listening for incoming TCP connections.")
