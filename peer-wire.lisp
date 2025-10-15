@@ -118,10 +118,10 @@ extensions to STREAM."
 (defun accept-peer-connection (socket)
   "Accepts a socket connection from a SOCKET and listens in a new thread."
   (let ((accepted-socket (socket-accept socket)))
-    ;; if the handshake succeeds, do nothing
-    (cond ((receive-handshake accepted-socket))
-          (t (socket-close accepted-socket)
-             (return-from accept-peer-connection)))
+    ;; if the handshake doesn't succeed, shut the peer down
+    (unless (receive-handshake accepted-socket)
+      (socket-close accepted-socket)
+      (return-from accept-peer-connection))
     (push (make-thread (lambda ()
                          (loop with stream = (socket-stream accepted-socket)
                                ;; FIXME: wait for input?
