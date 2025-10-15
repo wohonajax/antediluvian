@@ -47,8 +47,10 @@ and PORT."
 
 (defun add-peer-to-peer-list (hash socket id)
   "Adds a peer with the given SOCKET and ID to the peer list under HASH."
-  (setf (gethash (get-peer-address socket) (gethash hash *peer-list*))
-        (make-instance 'peer :socket socket :id id)))
+  (pushnew (make-instance 'peer :socket socket :id id
+                          :torrents (gethash hash *torrent-hashes*))
+           *peer-list*
+           :key #'peer-id :test #'equalp))
 
 (defun clear-peer-list ()
   "Removes any peer whose socket connection failed."
