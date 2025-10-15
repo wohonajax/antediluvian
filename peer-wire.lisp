@@ -53,7 +53,7 @@ extensions to STREAM."
 
 (defun receive-handshake (torrent socket)
   "Receives a BitTorrent protocol handshake for TORRENT from a peer connected
-to SOCKET."
+to SOCKET. Returns the peer's ID, or NIL if the handshake failed."
   (macrolet ((close-unless (test)
                `(unless ,test
                   (socket-close socket)
@@ -69,15 +69,10 @@ to SOCKET."
         (finish-output stream)
         (let ((peer-hash (make-octets 20)))
           (read-sequence peer-hash stream)
-          (close-unless (equalp hash peer-hash))
-          (let ((ip (get-peer-address socket)))
-            (push (make-instance 'peer :ip ip :port (get-peer-port socket)
-                                 :id (lret ((peer-id (make-octets 20)))
-                                       (read-sequence peer-id stream))
-                                 :socket socket)
-                  (gethash ip (gethash peer-hash *peer-list*)))
-            ;; return t so we can check whether the handshake succeeded or not
-            t))))))
+          (close-unless (equalp hash peer-hash)))
+        ;; return the peer id if the handshake succeeds
+        (lret ((peer-id (make-octets 20)))
+          (read-sequence peer-id stream))))))
 
 (defvar *message-id-to-message-type-alist*
         '((0 . :choke)
@@ -125,11 +120,15 @@ to SOCKET."
 
 (defun accept-peer-connection (socket)
   "Accepts a socket connection from a SOCKET and listens in a new thread."
-  (let ((accepted-socket (socket-accept socket)))
-    ;; if the handshake doesn't succeed, shut the peer down
-    (unless (receive-handshake accepted-socket)
-      (socket-close accepted-socket)
-      (return-from accept-peer-connection))
+  (let* ((accepted-socket (socket-accept socket))
+         (peer-id (receive-handshake torrent accepted-socket)))
+    ;; FIXME: associate peers with info hashes
+    ;; we need to find a way to determine what torrent/hash
+    ;; an incoming peer connection is associated with
+    (cond (peer-id (add-peer-to-peer-list accepted-socket peer-id))
+          ;; if the handshake didn't succeed, shut the peer down
+          (t (socket-close accepted-socket)
+             (return-from accept-peer-connection)))
     (push (make-thread (lambda ()
                          (loop with stream = (socket-stream accepted-socket)
                                ;; FIXME: wait for input?
