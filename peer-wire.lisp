@@ -34,7 +34,7 @@ the connection attempt is still in progress."
 
 (defun write-handshake-header (stream)
   "Writes the BitTorrent handshake header to STREAM."
-  (write-byte 19 stream) ; length prefix
+  (write-byte 19 stream) ; length prefix; (length "BitTorrent protocol") = 19
   (write-sequence (ascii-string-to-byte-array "BitTorrent protocol") stream))
 
 (defun write-handshake-header-reserved-bytes (stream)
@@ -152,7 +152,7 @@ peer socket."
 to SOCKET."
   (let ((stream (socket-stream socket))
         (hash (torrent-info-hash torrent)))
-    (write-handshake-header stream)
+    (write-handshake-header stream) ; protocol length prefix and string
     (write-handshake-header-reserved-bytes stream)
     (write-sequence hash stream)
     (finish-output stream)
