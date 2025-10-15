@@ -24,10 +24,9 @@
    ;; if true then requests will be incoming when we unchoke
    (interested-in-us-p :initform nil :accessor interested-in-us-p)))
 
-(defvar *peer-list* (make-hash-table :test #'equalp)
-  "A hash table containing info_hashes as keys and hash tables mapping IP
-addresses to peer objects as values. Peer object socket slots contain futures.
-These futures will have NIL values if the socket connection failed.")
+(defvar *peer-list* (list)
+  "A list of peer objects corresponding to peers for torrents we're downloading
+or uploading.")
 
 (defun make-peer-socket-future (ip port)
   "Creates a future containing a socket connected to IP and PORT, or NIL if the
