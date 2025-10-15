@@ -63,9 +63,8 @@ extensions to STREAM."
                               :test #'equalp))
         (let ((ip (get-peer-address socket)))
           (push (make-instance 'peer :ip ip :port (get-peer-port socket)
-                               :id (let ((peer-id (make-octets 20)))
-                                     (read-sequence peer-id stream)
-                                     peer-id)
+                               :id (lret ((peer-id (make-octets 20)))
+                                     (read-sequence peer-id stream))
                                :socket socket)
                 (gethash ip (gethash peer-hash *peer-list*)))
           ;; return t so we can check whether the handshake succeeded or not

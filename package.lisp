@@ -32,7 +32,8 @@
                 #:future
                 #:promise)
   (:import-from #:serapeum
-                #:firstn)
+                #:firstn
+                #:lret)
   (:import-from #:str
                 #:join
                 #:starts-with-p)
