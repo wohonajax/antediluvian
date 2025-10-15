@@ -9,6 +9,7 @@
   :components ((:file "package")
                (:file "settings")
                (:file "util")
+               (:file "torrents")
                (:file "peers")
                (:module "dht"
                         :serial t
@@ -21,7 +22,6 @@
                                      (:file "lookups")
                                      (:file "networking")
                                      (:file "dht")))
-               (:file "torrents")
                (:file "files")
                (:file "peer-wire")
                (:file "antediluvian"))

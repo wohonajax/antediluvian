@@ -8,6 +8,8 @@
   ((socket :initarg :socket :accessor peer-socket)
    ;; this peer's ID
    (id :initform nil :initarg :id :accessor peer-id)
+   ;; list of torrents this peer is associated with
+   (torrents :initform '() :accessor peer-torrents)
    ;; list of pieces this peer already has
    (had-pieces :initform '() :accessor had-pieces)
    ;; list of piece indices this peer has requested
