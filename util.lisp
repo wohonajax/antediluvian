@@ -40,3 +40,7 @@ not allowed."
 (defun filespecp (object)
   "Determines whether OBJECT is a file specifier or not."
   (or (stringp source) (pathnamep source)))
+
+(defun make-octets (length &rest args)
+  "Makes a vector of length LENGTH with an element type of (UNSIGNED-BYTE 8)."
+  (apply #'make-array length :element-type '(unsigned-byte 8) args))

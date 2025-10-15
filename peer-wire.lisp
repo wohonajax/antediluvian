@@ -36,8 +36,8 @@ header (for AnteDiluvian). Uses an Azureus-style client ID string."
 
 (defun read-4-bytes-to-integer (stream)
   "Reads 4 big-endian bytes from STREAM and converts the result to an integer."
-  (let ((vector (make-array 4 :element-type '(unsigned-byte 8))))
-    (read-sequence vector stream :end 4)
+  (let ((vector (make-octets 4)))
+    (read-sequence vector stream)
     (octets-to-integer vector)))
 
 (defun read-peer-wire-length-header (stream)
@@ -51,8 +51,8 @@ header (for AnteDiluvian). Uses an Azureus-style client ID string."
 (defun read-peer-wire-message (stream)
   "Reads a peer wire protocol message from STREAM."
   (let* ((length (read-peer-wire-length-header stream))
-         (message-bytes (make-array length :element-type '(unsigned-byte 8))))
-    (read-sequence message-bytes stream :end length)
+         (message-bytes (make-octets length)))
+    (read-sequence message-bytes stream)
     (case (message-id-to-message-type (aref message-bytes 0))
       (:choke )
       (:unchoke )
@@ -105,8 +105,7 @@ the connection attempt is still in progress."
 (defun write-handshake-header-reserved-bytes (stream)
   "Writes the reserved bytes of the handshake that indicate protocol
 extensions to STREAM."
-  (let ((vector (make-array 8 :element-type '(unsigned-byte 8)
-                            :initial-element 0)))
+  (let ((vector (make-octets 8 :initial-element 0)))
     (write-sequence vector stream)))
 
 (defun perform-handshake (hash socket)
@@ -119,7 +118,7 @@ to SOCKET."
     (finish-output stream)
     ;; if we don't get the same hash back as
     ;; the one we send, sever the connection
-    (let ((peer-hash (make-array 20 :element-type '(unsigned-byte 8))))
+    (let ((peer-hash (make-octets 20)))
       (read-sequence peer-hash stream)
       (unless (equalp hash peer-hash)
         (let ((ip (get-peer-address socket)))
@@ -200,7 +199,7 @@ have."
            ;; we want the ceiling so we don't lose pieces.
            ;; extra bits are zeros
            (pieces-length (ceiling number-of-pieces 8))
-           (bitfield-vector (make-array pieces-length :initial-element 0)))
+           (bitfield-vector (make-octets pieces-length :initial-element 0)))
       (loop with piece-index = 0
             for vector-index below pieces-length
             do (loop with bitfield = 0
@@ -253,6 +252,5 @@ this DHT node is listening on."
   (with-socket-stream (stream socket)
     (send-peer-message-length-header 3 socket)
     (write-byte (message-id-for-message-type :port) stream)
-    (write-sequence (port-to-octet-buffer *default-port*
-                                          (make-array 2 :element-type '(unsigned-byte 8)))
+    (write-sequence (port-to-octet-buffer *default-port* (make-octets 2))
                     stream)))
