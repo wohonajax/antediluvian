@@ -147,10 +147,11 @@ peer socket."
 (defvar *peer-listener-thread* nil
   "A thread listening for incoming TCP connections.")
 
-(defun perform-handshake (hash socket)
-  "Performs a BitTorrent protocol handshake with the peer under HASH connected
+(defun perform-handshake (torrent socket)
+  "Performs a BitTorrent protocol handshake with the TORRENT peer connected
 to SOCKET."
-  (let ((stream (socket-stream socket)))
+  (let ((stream (socket-stream socket))
+        (hash (torrent-info-hash torrent)))
     (write-handshake-header stream)
     (write-handshake-header-reserved-bytes stream)
     (write-sequence hash stream)
