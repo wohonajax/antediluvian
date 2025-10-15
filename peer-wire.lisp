@@ -43,9 +43,9 @@ the connection attempt is still in progress."
 extensions to STREAM."
   (let ((reserved-bytes (make-octets 8 :initial-element 0)))
     (flet ((set-bit (nth-bit nth-byte)
-             ;; nth-bit is "big-endian"; a value of 7 means the 8th bit from
-             ;; left to right (i.e., setting bit 7 will result in 1 and
-             ;; setting bit 0 will result in 128)
+             ;; nth-bit is "big-endian"/left-justified; a value of 7 means
+             ;; the 8th bit from left to right (i.e., setting bit 7 will
+             ;; result in 1 and setting bit 0 will result in 128)
              (setf (ldb (byte 8 (- 7 nth-bit))
                         (aref reserved-bytes nth-byte))
                    1)))
