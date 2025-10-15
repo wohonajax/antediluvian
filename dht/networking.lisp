@@ -108,8 +108,7 @@ then tries to add it to the routing table. Returns the node object."
       ("get_peers" (send-response :get_peers node dict))
       ("announce_peer"
        (cond ((member token (recall-tokens info-hash) :test #'equalp)
-              (setf (gethash ip (gethash info-hash *peer-list*))
-                    (make-peer ip port))
+              (push (make-peer ip port info-hash) *peer-list*)
               (send-response :announce_peer node dict :source-port port))
              (t (send-response :dht_error node dict :error-type :protocol)))))))
 
@@ -153,16 +152,18 @@ node in the response."
   (unless (gethash target *active-lookups*)
     (recurse-on-lookup-results target)))
 
+(defun get-peer-socket-ip (peer)
+  "Returns PEER's socket address, or NIL if the socket connection failed."
+  (when-let (socket (force (peer-socket peer)))
+    (get-peer-address socket)))
+
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
-  (loop with target-peers = (gethash target *peer-list*)
-        for (ip . port) in (parse-peers peers)
-        ;; just because a peer failed to connect
-        ;; before doesn't mean it will this time
-        ;; also, force will give us nil
-        ;; if ip isn't in target-peers
-        unless (force (peer-socket (gethash ip target-peers)))
-          do (setf (gethash ip target-peers) (make-peer ip port))))
+  (loop for (ip . port) in (parse-peers peers)
+        ;; TODO: remove duplicate peers when there's
+        ;; a peer with a failed socket connection
+        unless (member ip *peer-list* :key #'get-peer-socket-ip :test #'equalp)
+          do (push (make-peer ip port target) *peer-list*)))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
