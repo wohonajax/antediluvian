@@ -6,6 +6,8 @@
   ;; stream socket object for the connection to this peer
   ;; wrapped in a future (need to use (force (peer-socket peer)))
   ((socket :initarg :socket :accessor peer-socket)
+   ;; this peer's ID
+   (id :initform nil :initarg :id :accessor peer-id)
    ;; list of pieces this peer already has
    (had-pieces :initform '() :accessor had-pieces)
    ;; list of piece indices this peer has requested
