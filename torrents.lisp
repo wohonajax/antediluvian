@@ -12,6 +12,9 @@
 (defvar *torrents* (list)
   "The list of added torrents.")
 
+(defvar *torrent-hashes* (make-hash-table :test #'equalp)
+  "A hash table mapping info hashes to torrent objects.")
+
 (defun magnet-link-p (item)
   "Tests whether ITEM is a magnet link."
   (and (stringp item) (starts-with-p "magnet:?" item)))
