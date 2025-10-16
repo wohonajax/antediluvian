@@ -43,12 +43,12 @@ connection fails or times out."
   "Creates a peer object with a socket future that attempts to connect to IP
 and PORT."
   (make-instance 'peer :socket (make-peer-socket-future ip port)
-                 :torrents (gethash hash *torrent-hashes*)))
+                 :torrent (gethash hash *torrent-hashes*)))
 
 (defun add-peer-to-peer-list (hash socket id)
   "Adds a peer with the given SOCKET and ID to the peer list under HASH."
   (pushnew (make-instance 'peer :socket socket :id id
-                          :torrents (list (gethash hash *torrent-hashes*)))
+                          :torrent (gethash hash *torrent-hashes*))
            *peer-list*
            :key #'peer-id :test #'equalp))
 
