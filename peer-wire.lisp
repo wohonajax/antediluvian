@@ -67,8 +67,7 @@ Returns the peer object, or NIL if the handshake failed."
         (finish-output stream)
         (lret* ((peer-id (make-octets 20))
                 (peer (make-instance 'peer :socket socket :id peer-id
-                                     :torrent (gethash hash
-                                                       *torrent-hashes*))))
+                                     :torrent (gethash hash *torrent-hashes*))))
           (read-sequence peer-id stream)
           (push peer *peer-list*))))))
 
