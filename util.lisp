@@ -25,7 +25,7 @@ not allowed."
                     (cons itm lst))
                    (t (cons (first lst)
                             (insert-item itm (rest lst)))))))
-    `(setf ,list (insert-item ,item ,list))))
+    `(setf ,list ,(insert-item item list))))
 
 (defun concat-vec (x y)
   "Concatenates X and Y into a byte vector."
