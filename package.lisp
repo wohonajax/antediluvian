@@ -33,7 +33,7 @@
                 #:promise)
   (:import-from #:serapeum
                 #:firstn
-                #:lret)
+                #:lret*)
   (:import-from #:str
                 #:join
                 #:starts-with-p)

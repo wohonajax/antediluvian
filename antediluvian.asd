@@ -1,6 +1,6 @@
 (asdf:defsystem #:antediluvian
   :name "antediluvian"
-  :version "20251015"
+  :version "20251016"
   :description "antediluvian"
   :long-description "Torrent client in Common Lisp"
   :author "Hunter Chandler <wohonajax@gmail.com>"

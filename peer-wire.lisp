@@ -45,28 +45,32 @@ extensions to STREAM."
       (set-bit 7 7) ; DHT extension (the last bit in the last reserved byte)
       (write-sequence reserved-bytes stream))))
 
-(defun receive-handshake (torrent socket)
-  "Receives a BitTorrent protocol handshake for TORRENT from a peer connected
-to SOCKET. Returns the peer's ID, or NIL if the handshake failed."
+(defun receive-handshake (socket)
+  "Receives a BitTorrent protocol handshake from a peer connected to SOCKET.
+Returns the peer's ID, or NIL if the handshake failed."
   (macrolet ((close-unless (test)
                `(unless ,test
                   (socket-close socket)
                   (return-from receive-handshake))))
-    (let ((hash (torrent-info-hash torrent))
-          (stream (socket-stream socket)))
+    (let ((stream (socket-stream socket)))
       (close-unless (= (read-byte stream) 19))
       (let ((protocol-vector (make-octets 19)))
         (read-sequence protocol-vector stream)
         (close-unless (string= (byte-array-to-ascii-string protocol-vector)
                                "BitTorrent protocol")))
-      (write-sequence hash stream)
-      (finish-output stream)
-      (let ((peer-hash (make-octets 20)))
-        (read-sequence peer-hash stream)
-        (close-unless (equalp hash peer-hash)))
-      ;; return the peer id if the handshake succeeds
-      (lret ((peer-id (make-octets 20)))
-        (read-sequence peer-id stream)))))
+      (let ((hash (make-octets 20)))
+        (read-sequence hash stream)
+        (close-unless (gethash hash *torrent-hashes*))
+        ;; we've checked that the hash is among our active
+        ;; torrents, so just write the hash back to confirm
+        (write-sequence hash stream)
+        (finish-output stream)
+        (lret* ((peer-id (make-octets 20))
+                (peer (make-instance 'peer :socket socket :id peer-id
+                                     :torrent (gethash hash
+                                                       *torrent-hashes*))))
+          (read-sequence peer-id stream)
+          (push peer *peer-list*))))))
 
 (defvar *message-id-to-message-type-alist*
         '((0 . :choke)
