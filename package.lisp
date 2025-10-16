@@ -47,11 +47,14 @@
                 #:truenamize
                 #:xdg-config-home)
   (:import-from #:usocket
+                ;; variables and constants
                 #:*wildcard-host*
                 #:+max-datagram-packet-size+
-                #:get-local-port
+                ;; port translation utilities
                 #:port-from-octet-buffer
                 #:port-to-octet-buffer
+                ;; general socket functions
+                #:get-local-port
                 #:socket-connect
                 #:socket-close
                 ;; datagram sockets (UDP)
