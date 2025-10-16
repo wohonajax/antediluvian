@@ -41,6 +41,7 @@
                 #:truenamize
                 #:xdg-config-home)
   (:import-from #:usocket
+                #:*wildcard-host*
                 #:+max-datagram-packet-size+
                 #:get-local-port
                 #:get-peer-address
