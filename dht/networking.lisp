@@ -136,8 +136,8 @@ substrings."
     (handler-case
         (mapc (lambda (byte-vector)
                 (push (multiple-value-call #'cons (parse-node-ip byte-vector))
-                      peers)
-              peers-list))
+                      peers))
+              peers-list)
       ;; TODO: error handling for out-of-bounds
       ;; (node's health may be bad--malformed response sent?)
       ;; also possibly sending IPv6 addresses
