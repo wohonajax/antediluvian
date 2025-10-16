@@ -140,7 +140,8 @@ peer socket."
   "A thread listening for incoming TCP connections.")
 
 (defun perform-handshake (peer)
-  "Performs a BitTorrent protocol handshake with PEER."
+  "Performs a BitTorrent protocol handshake with PEER. Returns T if successful,
+NIL if not."
   (let* ((socket (force (peer-socket peer)))
          (stream (socket-stream socket))
          (hash (torrent-info-hash (peer-torrent peer))))
@@ -157,7 +158,9 @@ peer socket."
         (setf *peer-list* (remove peer *peer-list* :count 1))
         (return-from perform-handshake)))
     (write-sequence *peer-id* stream)
-    (finish-output stream)))
+    (finish-output stream)
+    ;; return t if the handshake was successful
+    t))
 
 (defun message-id-for-message-type (type)
   "Returns the byte to be sent to a peer for a TYPE message. TYPE must be a
