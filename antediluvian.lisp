@@ -16,7 +16,7 @@ list of SHA1 hashes, magnet links, or torrent file paths."
   (dht-cleanup)
   (socket-close *listening-peer-socket*)
   (destroy-thread *peer-listener-thread*)
-  (mapc #'destroy-thread *listening-threads*)
+  (mapc #'destroy-thread *peer-connection-threads*)
   (mapc (lambda (peer)
           (when-let (socket (force (peer-socket peer)))
             (socket-close socket)))

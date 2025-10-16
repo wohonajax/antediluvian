@@ -17,8 +17,8 @@ header (for AnteDiluvian). Uses an Azureus-style client ID string."
 (defvar *listening-peer-socket* nil
   "A TCP socket listening for connections from peers.")
 
-(defvar *listening-threads* (list)
-  "A list of threads listening to peer sockets.")
+(defvar *peer-connection-threads* (list)
+  "A list of threads communicating with peer sockets.")
 
 ;;;; Peer wire protocol
 
