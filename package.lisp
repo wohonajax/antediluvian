@@ -57,6 +57,7 @@
                 #:socket-accept
                 #:socket-listen
                 #:socket-stream
+                #:wait-for-input
                 ;; conditions
                 #:connection-refused-error
                 #:timeout-error)
