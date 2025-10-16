@@ -49,8 +49,9 @@ from find_node lookups.")
         finally (remhash target *lookup-results-lists*)))
 
 (defun push-to-best-results (node target)
-  (insert node (gethash target *best-lookup-results*) #'<
-          :key (rcurry #'calculate-node-distance target))
+  (setf (gethash target *best-lookup-results*)
+        (insert node (gethash target *best-lookup-results*) #'<
+                :key (rcurry #'calculate-node-distance target)))
   ;; we only want the k closest nodes
   (setf (gethash target *best-lookup-results*)
         (firstn +k+ (gethash target *best-lookup-results*))))

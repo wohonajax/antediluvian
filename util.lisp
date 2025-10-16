@@ -14,18 +14,16 @@
   "Converts a node ID from an ID byte vector to a decimal integer."
   (octets-to-integer id))
 
-(defmacro insert (item list predicate &key (key #'identity))
+(defun insert (item list predicate &key (key #'identity))
   "Inserts ITEM into LIST and sorts it according to PREDICATE. Duplicates are
 not allowed."
-  (labels ((insert-item (itm lst)
-             (cond ((equalp itm (first lst)) lst)
-                   ((funcall predicate
-                             (funcall key itm)
-                             (funcall key (first lst)))
-                    (cons itm lst))
-                   (t (cons (first lst)
-                            (insert-item itm (rest lst)))))))
-    `(setf ,list ,(insert-item item list))))
+  (cond ((equalp item (first list)) list)
+        ((funcall predicate
+                  (funcall key item)
+                  (funcall key (first list)))
+         (cons item list))
+        (t (cons (first list)
+                 (insert item (rest list))))))
 
 (defun concat-vec (x y)
   "Concatenates X and Y into a byte vector."

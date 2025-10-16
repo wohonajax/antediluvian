@@ -17,7 +17,8 @@
 (defun make-new-bucket (min max)
   "Adds a bucket to the routing table with a range from MIN to MAX."
   (let ((new-bucket (make-bucket :min min :max max)))
-    (insert new-bucket *routing-table* #'< :key #'bucket-min)
+    (setf *routing-table*
+          (insert new-bucket *routing-table* #'< :key #'bucket-min))
     new-bucket))
 
 (defun correct-bucket (id)
@@ -61,7 +62,7 @@ if successful, NIL otherwise."
            ;; than the worst so far. if worst isn't set, the node's distance
            ;; is closer since there are no nodes in winners farther away
            (when (lessp distance worst) ; if worst is nil, this returns t
-             (insert node winners (curry #'node-closer-p id))
+             (setf winners (insert node winners (curry #'node-closer-p id)))
              (when (> (length winners) +k+)
                (setf winners (butlast winners)))
              (setf worst (calculate-node-distance (lastcar winners) id)))))
