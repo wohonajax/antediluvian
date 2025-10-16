@@ -20,7 +20,7 @@
                 #:digest-sequence
                 #:integer-to-octets
                 #:octets-to-integer
-                #:random-data)
+                #-mezzano #:random-data)
   (:import-from #:lparallel
                 ;; kernel
                 #:end-kernel

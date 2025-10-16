@@ -46,3 +46,12 @@ not allowed."
 (defun byte-array-to-ascii-string (byte-array)
   "Converts BYTE-ARRAY to an ASCII string."
   (map 'string #'code-char byte-array))
+#+mezzano
+(defun random-data (num-bytes)
+  "Generates an (unsigned-byte 8) vector of length NUM-BYTES filled with
+random data."
+  (loop with result = (make-octets num-bytes)
+        with random-state = (make-random-state t)
+        for i below num-bytes
+        do (setf (aref result i) (random 256 random-state))
+        finally (return result)))
