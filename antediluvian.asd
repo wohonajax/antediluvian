@@ -11,6 +11,8 @@
                (:file "util")
                (:file "torrents")
                (:file "peers")
+               (:file "files")
+               (:file "peer-wire")
                (:module "dht"
                         :serial t
                         :components ((:file "peers")
@@ -22,8 +24,6 @@
                                      (:file "lookups")
                                      (:file "networking")
                                      (:file "dht")))
-               (:file "files")
-               (:file "peer-wire")
                (:file "antediluvian"))
   :serial t
   :depends-on (alexandria
