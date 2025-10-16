@@ -47,7 +47,7 @@ extensions to STREAM."
 
 (defun receive-handshake (socket)
   "Receives a BitTorrent protocol handshake from a peer connected to SOCKET.
-Returns the peer's ID, or NIL if the handshake failed."
+Returns the peer object, or NIL if the handshake failed."
   (macrolet ((close-unless (test)
                `(unless ,test
                   (socket-close socket)
@@ -99,8 +99,8 @@ Returns the peer's ID, or NIL if the handshake failed."
   "Translates a message ID byte to a keyword denoting the message type."
   (cdr (assoc id *message-id-to-message-type-alist*)))
 
-(defun read-peer-wire-message (stream)
-  "Reads a peer wire protocol message from STREAM."
+(defun read-peer-wire-message (peer stream)
+  "Reads PEER's peer wire protocol message from STREAM."
   (let* ((length (read-peer-wire-length-header stream))
          (message-bytes (make-octets length)))
     (read-sequence message-bytes stream)
@@ -116,23 +116,16 @@ Returns the peer's ID, or NIL if the handshake failed."
       (:cancel )
       (:port ))))
 
-(defun accept-peer-connection (torrent socket)
-  "Accepts a TORRENT peer connection from a SOCKET and listens in a new thread."
+(defun accept-peer-connection (socket)
+  "Accepts a peer connection from a SOCKET and listens in a new thread."
   (let* ((accepted-socket (socket-accept socket))
-         (peer-id (receive-handshake torrent accepted-socket)))
-    ;; FIXME: associate peers with info hashes
-    ;; we need to find a way to determine what torrent/hash
-    ;; an incoming peer connection is associated with
-    (cond (peer-id (add-peer-to-peer-list (torrent-info-hash torrent)
-                                          accepted-socket
-                                          peer-id))
-          ;; if the handshake didn't succeed, shut the peer down
-          (t (socket-close accepted-socket)
-             (return-from accept-peer-connection)))
+         (peer (receive-handshake accepted-socket)))
+    (unless peer
+      (return-from accept-peer-connection))
     (push (make-thread (lambda ()
                          (loop with stream = (socket-stream accepted-socket)
                                ;; FIXME: wait for input?
-                               do (read-peer-wire-message stream))))
+                               do (read-peer-wire-message peer stream))))
           *listening-threads*)))
 
 (defun start-listener-thread ()
@@ -141,8 +134,7 @@ peer socket."
   (make-thread
    (lambda ()
      (loop for socket in (wait-for-input *listening-peer-socket* :ready-only t)
-           ;; FIXME: associate peers with torrents
-           do (accept-peer-connection torrent socket)))))
+           do (accept-peer-connection socket)))))
 
 (defvar *peer-listener-thread* nil
   "A thread listening for incoming TCP connections.")
