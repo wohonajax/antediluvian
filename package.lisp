@@ -14,7 +14,10 @@
   (:import-from #:bordeaux-threads
                 ;; threads
                 #:destroy-thread
-                #:make-thread)
+                #:make-thread
+                ;; locks
+                #:make-lock
+                #:with-lock-held)
   (:import-from #:ironclad
                 #:ascii-string-to-byte-array
                 #:digest-sequence

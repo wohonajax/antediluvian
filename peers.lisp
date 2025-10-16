@@ -29,6 +29,9 @@
   "A list of peer objects corresponding to peers for torrents we're downloading
 or uploading.")
 
+(defvar *peer-list-lock* (make-lock "peer list lock")
+  "A lock for modifying *PEER-LIST* from multiple threads.")
+
 (defun make-peer-socket-future (ip port)
   "Creates a future containing a socket connected to IP and PORT, or NIL if the
 connection fails or times out."

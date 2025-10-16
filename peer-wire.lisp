@@ -116,18 +116,6 @@ Returns the peer object, or NIL if the handshake failed."
       (:cancel )
       (:port ))))
 
-(defun accept-peer-connection (socket)
-  "Accepts a peer connection from a SOCKET and listens in a new thread."
-  (let* ((accepted-socket (socket-accept socket))
-         (peer (receive-handshake accepted-socket)))
-    (unless peer
-      (return-from accept-peer-connection))
-    (push (make-thread (lambda ()
-                         (loop with stream = (socket-stream accepted-socket)
-                               ;; FIXME: wait for input?
-                               do (read-peer-wire-message peer stream))))
-          *listening-threads*)))
-
 (defun start-listener-thread ()
   "Starts a thread that will listen for incoming connections on the listening
 peer socket."
@@ -288,3 +276,43 @@ this DHT node is listening on."
     (write-byte (message-id-for-message-type :port) stream)
     (write-sequence (port-to-octet-buffer *default-port* (make-octets 2))
                     stream)))
+
+(defun accept-peer-connection (socket)
+  "Accepts a peer connection from a SOCKET and listens in a new thread."
+  (let* ((accepted-socket (socket-accept socket))
+         (peer (receive-handshake accepted-socket)))
+    (unless peer
+      (return-from accept-peer-connection))
+    (push (make-thread (lambda ()
+                         (loop with stream = (socket-stream accepted-socket)
+                               ;; FIXME: wait for input?
+                               do (read-peer-wire-message peer stream))))
+          *peer-connection-threads*)))
+
+(defun initiate-peer-connection (peer)
+  "Initiates a TCP socket connection with PEER."
+  (macrolet ((remove-and-exit ()
+               `(progn (remove peer *peer-list* :count 1)
+                       (return-from initiate-peer-connection))))
+    (flet ((try-socket-connection ()
+             (handler-case (socket-connect (peer-ip peer)
+                                           (peer-port peer)
+                                           :element-type '(unsigned-byte 8)
+                                           :timeout 10)
+               ;; if the connection fails, abandon the peer
+               (connection-refused-error () (remove-and-exit))
+               (timeout-error () (remove-and-exit)))))
+      (push (make-thread (lambda ()
+                           (setf (peer-socket peer) (try-socket-connection))
+                           (loop with socket = (peer-socket peer)
+                                 with stream = (socket-stream socket)
+                                 with torrent = (peer-torrent peer)
+                                 initially (unless (perform-handshake peer)
+                                             (socket-close (peer-socket peer))
+                                             (loop-finish))
+                                 initially (send-bitfield-message torrent socket)
+                                 do (read-peer-wire-message stream)
+                                 finally (with-lock-held (*peer-list-lock*)
+                                           (setf *peer-list*
+                                                 (remove peer *peer-list* :count 1))))))
+            *peer-connection-threads*))))
