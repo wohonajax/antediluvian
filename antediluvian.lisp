@@ -17,7 +17,7 @@ list of SHA1 hashes, magnet links, or torrent file paths."
   (socket-close *listening-peer-socket*)
   (destroy-thread *peer-listener-thread*)
   (mapc #'destroy-thread *peer-connection-threads*)
-  (mapc (lambda (peer) (socket-close (peer-socket peer)))
+  (mapc (compose #'socket-close #'peer-socket)
         *peer-list*)
   (destroy-thread *file-writer-thread*))
 

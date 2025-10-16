@@ -3,12 +3,17 @@
 (defpackage #:antediluvian
   (:use #:cl)
   (:import-from #:alexandria
-                #:curry
-                #:eswitch
+                ;; general utilities
                 #:extremum
                 #:lastcar
+                ;; higher order functions
+                #:compose
+                #:curry
                 #:rcurry
+                ;; switch
+                #:eswitch
                 #:switch
+                ;; when-let
                 #:when-let
                 #:when-let*)
   (:import-from #:bordeaux-threads
@@ -23,6 +28,8 @@
                 #:digest-sequence
                 #:integer-to-octets
                 #:octets-to-integer
+                ;; ironclad doesn't support mezzano
+                ;; we define our own random-data for it in util.lisp
                 #-mezzano #:random-data)
   (:import-from #:lparallel
                 ;; promises
@@ -43,8 +50,6 @@
                 #:*wildcard-host*
                 #:+max-datagram-packet-size+
                 #:get-local-port
-                #:get-peer-address
-                #:get-peer-port
                 #:port-from-octet-buffer
                 #:port-to-octet-buffer
                 #:socket-connect
