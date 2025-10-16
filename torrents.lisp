@@ -73,7 +73,7 @@ a filespec to a torrent file, or a SHA1 hash."
                       (first (gethash :dn parsed-source)))
                      ((filespecp source)
                       (gethash "name" (gethash "info" parsed-source)))))
-         (info (when (and (not magnet-link-p source)
+         (info (when (and (not (magnet-link-p source))
                           (filespecp source))
                  parsed-source))
          (download-path (make-download-pathname name)))
