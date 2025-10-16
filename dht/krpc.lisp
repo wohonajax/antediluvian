@@ -176,7 +176,6 @@ sends a protocol error message."
          (response-arguments (make-hash-table :test #'equal))
          (transaction-id (gethash "t" dict))
          (dict-arguments (gethash "a" dict))
-         (id (gethash "id" dict-arguments))
          (implied-port-p (gethash "implied_port" dict-arguments))
          (info-hash (gethash "info_hash" dict-arguments))
          (port (if (and implied-port-p (= implied-port-p 1))
