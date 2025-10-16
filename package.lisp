@@ -24,8 +24,10 @@
                 #:make-lock
                 #:with-lock-held)
   (:import-from #:ironclad
-                #:ascii-string-to-byte-array
+                ;; digests (i.e. hash functions)
                 #:digest-sequence
+                ;; general utilities
+                #:ascii-string-to-byte-array
                 #:integer-to-octets
                 #:octets-to-integer
                 ;; ironclad doesn't support mezzano
