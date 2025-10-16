@@ -108,7 +108,13 @@ then tries to add it to the routing table. Returns the node object."
       ("get_peers" (send-response :get_peers node dict))
       ("announce_peer"
        (cond ((member token (recall-tokens info-hash) :test #'equalp)
-              (push (make-peer ip port info-hash) *peer-list*)
+              ;; TODO: maintain a table of peers for hashes we don't have
+              (when (member info-hash *torrents* :key #'torrent-info-hash
+                            :test #'equalp)
+                (let ((peer (make-peer ip port info-hash)))
+                 ;; FIXME: don't duplicate peers
+                 (push peer *peer-list*)
+                 (initiate-peer-connection peer))
               (send-response :announce_peer node dict :source-port port))
              (t (send-response :dht_error node dict :error-type :protocol)))))))
 
@@ -160,10 +166,12 @@ node in the response."
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
   (loop for (ip . port) in (parse-peers peers)
+        for peer = (make-peer ip port target)
         ;; TODO: remove duplicate peers when there's
         ;; a peer with a failed socket connection
-        unless (member ip *peer-list* :key #'get-peer-socket-ip :test #'equalp)
-          do (push (make-peer ip port target) *peer-list*)))
+        unless (member ip *peer-list* :key #'peer-ip :test #'equalp)
+          do (push peer *peer-list*)
+             (initiate-peer-connection peer)))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
