@@ -48,7 +48,7 @@ and PORT."
 (defun add-peer-to-peer-list (hash socket id)
   "Adds a peer with the given SOCKET and ID to the peer list under HASH."
   (pushnew (make-instance 'peer :socket socket :id id
-                          :torrents (gethash hash *torrent-hashes*))
+                          :torrents (list (gethash hash *torrent-hashes*)))
            *peer-list*
            :key #'peer-id :test #'equalp))
 
