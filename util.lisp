@@ -23,7 +23,7 @@ not allowed."
                   (funcall key (first list)))
          (cons item list))
         (t (cons (first list)
-                 (insert item (rest list))))))
+                 (insert item (rest list) predicate :key key)))))
 
 (defun concat-vec (x y)
   "Concatenates X and Y into a byte vector."
