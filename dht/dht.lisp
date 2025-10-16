@@ -54,8 +54,6 @@ fails, try ports 6881 through 6889."
 (defun dht-setup (hashes)
   "Performs DHT setup on program startup. Sets up initial variables, etc."
   (load-settings)
-  ;; TODO: expose number of worker threads as a setting
-  (setf lparallel:*kernel* (make-kernel 1))
   (try-ports *default-port*)
   (setf *default-port* (get-local-port *listening-dht-socket*))
   (setf *secret-rotation-thread* (start-sercret-rotation-thread)
@@ -77,7 +75,6 @@ saves settings."
   (socket-close *listening-dht-socket*)
   (destroy-thread *secret-rotation-thread*)
   (destroy-thread *main-dht-thread*)
-  (end-kernel)
   (save-settings))
 
 (defun dht (&rest hashes)

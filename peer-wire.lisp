@@ -129,7 +129,7 @@ peer socket."
 (defun perform-handshake (peer)
   "Performs a BitTorrent protocol handshake with PEER. Returns T if successful,
 NIL if not."
-  (let* ((socket (force (peer-socket peer)))
+  (let* ((socket (peer-socket peer))
          (stream (socket-stream socket))
          (hash (torrent-info-hash (peer-torrent peer))))
     (write-handshake-header stream) ; protocol length prefix and string

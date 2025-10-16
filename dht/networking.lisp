@@ -158,11 +158,6 @@ node in the response."
   (unless (gethash target *active-lookups*)
     (recurse-on-lookup-results target)))
 
-(defun get-peer-socket-ip (peer)
-  "Returns PEER's socket address, or NIL if the socket connection failed."
-  (when-let (socket (force (peer-socket peer)))
-    (get-peer-address socket)))
-
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
   (loop for (ip . port) in (parse-peers peers)

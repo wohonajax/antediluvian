@@ -32,17 +32,6 @@ or uploading.")
 (defvar *peer-list-lock* (make-lock "peer list lock")
   "A lock for modifying *PEER-LIST* from multiple threads.")
 
-(defun make-peer-socket-future (ip port)
-  "Creates a future containing a socket connected to IP and PORT, or NIL if the
-connection fails or times out."
-  (future (handler-case (socket-connect ip port
-                                        :element-type '(unsigned-byte 8)
-                                        :timeout 5)
-            ;; if we can't connect to the peer,
-            ;; just have the future contain nil
-            (connection-refused-error ())
-            (timeout-error ()))))
-
 (defun make-peer (ip port hash)
   "Creates a peer object with an IP address and PORT associated with a torrent
 indicated by HASH."
@@ -55,9 +44,3 @@ indicated by HASH."
                           :torrent (gethash hash *torrent-hashes*))
            *peer-list*
            :key #'peer-id :test #'equalp))
-
-(defun clear-peer-list ()
-  "Removes any peer whose socket connection failed."
-  (loop for peer in *peer-list*
-        unless (force (peer-socket peer))
-          do (setf *peer-list* (remove peer *peer-list* :count 1))))

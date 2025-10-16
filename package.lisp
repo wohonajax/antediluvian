@@ -25,14 +25,10 @@
                 #:octets-to-integer
                 #-mezzano #:random-data)
   (:import-from #:lparallel
-                ;; kernel
-                #:end-kernel
-                #:make-kernel
-                ;; futures and promises
+                ;; promises
                 #:force
                 #:fulfill
                 #:fulfilledp
-                #:future
                 #:promise)
   (:import-from #:serapeum
                 #:firstn

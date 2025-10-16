@@ -10,10 +10,6 @@
   "Returns a list of address/port byte vectors for peers under INFO-HASH in
 compact peer format."
   (loop for peer in *peer-list*
-        for socket = (force (peer-socket peer))
-        when (and socket ; if the connection failed, don't include that peer
-                  (member info-hash (peer-torrents peer)
-                          :key #'torrent-info-hash
-                          :test #'equalp))
-          collect (compact-peer-info (get-peer-address socket)
-                                     (get-peer-port socket))))
+        when (equalp info-hash (torrent-info-hash (peer-torrent peer)))
+          collect (compact-peer-info (peer-ip peer)
+                                     (peer-port peer))))
