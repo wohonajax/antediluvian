@@ -119,7 +119,9 @@ to SOCKET. Returns the peer's ID, or NIL if the handshake failed."
     ;; FIXME: associate peers with info hashes
     ;; we need to find a way to determine what torrent/hash
     ;; an incoming peer connection is associated with
-    (cond (peer-id (add-peer-to-peer-list accepted-socket peer-id))
+    (cond (peer-id (add-peer-to-peer-list (torrent-info-hash torrent)
+                                          accepted-socket
+                                          peer-id))
           ;; if the handshake didn't succeed, shut the peer down
           (t (socket-close accepted-socket)
              (return-from accept-peer-connection)))
