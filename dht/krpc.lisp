@@ -117,7 +117,7 @@ format."
                                      (:method (list 204 "Method Unknown"))))
     (send-bencoded-data error-dict ip port)))
 
-(defun respond-to-ping (ip port dict node)
+(defun respond-to-ping (ip port dict)
   "Responds to a ping query."
   (let ((response-dict (make-hash-table :test #'equal))
         (response-arguments (make-hash-table :test #'equal))
@@ -129,7 +129,7 @@ format."
           (gethash "r" response-dict) response-arguments)
     (send-bencoded-data response-dict ip port)))
 
-(defun respond-to-find-node (ip port dict node)
+(defun respond-to-find-node (ip port dict)
   "Responds to a find_node query."
   (let ((response-dict (make-hash-table :test #'equal))
         (response-arguments (make-hash-table :test #'equal))
@@ -199,9 +199,9 @@ sends a protocol error message."
         (port (node-port node)))
     (handler-case (case type
                     (:ping
-                     (respond-to-ping ip port dict node))
+                     (respond-to-ping ip port dict))
                     (:find_node
-                     (respond-to-find-node ip port dict node))
+                     (respond-to-find-node ip port dict))
                     (:get_peers
                      (respond-to-get-peers ip port dict node))
                     (:announce_peer
