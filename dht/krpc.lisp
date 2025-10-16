@@ -169,7 +169,7 @@ format."
               (pack-nodes-response hash)))
     (send-bencoded-data response-dict ip port)))
 
-(defun respond-to-announce-peer (ip port dict node source-port)
+(defun respond-to-announce-peer (ip dict node source-port)
   "Responds to an announce_peer query. If the received token isn't valid,
 sends a protocol error message."
   (let* ((response-dict (make-hash-table :test #'equal))
@@ -205,6 +205,6 @@ sends a protocol error message."
                     (:get_peers
                      (respond-to-get-peers ip port dict node))
                     (:announce_peer
-                     (respond-to-announce-peer ip port dict node source-port))
+                     (respond-to-announce-peer ip dict node source-port))
                     (:dht_error (dht-error ip port error-type dict)))
       (simple-error () (invoke-restart :continue)))))
