@@ -39,7 +39,7 @@ not allowed."
 
 (defun filespecp (object)
   "Determines whether OBJECT is a file specifier or not."
-  (or (stringp source) (pathnamep source)))
+  (or (stringp object) (pathnamep object)))
 
 (defun make-octets (length &rest args)
   "Makes a vector of length LENGTH with an element type of (UNSIGNED-BYTE 8)."
