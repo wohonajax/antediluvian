@@ -57,6 +57,8 @@
                 #:port-to-octet-buffer
                 ;; general socket functions
                 #:get-local-port
+                #:get-peer-address
+                #:get-peer-port
                 #:socket-connect
                 #:socket-close
                 ;; datagram sockets (UDP)

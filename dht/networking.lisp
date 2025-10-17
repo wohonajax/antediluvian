@@ -113,7 +113,8 @@ then tries to add it to the routing table. Returns the node object."
                             :test #'equalp)
                 (let ((peer (make-peer ip port info-hash)))
                  ;; FIXME: don't duplicate peers
-                 (push peer *peer-list*)
+                 (with-lock-held (*peer-list-lock*)
+                   (push peer *peer-list*))
                  (initiate-peer-connection peer))
               (send-response :announce_peer node dict :source-port port))
              (t (send-response :dht_error node dict :error-type :protocol)))))))
@@ -165,7 +166,8 @@ node in the response."
         ;; TODO: remove duplicate peers when there's
         ;; a peer with a failed socket connection
         unless (member ip *peer-list* :key #'peer-ip :test #'equalp)
-          do (push peer *peer-list*)
+          do (with-lock-held (*peer-list-lock*)
+               (push peer *peer-list*))
              (initiate-peer-connection peer)))
 
 (defun parse-response (dict ip port)

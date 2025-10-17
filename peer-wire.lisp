@@ -69,7 +69,8 @@ Returns the peer object, or NIL if the handshake failed."
                 (peer (make-instance 'peer :socket socket :id peer-id
                                      :torrent (gethash hash *torrent-hashes*))))
           (read-sequence peer-id stream)
-          (push peer *peer-list*))))))
+          (with-lock-held (*peer-list-lock*)
+            (push peer *peer-list*)))))))
 
 (defvar *message-id-to-message-type-alist*
         '((0 . :choke)
@@ -142,7 +143,8 @@ NIL if not."
       (read-sequence peer-hash stream)
       (unless (equalp hash peer-hash)
         (socket-close socket)
-        (setf *peer-list* (remove peer *peer-list* :count 1))
+        (with-lock-held (*peer-list-lock*)
+          (setf *peer-list* (remove peer *peer-list* :count 1)))
         (return-from perform-handshake)))
     (write-sequence *peer-id* stream)
     (finish-output stream)
@@ -291,7 +293,8 @@ this DHT node is listening on."
 (defun initiate-peer-connection (peer)
   "Initiates a TCP socket connection with PEER."
   (macrolet ((remove-and-exit ()
-               `(progn (remove peer *peer-list* :count 1)
+               `(progn (with-lock-held (*peer-list-lock*)
+                         (setf *peer-list* (remove peer *peer-list* :count 1)))
                        (return-from initiate-peer-connection))))
     (flet ((try-socket-connection ()
              (handler-case (socket-connect (peer-ip peer)
