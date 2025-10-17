@@ -47,15 +47,15 @@
   "Returns a list of pathnames specifying download locations relative
 to ROOT-PATH for a given torrent's INFO-DICTIONARY."
   (if-let (files (gethash "files" info-dictionary))
-          (mapcar (lambda (file-dictionary)
-                    ;; the path entry will be a list of (sub-)directories
-                    ;; and the filename. potentially only the filename
-                    (merge-pathnames (join "/" (gethash "path" file-dictionary))
-                                     root-path))
-                  files)
-          ;; there's no files entry in the info dictionary, so use the torrent
-          ;; directory as the filename (it comes from the torrent name anyway)
-          (list (truenamize (join "/" (rest (pathname-directory root-path)))))))
+    (mapcar (lambda (file-dictionary)
+              ;; the path entry will be a list of (sub-)directories
+              ;; and the filename. potentially only the filename
+              (merge-pathnames (join "/" (gethash "path" file-dictionary))
+                               root-path))
+            files)
+    ;; there's no files entry in the info dictionary, so use the torrent
+    ;; directory as the filename (it comes from the torrent name anyway)
+    (list (truenamize (join "/" (rest (pathname-directory root-path)))))))
 
 (defun parse-source (source)
   "Parses SOURCE into a torrent object. SOURCE should be a magnet link,

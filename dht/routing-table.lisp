@@ -26,8 +26,10 @@ whose cdr is the node to add to the bucket.")
   "Adds NODE to BUCKET if there's an empty slot in it. Otherwise checks whether
 to replace the least-recently-active node in BUCKET."
   (if-let (empty-slot-index (first-empty-slot bucket))
-          (setf (svref bucket empty-slot-index) node)
-          (node-replacement-check (oldest-node-in-bucket bucket) node)))
+    ;; the bucket isn't full
+    (setf (svref bucket empty-slot-index) node)
+    ;; the bucket is full
+    (node-replacement-check (oldest-node-in-bucket bucket) node)))
 
 (defun bucket-split-candidate-p (node bucket)
   "Tests whether BUCKET fits the criteria for being split or not. In order to
