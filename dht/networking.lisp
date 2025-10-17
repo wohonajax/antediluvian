@@ -115,7 +115,7 @@ then tries to add it to the routing table. Returns the node object."
                  ;; FIXME: don't duplicate peers
                  (with-lock-held (*peer-list-lock*)
                    (push peer *peer-list*))
-                 (initiate-peer-connection peer))
+                 (initiate-peer-connection peer)))
               (send-response :announce_peer node dict :source-port port))
              (t (send-response :dht_error node dict :error-type :protocol)))))))
 
