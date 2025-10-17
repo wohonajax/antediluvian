@@ -363,10 +363,8 @@ this DHT node is listening on."
 
 (defun accept-peer-connection (socket)
   "Accepts a peer connection from a SOCKET and listens in a new thread."
-  (let* ((accepted-socket (socket-accept socket))
-         (peer (receive-handshake accepted-socket)))
-    (unless peer
-      (return-from accept-peer-connection))
+  (when-let* ((accepted-socket (socket-accept socket))
+              (peer (receive-handshake accepted-socket)))
     (push (make-thread (lambda ()
                          (loop with stream = (socket-stream accepted-socket)
                                ;; FIXME: wait for input?
