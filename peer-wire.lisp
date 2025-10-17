@@ -313,6 +313,7 @@ this DHT node is listening on."
                                              (socket-close (peer-socket peer))
                                              (loop-finish))
                                  initially (send-bitfield-message torrent socket)
+                                 initially (send-port-message socket)
                                  do (read-peer-wire-message stream)
                                  finally (with-lock-held (*peer-list-lock*)
                                            (setf *peer-list*
