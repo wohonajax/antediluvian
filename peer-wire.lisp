@@ -302,9 +302,10 @@ have."
       (write-byte (message-id-for-message-type :bitfield) stream)
       (write-sequence bitfield-vector stream))))
 
-(defun send-request-message (piece-index begin length socket)
-  "Sends a request message for PIECE-INDEX, with a BEGIN byte offset within the
-piece and a LENGTH byte offset from BEGIN, to the peer connected to SOCKET."
+(defun send-request-message (piece-index byte-offset block-length socket)
+  "Sends a request message for PIECE-INDEX, with a BYTE-OFFSET byte offset
+within the piece and a BLOCK-LENGTH byte offset from BYTE-OFFSET, to the peer
+connected to SOCKET."
   (with-socket-stream (stream socket)
     (send-peer-message-length-header 13 socket)
     (write-byte (message-id-for-message-type :request) stream)
@@ -312,9 +313,9 @@ piece and a LENGTH byte offset from BEGIN, to the peer connected to SOCKET."
     (write-sequence (pad-integer-to-octets begin 4) stream)
     (write-sequence (pad-integer-to-octets length 4) stream)))
 
-(defun send-piece-message (piece-index begin block socket)
-  "Sends a piece message where PIECE-INDEX is the piece index, BEGIN is the
-byte offset within the piece, and BLOCK is a subset of the PIECE-INDEXth
+(defun send-piece-message (piece-index byte-offset block socket)
+  "Sends a piece message where PIECE-INDEX is the piece index, BYTE-OFFSET is
+the byte offset within the piece, and BLOCK is a chunk of the PIECE-INDEXth
 piece."
   (with-socket-stream (stream socket)
     (let ((block-length (length block)))
@@ -324,10 +325,10 @@ piece."
       (write-sequence (pad-integer-to-octets begin 4) stream)
       (write-sequence block stream))))
 
-(defun send-cancel-message (piece-index begin length socket)
-  "Sends a cancel message where PIECE-INDEX is the piece index, BEGIN is the
-byte offset within thepiece, and length is the length of the block to cancel,
-to the peer connected to SOCKET."
+(defun send-cancel-message (piece-index byte-offset block-length socket)
+  "Sends a cancel message where PIECE-INDEX is the piece index, BYTE-OFFSET is
+the byte offset within the piece, and BLOCK-LENGTH is the length of the block
+to cancel in bytes, to the peer connected to SOCKET."
   (with-socket-stream (stream socket)
     (send-peer-message-length-header 13 socket)
     (write-byte (message-id-for-message-type :cancel) stream)
