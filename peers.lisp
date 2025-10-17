@@ -23,7 +23,29 @@
    (am-interested-p :initform nil :accessor am-interested-p)
    ;; whether this peer is interested in something we have
    ;; if true then requests will be incoming when we unchoke
-   (interested-in-us-p :initform nil :accessor interested-in-us-p)))
+   (interested-in-us-p :initform nil :accessor interested-in-us-p)
+   ;;; supported protocol extensions indicated
+   ;;; by the reserved bytes in the handshake header
+   (supports-azureus-messaging-protocol-p
+    :initform nil
+    :accessor supports-azureus-messaging-protocol-p)
+   (supports-bittorrent-location-aware-protocol-p
+    :initform nil
+    :accessor supports-bittorrent-location-aware-protocol-p)
+   (supports-libtorrent-extension-protocol-p
+    :initform nil
+    :accessor supports-libtorrent-extension-protocol-p)
+   (supports-extension-negotiation-protocol-p
+    :initform nil
+    :accessor supports-extension-negotiation-protocol-p)
+   (supports-bittorrent-dht-p
+    :initform nil
+    :accessor supports-bittorrent-dht-p)
+   (supports-peer-exchange-p :initform nil :accessor supports-peer-exchange-p)
+   (supports-fast-extension-p
+    :initform nil
+    :accessor supports-fast-extension-p)
+   (supports-nat-traversal-p :initform nil :accessor supports-nat-traversal-p)))
 
 (defvar *peer-list* (list)
   "A list of peer objects corresponding to peers for torrents we're downloading

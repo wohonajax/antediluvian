@@ -45,6 +45,31 @@ extensions to STREAM."
       (set-bit 7 7) ; DHT extension (the last bit in the last reserved byte)
       (write-sequence reserved-bytes stream))))
 
+(defun parse-extensions-for-peer (peer extension-bytes-vector)
+  "Parses the reserved bits set in EXTENSION-BYTES-VECTOR and sets the
+appropriate slots in PEER."
+  (flet (bit-setp (bit byte)
+          ;; BIT of bytes[BYTE]
+          (= 1 (ldb (byte 8 bit) (aref extension-bytes-vector byte))))
+    (when (bit-setp 7 0)
+      (setf (supports-azureus-messaging-protocol-p peer) t))
+    (when (bit-setp 3 2)
+      (setf (supports-bittorrent-location-aware-protocol-p peer) t))
+    (when (bit-setp 4 5)
+      (setf (supports-libtorrent-extension-protocol-p peer) t))
+    (when (bit-setp 0 5)
+      (setf (supports-extension-negotiation-protocol-p peer) t))
+    (when (bit-setp 1 5)
+      (setf (supports-extension-negotiation-protocol-p peer) t))
+    (when (bit-setp 0 7)
+      (setf (supports-bittorrent-dht-p peer) t))
+    (when (bit-setp 1 7)
+      (setf (supports-peer-exchange-p peer) t))
+    (when (bit-setp 2 7)
+      (setf (supports-fast-extension-p peer) t))
+    (when (bit-setp 3 7)
+      (setf (supports-nat-traversal-p peer) t))))
+
 (defun receive-handshake (socket)
   "Receives a BitTorrent protocol handshake from a peer connected to SOCKET.
 Returns the peer object, or NIL if the handshake failed."
