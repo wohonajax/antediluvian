@@ -325,9 +325,9 @@ this DHT node is listening on."
 (defun initiate-peer-connection (peer)
   "Initiates a TCP socket connection with PEER."
   (macrolet ((try-socket-connection ()
-               `(handler-case (socket-connect (peer-ip ,peer)
-                                              (peer-port ,peer)
-                                              :element-type (unsigned-byte 8)
+               `(handler-case (socket-connect (peer-ip peer)
+                                              (peer-port peer)
+                                              :element-type '(unsigned-byte 8)
                                               :timeout 10)
                   ;; if the connection fails, abandon the peer
                   (connection-refused-error () (return-from thread-block))
