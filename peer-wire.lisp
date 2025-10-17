@@ -347,7 +347,7 @@ this DHT node is listening on."
                                  initially (send-bitfield-message torrent socket)
                                  initially (when (supports-bittorrent-dht-p peer)
                                              (send-port-message socket))
-                                 do (read-peer-wire-message stream)
+                                 do (read-peer-wire-message peer stream)
                                  finally (with-lock-held (*peer-list-lock*)
                                            (setf *peer-list*
                                                  (remove peer *peer-list* :count 1))))))
