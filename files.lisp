@@ -73,15 +73,17 @@ BLOCK-LENGTH and returns it as a byte vetor."
                         byte-offset))
          (file-dict-list (gethash "files" info-dictionary))
          (indexed-file-number (file-number true-index file-dict-list))
-         (file-list (torrent-file-list torrent))
-         (bytes-read-so-far 0)
-         (block (make-octets block-length)))
-    (loop for current-file-number-to-read from indexed-file-number
+         (file-list (torrent-file-list torrent)))
+    (loop with bytes-read-so-far = 0
+          with block = (make-octets block-length)
+          for current-file-number-to-read from indexed-file-number
           while (< bytes-read-so-far block-length)
           do (with-open-file (file-stream (nth current-file-number-to-read
                                                file-list)
                                           :element-type '(unsigned-byte 8))
-               (setf bytes-read-so-far (read-sequence block file-stream))))))
+               (setf bytes-read-so-far
+                     (read-sequence block file-stream :start bytes-read-so-far)))
+          finally (return block))))
 
 (defstruct block-request piece-index byte-offset block-length)
 
