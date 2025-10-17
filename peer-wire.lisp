@@ -324,31 +324,34 @@ this DHT node is listening on."
 
 (defun initiate-peer-connection (peer)
   "Initiates a TCP socket connection with PEER."
-  (macrolet ((remove-and-exit ()
-               `(progn (with-lock-held (*peer-list-lock*)
-                         (setf *peer-list* (remove peer *peer-list* :count 1)))
-                       (return-from initiate-peer-connection))))
-    (flet ((try-socket-connection ()
-             (handler-case (socket-connect (peer-ip peer)
-                                           (peer-port peer)
-                                           :element-type '(unsigned-byte 8)
-                                           :timeout 10)
-               ;; if the connection fails, abandon the peer
-               (connection-refused-error () (remove-and-exit))
-               (timeout-error () (remove-and-exit)))))
-      (push (make-thread (lambda ()
+  (macrolet ((try-socket-connection ()
+               `(handler-case (socket-connect (peer-ip ,peer)
+                                              (peer-port ,peer)
+                                              :element-type (unsigned-byte 8)
+                                              :timeout 10)
+                  ;; if the connection fails, abandon the peer
+                  (connection-refused-error () (return-from thread-block))
+                  (timeout-error () (return-from thread-block)))))
+    (push (make-thread (lambda ()
+                         (block thread-block
                            (setf (peer-socket peer) (try-socket-connection))
                            (loop with socket = (peer-socket peer)
                                  with stream = (socket-stream socket)
                                  with torrent = (peer-torrent peer)
                                  initially (unless (perform-handshake peer)
-                                             (socket-close (peer-socket peer))
-                                             (loop-finish))
+                                             ;; perform-handshake closes the
+                                             ;; socket and removes the peer
+                                             ;; from the peer list if the
+                                             ;; handshake fails, so in that
+                                             ;; case just exit the whole block
+                                             (return-from thread-block))
                                  initially (send-bitfield-message torrent socket)
                                  initially (when (supports-bittorrent-dht-p peer)
                                              (send-port-message socket))
                                  do (read-peer-wire-message peer stream)
+                                 ;; abandon the peer
                                  finally (with-lock-held (*peer-list-lock*)
+                                           (socket-close socket)
                                            (setf *peer-list*
-                                                 (remove peer *peer-list* :count 1))))))
-            *peer-connection-threads*))))
+                                                 (remove peer *peer-list* :count 1)))))))
+          *peer-connection-threads*)))
