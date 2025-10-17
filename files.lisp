@@ -53,7 +53,9 @@ TORRENT to the appropriate file."
                                     begin))
       (write-sequence block file-stream))))
 
-(defstruct write-instruction torrent block piece-index byte-offset length)
+(defstruct block-request piece-index byte-offset block-length)
+
+(defstruct write-instruction torrent block piece-index byte-offset)
 
 (defvar *write-instructions-channel* (make-instance 'chanl:channel))
 
