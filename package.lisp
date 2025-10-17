@@ -13,7 +13,8 @@
                 ;; switch
                 #:eswitch
                 #:switch
-                ;; when-let
+                ;; conditional let forms
+                #:if-let
                 #:when-let
                 #:when-let*)
   (:import-from #:bordeaux-threads

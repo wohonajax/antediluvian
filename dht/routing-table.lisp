@@ -25,13 +25,9 @@ whose cdr is the node to add to the bucket.")
 (defun maybe-add-to-bucket (node bucket)
   "Adds NODE to BUCKET if there's an empty slot in it. Otherwise checks whether
 to replace the least-recently-active node in BUCKET."
-  (when-let (empty-slot-index (first-empty-slot bucket))
-    (setf (svref bucket empty-slot-index) node)
-    ;; we've added the node to the bucket; we're done
-    (return-from maybe-add-to-bucket))
-  ;; check whether to replace the least-recently-active
-  ;; node in the bucket with the new node we're handling
-  (node-replacement-check (oldest-node-in-bucket bucket) node))
+  (if-let (empty-slot-index (first-empty-slot bucket))
+          (setf (svref bucket empty-slot-index) node)
+          (node-replacement-check (oldest-node-in-bucket bucket) node)))
 
 (defun bucket-split-candidate-p (node bucket)
   "Tests whether BUCKET fits the criteria for being split or not. In order to
