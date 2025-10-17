@@ -52,25 +52,31 @@ Returns the peer object, or NIL if the handshake failed."
                `(unless ,test
                   (socket-close socket)
                   (return-from receive-handshake))))
-    (let ((stream (socket-stream socket)))
+    (lret* ((stream (socket-stream socket))
+            (protocol-vector (make-octets 19))
+            (extensions-vector (make-octets 8))
+            (hash (make-octets 20))
+            (peer-id (make-octets 20))
+            (peer (make-instance 'peer :ip (get-peer-address socket)
+                                 :port (get-peer-port socket)
+                                 :socket socket
+                                 :id peer-id)))
       (close-unless (= (read-byte stream) 19))
-      (let ((protocol-vector (make-octets 19)))
-        (read-sequence protocol-vector stream)
-        (close-unless (string= (byte-array-to-ascii-string protocol-vector)
-                               "BitTorrent protocol")))
-      (let ((hash (make-octets 20)))
-        (read-sequence hash stream)
-        (close-unless (gethash hash *torrent-hashes*))
-        ;; we've checked that the hash is among our active
-        ;; torrents, so just write the hash back to confirm
-        (write-sequence hash stream)
-        (finish-output stream)
-        (lret* ((peer-id (make-octets 20))
-                (peer (make-instance 'peer :socket socket :id peer-id
-                                     :torrent (gethash hash *torrent-hashes*))))
-          (read-sequence peer-id stream)
-          (with-lock-held (*peer-list-lock*)
-            (push peer *peer-list*)))))))
+      (read-sequence protocol-vector stream)
+      (close-unless (string= (byte-array-to-ascii-string protocol-vector)
+                             "BitTorrent protocol"))
+      (read-sequence extensions-vector stream)
+      (parse-extensions-for-peer peer extensions-vector)
+      (read-sequence hash stream)
+      (close-unless (gethash hash *torrent-hashes*))
+      ;; we've checked that the hash is among our active
+      ;; torrents, so just write the hash back to confirm
+      (write-sequence hash stream)
+      (finish-output stream)
+      (setf (peer-torrent peer) (gethash hash *torrent-hashes*))
+      (read-sequence peer-id stream)
+      (with-lock-held (*peer-list-lock*)
+        (push peer *peer-list*)))))
 
 (defvar *message-id-to-message-type-alist*
         '((0 . :choke)
