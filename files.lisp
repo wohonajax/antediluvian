@@ -77,7 +77,7 @@ BLOCK-LENGTH and returns it as a byte vetor."
     (loop with bytes-read-so-far = 0
           with block = (make-octets block-length)
           for current-file-number-to-read from indexed-file-number
-          while (< bytes-read-so-far block-length)
+          until (= bytes-read-so-far block-length)
           do (with-open-file (file-stream (nth current-file-number-to-read
                                                file-list)
                                           :element-type '(unsigned-byte 8))
