@@ -38,8 +38,9 @@
    (supports-extension-negotiation-protocol-p
     :initform nil
     :accessor supports-extension-negotiation-protocol-p)
+   ;; assume peers support DHT
    (supports-bittorrent-dht-p
-    :initform nil
+    :initform t
     :accessor supports-bittorrent-dht-p)
    (supports-peer-exchange-p :initform nil :accessor supports-peer-exchange-p)
    (supports-fast-extension-p

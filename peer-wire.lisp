@@ -61,8 +61,9 @@ appropriate slots in PEER."
       (setf (supports-extension-negotiation-protocol-p peer) t))
     (when (bit-setp 1 5)
       (setf (supports-extension-negotiation-protocol-p peer) t))
-    (when (bit-setp 0 7)
-      (setf (supports-bittorrent-dht-p peer) t))
+    ;; peers are assumed to support DHT
+    (when (not (bit-setp 0 7))
+      (setf (supports-bittorrent-dht-p peer) nil))
     (when (bit-setp 1 7)
       (setf (supports-peer-exchange-p peer) t))
     (when (bit-setp 2 7)
@@ -344,7 +345,8 @@ this DHT node is listening on."
                                              (socket-close (peer-socket peer))
                                              (loop-finish))
                                  initially (send-bitfield-message torrent socket)
-                                 initially (send-port-message socket)
+                                 initially (when (supports-bittorrent-dht-p peer)
+                                             (send-port-message socket))
                                  do (read-peer-wire-message stream)
                                  finally (with-lock-held (*peer-list-lock*)
                                            (setf *peer-list*
