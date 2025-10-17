@@ -48,9 +48,9 @@ extensions to STREAM."
 (defun parse-extensions-for-peer (peer extension-bytes-vector)
   "Parses the reserved bits set in EXTENSION-BYTES-VECTOR and sets the
 appropriate slots in PEER."
-  (flet (bit-setp (bit byte)
-          ;; BIT of bytes[BYTE]
-          (= 1 (ldb (byte 8 bit) (aref extension-bytes-vector byte))))
+  (flet ((bit-setp (bit byte)
+           ;; BIT of bytes[BYTE]
+           (= 1 (ldb (byte 8 bit) (aref extension-bytes-vector byte)))))
     (when (bit-setp 7 0)
       (setf (supports-azureus-messaging-protocol-p peer) t))
     (when (bit-setp 3 2)
