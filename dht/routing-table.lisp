@@ -22,13 +22,13 @@ whose cdr is the node to add to the bucket.")
                   (node-port incumbent)
                   transaction-id)))
 
-(defun maybe-add-to-table (node bucket)
+(defun maybe-add-to-bucket (node bucket)
   "Adds NODE to BUCKET if there's an empty slot in it. Otherwise checks whether
 to replace the least-recently-active node in BUCKET."
   (when-let (empty-slot-index (first-empty-slot bucket))
     (setf (svref bucket empty-slot-index) node)
     ;; we've added the node to the bucket; we're done
-    (return-from maybe-add-to-table))
+    (return-from maybe-add-to-bucket))
   ;; check whether to replace the least-recently-active
   ;; node in the bucket with the new node we're handling
   (node-replacement-check (oldest-node-in-bucket bucket) node))
