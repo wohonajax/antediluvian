@@ -131,22 +131,73 @@ Returns the peer object, or NIL if the handshake failed."
   "Translates a message ID byte to a keyword denoting the message type."
   (cdr (assoc id *message-id-to-message-type-alist*)))
 
+(defun parse-bitfield (bitfield-vector)
+  "Parses a bitfield out of BITFIELD-VECTOR. Bits are read from left to right."
+  (loop with had-pieces = '()
+        with piece-index = 0
+        for byte across bitfield-vector
+        do (loop for bit below 8
+                 do (when (= 1 (ldb (byte 1 (- 7 bit)) byte))
+                      (push piece-index had-pieces))
+                    (incf piece-index))
+        finally (return (nreverse had-pieces))))
+
 (defun read-peer-wire-message (peer stream)
   "Reads PEER's peer wire protocol message from STREAM."
-  (let* ((length (read-peer-wire-length-header stream))
+  (let* ((torrent (peer-torrent peer))
+         (length (read-peer-wire-length-header stream))
          (message-bytes (make-octets length)))
     (read-sequence message-bytes stream)
     (case (message-id-to-message-type (aref message-bytes 0))
-      (:choke )
-      (:unchoke )
-      (:interested )
-      (:not-interested )
-      (:have )
-      (:bitfield )
-      (:request )
-      (:piece )
-      (:cancel )
-      (:port ))))
+      (:choke (setf (choking-us-p peer) t))
+      (:unchoke (setf (choking-us-p peer) nil))
+      (:interested (setf (interested-in-us-p peer) t))
+      (:not-interested (setf (interested-in-us-p peer) nil))
+      (:have (pushnew (octets-to-integer (subseq message-bytes 1))
+                      (had-pieces peer) :test #'=))
+      ;; bitfield messages come first, so don't
+      ;; worry about overwriting anything
+      (:bitfield (setf (had-pieces peer)
+                       (parse-bitfield (subseq message-bytes 1))))
+      (:request (let* ((message-content (subseq message-bytes 1))
+                       (piece-index (octets-to-integer
+                                     (subseq message-content 0 4)))
+                       (byte-offset (octets-to-integer
+                                     (subseq message-content 4 8)))
+                       (block-length (octets-to-integer
+                                      (subseq message-content 8))))
+                  (pushnew (make-block-request :piece-index piece-index
+                                               :byte-offset byte-offset
+                                               :block-length block-length)
+                           (requested-pieces peer)
+                           :test #'equalp)))
+      (:piece (let* ((message-content (subseq message-bytes 1))
+                     (piece-index (octets-to-integer
+                                   (subseq message-content 0 4)))
+                     (byte-offset (octets-to-integer
+                                   (subseq message-content 4 8)))
+                     (block (subseq message-content 8)))
+                (chanl:send *write-instructions-channel*
+                            (make-write-instruction :torrent torrent
+                                                    :block block
+                                                    :piece-index piece-index
+                                                    :byte-offset byte-offset))))
+      (:cancel (let* ((message-content (subseq message-bytes 1))
+                      (piece-index (octets-to-integer
+                                    (subseq message-content 0 4)))
+                      (byte-offset (octets-to-integer
+                                    (subseq message-content 4 8)))
+                      (block-length (octets-to-integer
+                                     (subseq message-content 8))))
+                 (setf (requested-pieces peer)
+                       (remove (make-block-request :piece-index piece-index
+                                                   :byte-offset byte-offset
+                                                   :block-length block-length)
+                               (requested-pieces peer)
+                               :test #'equalp))))
+      (:port (send-message :ping (peer-ip peer)
+                           (port-from-octet-buffer (subseq message-bytes 1))
+                           (generate-transaction-id))))))
 
 (defun start-listener-thread ()
   "Starts a thread that will listen for incoming connections on the listening
