@@ -9,7 +9,8 @@
 (defun pack-values-response (info-hash)
   "Returns a list of address/port byte vectors for peers under INFO-HASH in
 compact peer format."
-  (loop for peer in *peer-list*
-        when (equalp info-hash (torrent-info-hash (peer-torrent peer)))
-          collect (compact-peer-info (peer-ip peer)
-                                     (peer-port peer))))
+  (with-lock-held (*peer-list-lock*)
+    (loop for peer in *peer-list*
+          when (equalp info-hash (torrent-info-hash (peer-torrent peer)))
+            collect (compact-peer-info (peer-ip peer)
+                                       (peer-port peer)))))

@@ -161,14 +161,14 @@ node in the response."
 
 (defun handle-values-response (peers target)
   "Handle a list of peers that have been searched for."
-  (loop for (ip . port) in (parse-peers peers)
+  (with-lock-held (*peer-list-lock*)
+    (loop for (ip . port) in (parse-peers peers)
         for peer = (make-peer ip port target)
         ;; TODO: remove duplicate peers when there's
         ;; a peer with a failed socket connection
         unless (member ip *peer-list* :key #'peer-ip :test #'equalp)
-          do (with-lock-held (*peer-list-lock*)
-               (push peer *peer-list*))
-             (initiate-peer-connection peer)))
+          do (push peer *peer-list*)
+             (initiate-peer-connection peer))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."
