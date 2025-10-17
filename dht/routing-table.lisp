@@ -22,18 +22,16 @@ whose cdr is the node to add to the bucket.")
                   (node-port incumbent)
                   transaction-id)))
 
-(defun maybe-add-to-table (node)
-  "Adds NODE to the routing table if there's an empty slot in the appropriate
-bucket, otherwise checks whether to replace the least-recently-active node in
-that bucket."
-  (let ((bucket (correct-bucket node)))
-    (when-let (empty-slot-index (first-empty-slot bucket))
-      (setf (svref bucket empty-slot-index) node)
-      ;; we've added the node to the bucket; we're done
-      (return-from maybe-add-to-table))
-    ;; check whether to replace the least-recently-active
-    ;; node in the bucket with the new node we're handling
-    (node-replacement-check (oldest-node-in-bucket bucket) node)))
+(defun maybe-add-to-table (node bucket)
+  "Adds NODE to BUCKET if there's an empty slot in it. Otherwise checks whether
+to replace the least-recently-active node in BUCKET."
+  (when-let (empty-slot-index (first-empty-slot bucket))
+    (setf (svref bucket empty-slot-index) node)
+    ;; we've added the node to the bucket; we're done
+    (return-from maybe-add-to-table))
+  ;; check whether to replace the least-recently-active
+  ;; node in the bucket with the new node we're handling
+  (node-replacement-check (oldest-node-in-bucket bucket) node))
 
 (defun bucket-split-candidate-p (node bucket)
   "Tests whether BUCKET fits the criteria for being split or not. In order to
@@ -63,7 +61,7 @@ procedure for potentially adding a node to a bucket."
       (return-from maybe-add-node))
     (when (bucket-split-candidate-p node bucket)
       (split-bucket bucket))
-    (maybe-add-to-table node)))
+    (maybe-add-to-bucket node bucket)))
 
 (defun check-replacement-candidates ()
   "Checks whether to replace potentially stale nodes with replacement
