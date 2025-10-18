@@ -23,16 +23,31 @@ we don't have the piece, or if PIECE-INDEX is out of bounds."
          (info-dictionary (gethash "info" metainfo))
          (pieces (gethash "pieces" info-dictionary))
          (piece-length (gethash "piece length" info-dictionary))
+         (byte-index (* piece-index piece-length))
          (sha1-index (* piece-index 20))
          ;; if the piece is out of bounds, return nil
          (sha1-hash (handler-case (subseq pieces sha1-index (+ sha1-index 20))
                       (error () (return-from have-piece-p))))
-         (file-destination-path (torrent-destination torrent)))
-    (with-open-file (file-stream file-destination-path :element-type '(unsigned-byte 8))
-      (file-position file-stream (* piece-index piece-length))
-      (let ((result (make-octets piece-length)))
-        (read-sequence result file-stream)
-        (equalp sha1-hash (digest-sequence :sha1 result))))))
+         (file-dict-list (gethash "files" info-dictionary))
+         (file-list (torrent-file-list torrent)))
+    (multiple-value-bind (indexed-file-number offset-into-file)
+        (file-number-and-offset byte-index file-dict-list)
+      (loop with piece = (make-octets piece-length)
+            with bytes-into-piece = 0
+            for current-file-number from indexed-file-number
+            initially (with-open-file (file-stream (nth current-file-number
+                                                        file-list)
+                                                   :element-type '(unsigned-byte 8))
+                        (file-position file-stream offset-into-file)
+                        (setf bytes-into-piece
+                              (read-sequence piece file-stream))
+                        (incf current-file-number))
+            until (= bytes-into-piece piece-length)
+            do (with-open-file (file-stream (nth current-file-number file-list)
+                                            :element-type '(unsigned-byte 8))
+                 (setf bytes-into-piece
+                       (read-sequence piece file-stream :start bytes-into-piece)))
+            finally (return (equalp sha1-hash (digest-sequence :sha1 piece)))))))
 
 (defun write-piece (torrent piece piece-index)
   "Writes the given PIECE-INDEXth PIECE of TORRENT to its file."
