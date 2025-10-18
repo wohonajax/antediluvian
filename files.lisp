@@ -87,7 +87,8 @@ BLOCK-LENGTH and returns it as a byte vetor."
                                                    :element-type '(unsigned-byte 8))
                         (file-position file-stream offset-into-file)
                         (setf bytes-read-so-far
-                              (read-sequence block file-stream)))
+                              (read-sequence block file-stream))
+                        (incf current-file-number-to-read))
             until (= bytes-read-so-far block-length)
             do (with-open-file (file-stream (nth current-file-number-to-read
                                                  file-list)
