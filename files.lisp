@@ -16,6 +16,35 @@ indicates."
           return (values nth-file (- byte-index file-start))
         do (setf index-so-far file-end)))
 
+(defmacro chunk-operation (torrent piece-index byte-offset chunk-length
+                           chunk-var &body return-form)
+  (with-unique-names (info-dictionary file-dict-list piece-length byte-index
+                      file-list indexed-file-number offset-into-file bytes-so-far
+                      current-file-number file-stream)
+    `(let* ((,info-dictionary (gethash "info" (torrent-info ,torrent)))
+            (,file-dict-list (gethash "files" ,info-dictionary))
+            (,piece-length (gethash "piece length" ,info-dictionary))
+            (,byte-index (+ (* ,piece-index ,piece-length)
+                            ,byte-offset))
+            (,file-list (torrent-file-list ,torrent)))
+       (multiple-value-bind (,indexed-file-number ,offset-into-file)
+           (file-number-and-offset ,byte-index ,file-dict-list)
+         (loop with ,chunk-var = (make-octets ,chunk-length)
+               with ,bytes-so-far = 0
+               for ,current-file-number from ,indexed-file-number
+               initially (with-open-file (,file-stream (nth ,current-file-number
+                                                            ,file-list)
+                                                       :element-type '(unsigned-byte 8))
+                           (file-position ,file-stream ,offset-into-file)
+                           (setf ,bytes-so-far (read-sequence ,chunk-var ,file-stream))
+                           (incf ,current-file-number))
+               until (= ,bytes-so-far ,chunk-length)
+               do (with-open-file (,file-stream (nth ,current-file-number ,file-list)
+                                                :element-type '(unsigned-byte 8))
+                    (setf ,bytes-so-far
+                          (read-sequence ,chunk-var ,file-stream :start ,bytes-so-far)))
+               finally (return ,@return-form))))))
+
 (defun have-piece-p (torrent piece-index)
   "Returns T if we have the piece number PIECE-INDEX of TORRENT. Returns NIL if
 we don't have the piece, or if PIECE-INDEX is out of bounds."

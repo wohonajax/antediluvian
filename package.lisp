@@ -16,7 +16,9 @@
                 ;; conditional let forms
                 #:if-let
                 #:when-let
-                #:when-let*)
+                #:when-let*
+                ;; macro utilities
+                #:with-unique-names)
   (:import-from #:bordeaux-threads
                 ;; threads
                 #:destroy-thread
