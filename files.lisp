@@ -12,7 +12,7 @@
         ;; we incremented file-counter past the index
         finally (return (1- file-counter))))
 
-(defun have-piece-p (piece-index torrent)
+(defun have-piece-p (torrent piece-index)
   "Returns T if we have the piece number PIECE-INDEX of TORRENT. Returns NIL if
 we don't have the piece, or if PIECE-INDEX is out of bounds."
   (let* ((metainfo (torrent-info torrent))
@@ -30,7 +30,7 @@ we don't have the piece, or if PIECE-INDEX is out of bounds."
         (read-sequence result file-stream)
         (equalp sha1-hash (digest-sequence :sha1 result))))))
 
-(defun write-piece (piece piece-index torrent)
+(defun write-piece (torrent piece piece-index)
   "Writes the given PIECE-INDEXth PIECE of TORRENT to its file."
   (let* ((file-destination-path (torrent-destination torrent))
          (info-dictionary (gethash "info" (torrent-info torrent)))
@@ -48,7 +48,7 @@ we don't have the piece, or if PIECE-INDEX is out of bounds."
       (file-position file-stream (* piece-index piece-length))
       (write-sequence piece file-stream))))
 
-(defun write-block (block piece-index begin torrent)
+(defun write-block (torrent block piece-index begin)
   "Writes a BLOCK starting at a BEGIN offset within the PIECE-INDEXth piece of
 TORRENT to the appropriate file."
   (let* ((file-destination-path (torrent-destination torrent))

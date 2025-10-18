@@ -293,7 +293,7 @@ have."
             for vector-index below pieces-length
             do (loop with bitfield = 0
                      for i from 7 downto 0
-                     do (when (have-piece-p piece-index torrent)
+                     do (when (have-piece-p torrent piece-index)
                           (setf (ldb (byte 1 i) bitfield) 1))
                        (incf piece-index)
                      finally (setf (svref bitfield-vector vector-index)
