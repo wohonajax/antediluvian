@@ -2,6 +2,16 @@
 
 (in-package #:antediluvian)
 
+(defun file-number (byte-index file-list)
+  "Returns N, where the Nth file in FILE-LIST is indexed by BYTE-INDEX."
+  (loop with file-counter = 0
+        for dict in file-list
+        while (plusp byte-index)
+        do (decf byte-index (gethash "length" dict))
+           (incf file-counter)
+        ;; we incremented file-counter past the index
+        finally (return (1- file-counter))))
+
 (defun have-piece-p (piece-index torrent)
   "Returns T if we have the piece number PIECE-INDEX of TORRENT. Returns NIL if
 we don't have the piece, or if PIECE-INDEX is out of bounds."
@@ -52,16 +62,6 @@ TORRENT to the appropriate file."
       (file-position file-stream (+ (* piece-index piece-length)
                                     begin))
       (write-sequence block file-stream))))
-
-(defun file-number (byte-index file-list)
-  "Returns N, where the Nth file in FILE-LIST is indexed by BYTE-INDEX."
-  (loop with file-counter = 0
-        for dict in file-list
-        while (plusp byte-index)
-        do (decf byte-index (gethash "length" dict))
-           (incf file-counter)
-        ;; we incremented file-counter past the index
-        finally (return (1- file-counter))))
 
 (defun read-block (torrent piece-index byte-offset block-length)
   "Reads a block from TORRENT indicated by PIECE-INDEX, BYTE-OFFSET, and
