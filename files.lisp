@@ -2,9 +2,10 @@
 
 (in-package #:antediluvian)
 
-(defun file-number (byte-index file-list)
-  "Returns N and FILE-INDEX, where the Nth file in FILE-LIST is indexed by
-BYTE-INDEX and FILE-INDEX is how far into that file BYTE-INDEX indicates."
+(defun file-number-and-offset (byte-index file-list)
+  "Returns N and FILE-INDEX as multiple values, where the Nth file in FILE-LIST
+is indexed by BYTE-INDEX and FILE-INDEX is how far into that file BYTE-INDEX
+indicates."
   (loop with index-so-far = 0
         for nth-file upfrom 0
         for dict in file-list
