@@ -3,14 +3,17 @@
 (in-package #:antediluvian)
 
 (defun file-number (byte-index file-list)
-  "Returns N, where the Nth file in FILE-LIST is indexed by BYTE-INDEX."
-  (loop with file-counter = 0
+  "Returns N and FILE-INDEX, where the Nth file in FILE-LIST is indexed by
+BYTE-INDEX and FILE-INDEX is how far into that file BYTE-INDEX indicates."
+  (loop with index-so-far = 0
+        for nth-file upfrom 0
         for dict in file-list
-        while (plusp byte-index)
-        do (decf byte-index (gethash "length" dict))
-           (incf file-counter)
-        ;; we incremented file-counter past the index
-        finally (return (1- file-counter))))
+        for file-size = (gethash "length" dict)
+        for file-start = index-so-far then (+ file-start file-size)
+        for file-end = (+ file-start file-size)
+        when (<= file-start byte-index (1- file-end))
+          return (values nth-file (- byte-index file-start))
+        do (setf index-so-far file-end)))
 
 (defun have-piece-p (torrent piece-index)
   "Returns T if we have the piece number PIECE-INDEX of TORRENT. Returns NIL if
@@ -72,18 +75,25 @@ BLOCK-LENGTH and returns it as a byte vetor."
          (true-index (+ (* piece-index piece-length)
                         byte-offset))
          (file-dict-list (gethash "files" info-dictionary))
-         (indexed-file-number (file-number true-index file-dict-list))
          (file-list (torrent-file-list torrent)))
-    (loop with bytes-read-so-far = 0
-          with block = (make-octets block-length)
-          for current-file-number-to-read from indexed-file-number
-          until (= bytes-read-so-far block-length)
-          do (with-open-file (file-stream (nth current-file-number-to-read
-                                               file-list)
-                                          :element-type '(unsigned-byte 8))
-               (setf bytes-read-so-far
-                     (read-sequence block file-stream :start bytes-read-so-far)))
-          finally (return block))))
+    (multiple-value-bind (indexed-file-number offset-into-file)
+        (file-number-and-offset true-index file-dict-list)
+      (loop with bytes-read-so-far = 0
+            with block = (make-octets block-length)
+            for current-file-number-to-read from indexed-file-number
+            initially (with-open-file (file-stream (nth current-file-number-to-read
+                                                        file-list)
+                                                   :element-type '(unsigned-byte 8))
+                        (file-position file-stream offset-into-file)
+                        (setf bytes-read-so-far
+                              (read-sequence block file-stream)))
+            until (= bytes-read-so-far block-length)
+            do (with-open-file (file-stream (nth current-file-number-to-read
+                                                 file-list)
+                                            :element-type '(unsigned-byte 8))
+                 (setf bytes-read-so-far
+                       (read-sequence block file-stream :start bytes-read-so-far)))
+            finally (return block)))))
 
 (defstruct block-request piece-index byte-offset block-length)
 
