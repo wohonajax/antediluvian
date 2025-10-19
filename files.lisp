@@ -15,36 +15,54 @@ indicates."
           return (values nth-file (- byte-index index-so-far))
         do (setf index-so-far next-file-start)))
 
-(defmacro read-chunk (torrent piece-index byte-offset chunk-length chunk-var
-                      &body return-form)
-  "Reads a chunk of TORRENT indicated by PIECE-INDEX, BYTE-OFFSET, and CHUNK-LENGTH.
-Binds the chunk to CHUNK-VAR and returns the result of RETURN-FORM."
+(defmacro with-chunk ((chunk-var &optional chunk) torrent piece-index byte-offset
+                      chunk-length initially-form loop-body-form return-form)
+  "Performs a chunk operation with the CHUNK (read from disk if not supplied)
+bound to CHUNK-VAR. There will be a variable BYTES-SO-FAR initialized to 0.
+There will be a variable OFFSET-INTO-FILE initialized to the file position in
+the first file to read from or write to in the torrent's file list. There will
+be a variable named CURRENT-FILE-NUMBER initialized to the index of the current
+file to be read from or written to in the file list."
   (with-unique-names (info-dictionary file-dict-list piece-length byte-index
-                      file-list indexed-file-number offset-into-file bytes-so-far
-                      current-file-number file-stream)
+                       file-list indexed-file-number)
     `(let* ((,info-dictionary (gethash "info" (torrent-info ,torrent)))
             (,file-dict-list (gethash "files" ,info-dictionary))
             (,piece-length (gethash "piece length" ,info-dictionary))
             (,byte-index (+ (* ,piece-index ,piece-length)
                             ,byte-offset))
             (,file-list (torrent-file-list ,torrent)))
-       (multiple-value-bind (,indexed-file-number ,offset-into-file)
+       (multiple-value-bind (,indexed-file-number offset-into-file)
            (file-number-and-offset ,byte-index ,file-dict-list)
-         (loop with ,chunk-var = (make-octets ,chunk-length)
-               with ,bytes-so-far = 0
-               for ,current-file-number from ,indexed-file-number
-               initially (with-open-file (,file-stream (nth ,current-file-number
-                                                            ,file-list)
-                                                       :element-type '(unsigned-byte 8))
-                           (file-position ,file-stream ,offset-into-file)
-                           (setf ,bytes-so-far (read-sequence ,chunk-var ,file-stream))
-                           (incf ,current-file-number))
-               until (= ,bytes-so-far ,chunk-length)
-               do (with-open-file (,file-stream (nth ,current-file-number ,file-list)
-                                                :element-type '(unsigned-byte 8))
-                    (setf ,bytes-so-far
-                          (read-sequence ,chunk-var ,file-stream :start ,bytes-so-far)))
-               finally (return ,@return-form))))))
+         (loop with ,chunk-var = (or ,chunk (make-octets ,chunk-length))
+               with bytes-so-far = 0
+               for current-file-number from ,indexed-file-number
+               initially ,initially-form
+               until (= bytes-so-far ,chunk-length)
+               do ,loop-body-form
+               finally (return ,return-form))))))
+
+(defmacro read-chunk (torrent piece-index byte-offset chunk-length chunk-var
+                      &body return-form)
+  "Reads a chunk of TORRENT indicated by PIECE-INDEX, BYTE-OFFSET, and CHUNK-LENGTH.
+Binds the chunk to CHUNK-VAR and returns the result of RETURN-FORM."
+  (with-unique-names (file-stream)
+    `(with-chunk (,chunk-var)
+       ,torrent ,piece-index ,byte-offset ,chunk-length
+       ;; initially form
+       (with-open-file (,file-stream
+                        (nth current-file-number file-list)
+                        :element-type '(unsigned-byte 8))
+         (file-position ,file-stream offset-into-file)
+         (setf bytes-so-far (read-sequence ,chunk-var ,file-stream))
+         (incf current-file-number))
+       ;; loop body form
+       (with-open-file (,file-stream
+                        (nth current-file-number file-list)
+                        :element-type '(unsigned-byte 8))
+         (setf bytes-so-far
+               (read-sequence ,chunk-var ,file-stream :start bytes-so-far)))
+       ;; return form
+       ,@return-form)))
 
 (defun have-piece-p (torrent piece-index)
   "Returns T if we have the piece number PIECE-INDEX of TORRENT. Returns NIL if
@@ -123,7 +141,8 @@ TORRENT to disk."
                                          current-file-length))
                         (bytes-to-write (- chunk-length
                                            ending-index)))
-                   (write-sequence chunk :start bytes-written-so-far
+                   (write-sequence chunk file-stream
+                                   :start bytes-written-so-far
                                    :end ending-index)
                    (incf bytes-written-so-far (- current-file-length
                                                  bytes-to-write))))))))
