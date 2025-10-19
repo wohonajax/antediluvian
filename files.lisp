@@ -75,7 +75,7 @@ we don't have the piece, or if PIECE-INDEX is out of bounds."
            (sha1-index (* piece-index 20))
            ;; if the piece is out of bounds, return nil
            (sha1-hash (handler-case (subseq pieces sha1-index (+ sha1-index 20))
-                        (error (return-from have-piece-p nil)))))
+                        (error () (return-from have-piece-p nil)))))
       (equalp sha1-hash (digest-sequence :sha1 chunk)))))
 
 (defun write-chunk (torrent piece-index byte-offset chunk)
