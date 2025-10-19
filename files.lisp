@@ -79,11 +79,11 @@ we don't have the piece, or if PIECE-INDEX is out of bounds."
                           (error () (return-from have-piece-p nil)))))
         (equalp sha1-hash (digest-sequence :sha1 chunk))))))
 
-(defun write-chunk (torrent piece-index byte-offset chunk)
+(defun write-chunk (torrent piece-index byte-offset chunk-length)
   "Writes a CHUNK indicated by a BYTE-OFFSET into the PIECE-INDEXth piece of
 TORRENT to disk."
   (with-chunk (chunk chunk)
-    torrent piece-index byte-offset (length chunk)
+    torrent piece-index byte-offset chunk-length
     ;; initially form
     (let* ((current-file-length
             (gethash "length" (nth current-file-number file-dict-list)))
