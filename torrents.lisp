@@ -53,9 +53,9 @@ to ROOT-PATH for a given torrent's INFO-DICTIONARY."
               (merge-pathnames (join "/" (gethash "path" file-dictionary))
                                root-path))
             files)
-    ;; there's no files entry in the info dictionary, so use the torrent
-    ;; directory as the filename (it comes from the torrent name anyway)
-    (list (truenamize (join "/" (rest (pathname-directory root-path)))))))
+    ;; if there's no files entry in the info dictionary, use the name entry
+    (list (merge-pathnames (gethash "name" info-dictionary)
+                           *default-download-directory*))))
 
 (defun parse-source (source)
   "Parses SOURCE into a torrent object. SOURCE should be a magnet link,
