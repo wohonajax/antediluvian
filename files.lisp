@@ -70,13 +70,14 @@ Binds the chunk to CHUNK-VAR and returns the result of RETURN-FORM."
 (defun have-piece-p (torrent piece-index)
   "Returns T if we have the piece number PIECE-INDEX of TORRENT. Returns NIL if
 we don't have the piece, or if PIECE-INDEX is out of bounds."
-  (read-chunk torrent piece-index 0 nil chunk
-    (let* ((pieces (gethash "pieces" (torrent-info torrent)))
-           (sha1-index (* piece-index 20))
-           ;; if the piece is out of bounds, return nil
-           (sha1-hash (handler-case (subseq pieces sha1-index (+ sha1-index 20))
-                        (error () (return-from have-piece-p nil)))))
-      (equalp sha1-hash (digest-sequence :sha1 chunk)))))
+  (let ((piece-length (gethash "piece length" (torrent-info torrent))))
+    (read-chunk torrent piece-index 0 piece-length chunk
+      (let* ((pieces (gethash "pieces" (torrent-info torrent)))
+             (sha1-index (* piece-index 20))
+             ;; if the piece is out of bounds, return nil
+             (sha1-hash (handler-case (subseq pieces sha1-index (+ sha1-index 20))
+                          (error () (return-from have-piece-p nil)))))
+        (equalp sha1-hash (digest-sequence :sha1 chunk))))))
 
 (defun write-chunk (torrent piece-index byte-offset chunk)
   "Writes a CHUNK indicated by a BYTE-OFFSET into the PIECE-INDEXth piece of
