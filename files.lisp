@@ -7,14 +7,13 @@
 is indexed by BYTE-INDEX and FILE-INDEX is how far into that file BYTE-INDEX
 indicates."
   (loop with index-so-far = 0
-        for nth-file upfrom 0
+        for nth-file from 0
         for dict in file-list
         for file-size = (gethash "length" dict)
-        for file-start = index-so-far then (+ file-start file-size)
-        for file-end = (+ file-start file-size)
-        when (<= file-start byte-index (1- file-end))
-          return (values nth-file (- byte-index file-start))
-        do (setf index-so-far file-end)))
+        for next-file-start = (+ index-so-far file-size)
+        when (<= index-so-far byte-index (1- next-file-start))
+          return (values nth-file (- byte-index index-so-far))
+        do (setf index-so-far next-file-start)))
 
 (defmacro chunk-operation (torrent piece-index byte-offset chunk-length
                            chunk-var &body return-form)
