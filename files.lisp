@@ -79,6 +79,55 @@ we don't have the piece, or if PIECE-INDEX is out of bounds."
                        (read-sequence piece file-stream :start bytes-into-piece)))
             finally (return (equalp sha1-hash (digest-sequence :sha1 piece)))))))
 
+(defun write-chunk (torrent piece-index byte-offset chunk)
+  "Writes a CHUNK indicated by a BYTE-OFFSET into the PIECE-INDEXth piece of
+TORRENT to disk."
+  (let* ((info-dictionary (gethash "info" (torrent-info torrent)))
+         (pieces (gethash "pieces" info-dictionary))
+         (piece-length (gethash "piece length" info-dictionary))
+         (byte-index (+ (* piece-index piece-length)
+                        byte-offset))
+         (file-dict-list (gethash "files" info-dictionary))
+         (file-list (torrent-file-list torrent)))
+    (multiple-value-bind (indexed-file-number offset-into-file)
+        (file-number-and-offset byte-index file-dict-list)
+      (loop with bytes-written-so-far = 0
+            with chunk-length = (length chunk)
+            for current-file-number from indexed-file-number
+            initially (let* ((current-file-length
+                              (gethash "length" (nth current-file-number
+                                                     file-dict-list)))
+                             (bytes-to-write (- current-file-length
+                                                offset-into-file)))
+                        (with-open-file (file-stream
+                                         (nth current-file-number file-list)
+                                         :direction :output
+                                         :element-type '(unsigned-byte 8)
+                                         :if-exists :overwrite
+                                         :if-does-not-exist :create)
+                          (file-position file-stream offset-into-file)
+                          (write-sequence chunk file-stream :end bytes-to-write)
+                          (setf bytes-written-so-far bytes-to-write)
+                          (incf current-file-number)))
+            until (= bytes-written-so-far chunk-length)
+            do (with-open-file (file-stream
+                                (nth current-file-number file-list)
+                                :direction :output
+                                :element-type '(unsigned-byte 8)
+                                :if-exists :overwrite
+                                :if-does-not-exist :create)
+                 (let* ((current-file-length
+                         (gethash "length" (nth current-file-number
+                                                file-dict-list)))
+                        (ending-index (+ bytes-written-so-far
+                                         current-file-length))
+                        (bytes-to-write (- chunk-length
+                                           ending-index)))
+                   (write-sequence chunk :start bytes-written-so-far
+                                   :end ending-index)
+                   (incf bytes-written-so-far (- current-file-length
+                                                 bytes-to-write))))))))
+
 (defun write-piece (torrent piece piece-index)
   "Writes the given PIECE-INDEXth PIECE of TORRENT to its file."
   (let* ((file-destination-path (torrent-destination torrent))
