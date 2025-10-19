@@ -15,8 +15,8 @@ indicates."
           return (values nth-file (- byte-index index-so-far))
         do (setf index-so-far next-file-start)))
 
-(defmacro chunk-operation (torrent piece-index byte-offset chunk-length
-                           chunk-var &body return-form)
+(defmacro read-chunk (torrent piece-index byte-offset chunk-length chunk-var
+                      &body return-form)
   "Reads a chunk of TORRENT indicated by PIECE-INDEX, BYTE-OFFSET, and CHUNK-LENGTH.
 Binds the chunk to CHUNK-VAR and returns the result of RETURN-FORM."
   (with-unique-names (info-dictionary file-dict-list piece-length byte-index
