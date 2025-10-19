@@ -13,6 +13,7 @@
                (:file "peers")
                (:file "files")
                (:file "peer-wire")
+               (:file "connect")
                (:module "dht"
                         :serial t
                         :components ((:file "peers")
