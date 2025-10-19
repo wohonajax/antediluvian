@@ -149,32 +149,7 @@ TORRENT to the appropriate file."
 (defun read-block (torrent piece-index byte-offset block-length)
   "Reads a block from TORRENT indicated by PIECE-INDEX, BYTE-OFFSET, and
 BLOCK-LENGTH and returns it as a byte vetor."
-  (let* ((metainfo (torrent-info torrent))
-         (info-dictionary (gethash "info" metainfo))
-         (piece-length (gethash "piece length" info-dictionary))
-         (true-index (+ (* piece-index piece-length)
-                        byte-offset))
-         (file-dict-list (gethash "files" info-dictionary))
-         (file-list (torrent-file-list torrent)))
-    (multiple-value-bind (indexed-file-number offset-into-file)
-        (file-number-and-offset true-index file-dict-list)
-      (loop with bytes-read-so-far = 0
-            with block = (make-octets block-length)
-            for current-file-number-to-read from indexed-file-number
-            initially (with-open-file (file-stream (nth current-file-number-to-read
-                                                        file-list)
-                                                   :element-type '(unsigned-byte 8))
-                        (file-position file-stream offset-into-file)
-                        (setf bytes-read-so-far
-                              (read-sequence block file-stream))
-                        (incf current-file-number-to-read))
-            until (= bytes-read-so-far block-length)
-            do (with-open-file (file-stream (nth current-file-number-to-read
-                                                 file-list)
-                                            :element-type '(unsigned-byte 8))
-                 (setf bytes-read-so-far
-                       (read-sequence block file-stream :start bytes-read-so-far)))
-            finally (return block)))))
+  (read-chunk torrent piece-index byte-offset block-length block block))
 
 (defstruct block-request piece-index byte-offset block-length)
 
