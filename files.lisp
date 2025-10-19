@@ -19,20 +19,21 @@ indicates."
                       chunk-length initially-form loop-body-form return-form)
   "Performs a chunk operation with the CHUNK (read from disk if not supplied)
 bound to CHUNK-VAR. There will be a variable BYTES-SO-FAR initialized to 0.
-There will be a variable OFFSET-INTO-FILE initialized to the file position in
-the first file to read from or write to in the torrent's file list. There will
-be a variable named CURRENT-FILE-NUMBER initialized to the index of the current
-file to be read from or written to in the file list."
-  (with-unique-names (info-dictionary file-dict-list piece-length byte-index
-                       file-list indexed-file-number)
+There will be a variable FILE-DICT-LIST bound to the files entry of TORRENT's
+info dictionary. There will be a variable OFFSET-INTO-FILE initialized to the
+file position in the first file to read from or write to in the torrent's file
+list. There will be a variable named CURRENT-FILE-NUMBER initialized to the
+index of the current file to be read from or written to in the file list."
+  (with-unique-names (info-dictionary piece-length byte-index
+                      file-list indexed-file-number)
     `(let* ((,info-dictionary (gethash "info" (torrent-info ,torrent)))
-            (,file-dict-list (gethash "files" ,info-dictionary))
+            (file-dict-list (gethash "files" ,info-dictionary))
             (,piece-length (gethash "piece length" ,info-dictionary))
             (,byte-index (+ (* ,piece-index ,piece-length)
                             ,byte-offset))
             (,file-list (torrent-file-list ,torrent)))
        (multiple-value-bind (,indexed-file-number offset-into-file)
-           (file-number-and-offset ,byte-index ,file-dict-list)
+           (file-number-and-offset ,byte-index file-dict-list)
          (loop with ,chunk-var = (or ,chunk (make-octets ,chunk-length))
                with bytes-so-far = 0
                for current-file-number from ,indexed-file-number
