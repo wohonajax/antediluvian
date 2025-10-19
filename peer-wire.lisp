@@ -311,7 +311,7 @@ connected to SOCKET."
     (write-byte (message-id-for-message-type :request) stream)
     (write-sequence (pad-integer-to-octets piece-index 4) stream)
     (write-sequence (pad-integer-to-octets byte-offset 4) stream)
-    (write-sequence (pad-integer-to-octets length 4) stream)))
+    (write-sequence (pad-integer-to-octets block-length 4) stream)))
 
 (defun send-piece-message (piece-index byte-offset block socket)
   "Sends a piece message where PIECE-INDEX is the piece index, BYTE-OFFSET is
@@ -334,7 +334,7 @@ to cancel in bytes, to the peer connected to SOCKET."
     (write-byte (message-id-for-message-type :cancel) stream)
     (write-sequence (pad-integer-to-octets piece-index 4) stream)
     (write-sequence (pad-integer-to-octets byte-offset 4) stream)
-    (write-sequence (pad-integer-to-octets length 4) stream)))
+    (write-sequence (pad-integer-to-octets block-length 4) stream)))
 
 (defun send-port-message (socket)
   "Sends a port message to the peer connected to SOCKET, indicating the port
