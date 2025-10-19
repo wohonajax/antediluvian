@@ -33,7 +33,7 @@ index of the current file to be read from or written to in the file list."
             (,piece-length (gethash "piece length" ,info-dictionary))
             (,byte-index (+ (* ,piece-index ,piece-length)
                             ,byte-offset))
-            (,file-list (torrent-file-list ,torrent)))
+            (file-list (torrent-file-list ,torrent)))
        (multiple-value-bind (,indexed-file-number offset-into-file)
            (file-number-and-offset ,byte-index file-dict-list)
          (loop with ,chunk-var = (or ,chunk (make-octets ,chunk-length))
