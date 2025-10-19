@@ -24,8 +24,7 @@ info dictionary. There will be a variable OFFSET-INTO-FILE initialized to the
 file position in the first file to read from or write to in the torrent's file
 list. There will be a variable named CURRENT-FILE-NUMBER initialized to the
 index of the current file to be read from or written to in the file list."
-  (with-unique-names (info-dictionary piece-length byte-index
-                      file-list indexed-file-number)
+  (with-unique-names (info-dictionary piece-length byte-index indexed-file-number)
     `(let* ((,info-dictionary (gethash "info" (torrent-info ,torrent)))
             (file-dict-list (or (gethash "files" ,info-dictionary)
                                 (dict "path" (get-true-download-path ,info-dictionary)
