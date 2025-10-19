@@ -68,35 +68,13 @@ Binds the chunk to CHUNK-VAR and returns the result of RETURN-FORM."
 (defun have-piece-p (torrent piece-index)
   "Returns T if we have the piece number PIECE-INDEX of TORRENT. Returns NIL if
 we don't have the piece, or if PIECE-INDEX is out of bounds."
-  (let* ((metainfo (torrent-info torrent))
-         (info-dictionary (gethash "info" metainfo))
-         (pieces (gethash "pieces" info-dictionary))
-         (piece-length (gethash "piece length" info-dictionary))
-         (byte-index (* piece-index piece-length))
-         (sha1-index (* piece-index 20))
-         ;; if the piece is out of bounds, return nil
-         (sha1-hash (handler-case (subseq pieces sha1-index (+ sha1-index 20))
-                      (error () (return-from have-piece-p))))
-         (file-dict-list (gethash "files" info-dictionary))
-         (file-list (torrent-file-list torrent)))
-    (multiple-value-bind (indexed-file-number offset-into-file)
-        (file-number-and-offset byte-index file-dict-list)
-      (loop with piece = (make-octets piece-length)
-            with bytes-into-piece = 0
-            for current-file-number from indexed-file-number
-            initially (with-open-file (file-stream (nth current-file-number
-                                                        file-list)
-                                                   :element-type '(unsigned-byte 8))
-                        (file-position file-stream offset-into-file)
-                        (setf bytes-into-piece
-                              (read-sequence piece file-stream))
-                        (incf current-file-number))
-            until (= bytes-into-piece piece-length)
-            do (with-open-file (file-stream (nth current-file-number file-list)
-                                            :element-type '(unsigned-byte 8))
-                 (setf bytes-into-piece
-                       (read-sequence piece file-stream :start bytes-into-piece)))
-            finally (return (equalp sha1-hash (digest-sequence :sha1 piece)))))))
+  (read-chunk torrent piece-index 0 nil chunk
+    (let* ((pieces (gethash "pieces" (torrent-info torrent)))
+           (sha1-index (* piece-index 20))
+           ;; if the piece is out of bounds, return nil
+           (sha1-hash (handler-case (subseq pieces sha1-index (+ sha1-index 20))
+                        (error (return-from have-piece-p nil)))))
+      (equalp sha1-hash (digest-sequence :sha1 chunk)))))
 
 (defun write-chunk (torrent piece-index byte-offset chunk)
   "Writes a CHUNK indicated by a BYTE-OFFSET into the PIECE-INDEXth piece of
