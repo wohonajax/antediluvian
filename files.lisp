@@ -101,7 +101,7 @@ TORRENT to disk."
     ;; loop body form
     (let* ((current-file-length
             (gethash "length" (nth current-file-number file-dict-list)))
-           (ending-index (+ byte-so-far current-file-length))
+           (ending-index (+ bytes-so-far current-file-length))
            (bytes-to-write (- chunk-length ending-index)))
       (with-open-file (file-stream
                        (nth current-file-number file-list)
