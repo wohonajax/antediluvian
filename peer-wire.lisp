@@ -310,7 +310,7 @@ connected to SOCKET."
     (send-peer-message-length-header 13 socket)
     (write-byte (message-id-for-message-type :request) stream)
     (write-sequence (pad-integer-to-octets piece-index 4) stream)
-    (write-sequence (pad-integer-to-octets begin 4) stream)
+    (write-sequence (pad-integer-to-octets byte-offset 4) stream)
     (write-sequence (pad-integer-to-octets length 4) stream)))
 
 (defun send-piece-message (piece-index byte-offset block socket)
@@ -322,7 +322,7 @@ piece."
       (send-peer-message-length-header (+ 9 block-length) socket)
       (write-byte (message-id-for-message-type :piece) stream)
       (write-sequence (pad-integer-to-octets piece-index 4) stream)
-      (write-sequence (pad-integer-to-octets begin 4) stream)
+      (write-sequence (pad-integer-to-octets byte-offset 4) stream)
       (write-sequence block stream))))
 
 (defun send-cancel-message (piece-index byte-offset block-length socket)
@@ -333,7 +333,7 @@ to cancel in bytes, to the peer connected to SOCKET."
     (send-peer-message-length-header 13 socket)
     (write-byte (message-id-for-message-type :cancel) stream)
     (write-sequence (pad-integer-to-octets piece-index 4) stream)
-    (write-sequence (pad-integer-to-octets begin 4) stream)
+    (write-sequence (pad-integer-to-octets byte-offset 4) stream)
     (write-sequence (pad-integer-to-octets length 4) stream)))
 
 (defun send-port-message (socket)
