@@ -43,6 +43,12 @@
   (merge-pathnames (concatenate 'string filename "/")
                    *default-download-directory*))
 
+(defun get-true-download-path (info-dictionary)
+  "Returns a download pathname for a single-file torrent from its
+INFO-DICTIONARY."
+  (merge-pathnames (gethash "name" info-dictionary)
+                   *default-download-directory*))
+
 (defun get-file-list (info-dictionary root-path)
   "Returns a list of pathnames specifying download locations relative
 to ROOT-PATH for a given torrent's INFO-DICTIONARY."
@@ -54,8 +60,7 @@ to ROOT-PATH for a given torrent's INFO-DICTIONARY."
                                root-path))
             files)
     ;; if there's no files entry in the info dictionary, use the name entry
-    (list (merge-pathnames (gethash "name" info-dictionary)
-                           *default-download-directory*))))
+    (list (get-true-download-path info-dictionary))))
 
 (defun parse-source (source)
   "Parses SOURCE into a torrent object. SOURCE should be a magnet link,

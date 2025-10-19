@@ -27,7 +27,9 @@ index of the current file to be read from or written to in the file list."
   (with-unique-names (info-dictionary piece-length byte-index
                       file-list indexed-file-number)
     `(let* ((,info-dictionary (gethash "info" (torrent-info ,torrent)))
-            (file-dict-list (gethash "files" ,info-dictionary))
+            (file-dict-list (or (gethash "files" ,info-dictionary)
+                                (dict "path" (get-true-download-path ,info-dictionary)
+                                      "length" (gethash "length" ,info-dictionary))))
             (,piece-length (gethash "piece length" ,info-dictionary))
             (,byte-index (+ (* ,piece-index ,piece-length)
                             ,byte-offset))

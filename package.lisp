@@ -43,6 +43,7 @@
                 #:fulfilledp
                 #:promise)
   (:import-from #:serapeum
+                #:dict
                 #:firstn
                 #:lret*)
   (:import-from #:str
