@@ -18,12 +18,11 @@ indicates."
 (defmacro with-chunk ((chunk-var &optional chunk) torrent piece-index byte-offset
                       chunk-length initially-form loop-body-form return-form)
   "Performs a chunk operation with the CHUNK (read from disk if not supplied)
-bound to CHUNK-VAR. There will be a variable BYTES-SO-FAR initialized to 0.
-There will be a variable FILE-DICT-LIST bound to the files entry of TORRENT's
-info dictionary. There will be a variable OFFSET-INTO-FILE initialized to the
-file position in the first file to read from or write to in the torrent's file
-list. There will be a variable named CURRENT-FILE-NUMBER initialized to the
-index of the current file to be read from or written to in the file list."
+bound to CHUNK-VAR. There will be variables BYTES-SO-FAR, FILE-DICT-LIST,
+FILE-LIST, OFFSET-INTO-FILE, and CURRENT-FILE-NUMBER available in the body of
+the macro. INITIALLY-FORM will be evaluated as an INITIALLY clause in the LOOP
+form, LOOP-BODY-FORM will be evaluated as a DO clause, and RETURN-FORM will be
+evaluated in a FINALLY (RETURN RETURN-FORM) clause."
   (with-unique-names (info-dictionary piece-length byte-index indexed-file-number)
     `(let* ((,info-dictionary (gethash "info" (torrent-info ,torrent)))
             (file-dict-list (or (gethash "files" ,info-dictionary)
