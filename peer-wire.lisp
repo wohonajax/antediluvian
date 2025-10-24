@@ -174,6 +174,7 @@ Returns the peer object, or NIL if the handshake failed."
                 (chanl:send *write-instructions-channel*
                             (make-write-instruction :torrent torrent
                                                     :block block
+                                                    :block-length (length block)
                                                     :piece-index piece-index
                                                     :byte-offset byte-offset))))
       (:cancel (let* ((message-content (subseq message-bytes 1))

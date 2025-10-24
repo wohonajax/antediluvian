@@ -154,7 +154,7 @@ BLOCK-LENGTH and returns it as a byte vetor."
 
 (defstruct block-request piece-index byte-offset block-length)
 
-(defstruct write-instruction torrent block piece-index byte-offset)
+(defstruct write-instruction torrent block piece-index byte-offset block-length)
 
 (defvar *write-instructions-channel* (make-instance 'chanl:channel))
 
@@ -162,16 +162,20 @@ BLOCK-LENGTH and returns it as a byte vetor."
   "Returns a block to write, its piece index location, its byte offset from
 that piece index, and the torrent the instruction corresponds to as multiple
 values."
-  (values (write-instruction-block write-instruction)
+  (values (write-instruction-torrent write-instruction)
           (write-instruction-piece-index write-instruction)
           (write-instruction-byte-offset write-instruction)
-          (write-instruction-torrent write-instruction)))
+          (write-instruction-block write-instruction)
+          (write-instruction-block-length write-instruction)))
+  
 
 (defun start-file-writer-thread ()
   "Starts a thread that manages writing files to disk."
   (make-thread
    (lambda ()
-     (loop (multiple-value-call #'write-block
+     ;; TODO: check for when a piece is complete and modify
+     ;; had-pieces and needed-pieces accordingly
+     (loop (multiple-value-call #'write-chunk
                                 (write-instruction-values
                                  (chanl:recv *write-instructions-channel*)))))
    :name "file-writer"))
