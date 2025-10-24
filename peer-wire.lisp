@@ -315,7 +315,7 @@ have."
                                 (push piece-index (had-pieces torrent))
                                 (incf piece-index))
                                (t (push piece-index (needed-pieces torrent))
-                                  (incf piece-index)))))
+                                  (incf piece-index))))))
       (send-peer-message-length-header (1+ number-of-pieces) socket)
       (write-byte (message-id-for-message-type :bitfield) stream)
       (write-sequence bitfield-vector stream))))
