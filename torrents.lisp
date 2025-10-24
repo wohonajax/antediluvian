@@ -7,7 +7,9 @@
    (name :initarg :name :accessor torrent-name)
    (destination-path :initarg :destination :accessor torrent-destination)
    (file-list :initarg :file-list :accessor torrent-file-list)
-   (info :initarg :info :accessor torrent-info)))
+   (info :initarg :info :accessor torrent-info)
+   (had-pieces :initform '() :accessor had-pieces)
+   (needed-pieces :initform '() :accessor needed-pieces)))
 
 (defvar *torrents* (list)
   "The list of added torrents.")

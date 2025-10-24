@@ -279,6 +279,14 @@ the PIECE-INDEXth piece of a torrent."
     (write-byte (message-id-for-message-type :have) stream)
     (write-sequence (pad-integer-to-octets piece-index 4) stream)))
 
+(defmacro bitfield-body (pieces-length &body body)
+  `(loop with piece-index = 0
+         for vector-index below pieces-length
+         do (loop with bitfield = 0
+                  for i from 7 downto 0
+                  do ,@body
+                  finally (setf (svref bitfield-vector)))))
+
 (defun send-bitfield-message (torrent socket)
   "Sends a bitfield message to the peer connected to SOCKET regarding TORRENT.
 Bitfield messages essentially communicate which pieces of a torrent we already
@@ -289,15 +297,25 @@ have."
            ;; extra bits are zeros
            (pieces-length (ceiling number-of-pieces 8))
            (bitfield-vector (make-octets pieces-length :initial-element 0)))
-      (loop with piece-index = 0
-            for vector-index below pieces-length
-            do (loop with bitfield = 0
-                     for i from 7 downto 0
-                     do (when (have-piece-p torrent piece-index)
-                          (setf (ldb (byte 1 i) bitfield) 1))
-                       (incf piece-index)
-                     finally (setf (svref bitfield-vector vector-index)
-                                   bitfield)))
+      (macrolet ((bitfield-body (&body body)
+                   `(loop with piece-index = 0
+                          for vector-index below pieces-length
+                          do (loop with bitfield = 0
+                                   for i from 7 downto 0
+                                   do ,@body
+                                   finally (setf (svref bitfield-vector vector-index)
+                                                 bitfield)))))
+        (if-let (had-pieces (had-pieces torrent))
+          (bitfield-body (cond ((member piece-index had-pieces)
+                                (setf (ldb (byte 1 i) bitfield) 1)
+                                (incf piece-index))
+                               (t (incf piece-index))))
+          (bitfield-body (cond ((have-piece-p torrent piece-index)
+                                (setf (ldb (byte 1 i) bitfield) 1)
+                                (push piece-index (had-pieces torrent))
+                                (incf piece-index))
+                               (t (push piece-index (needed-pieces torrent))
+                                  (incf piece-index)))))
       (send-peer-message-length-header (1+ number-of-pieces) socket)
       (write-byte (message-id-for-message-type :bitfield) stream)
       (write-sequence bitfield-vector stream))))
