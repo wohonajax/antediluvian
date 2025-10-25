@@ -25,8 +25,10 @@ peer socket."
               (peer (receive-handshake accepted-socket)))
     (push (make-thread (lambda ()
                          (loop with stream = (socket-stream accepted-socket)
-                               ;; FIXME: wait for input?
-                               do (read-peer-wire-message peer stream))))
+                               ;; TODO: send pieces from the
+                               ;; had-pieces slot of the peer
+                               do (wait-for-input accepted-socket)
+                                  (read-peer-wire-message peer stream))))
           *peer-connection-threads*)))
 
 (defun initiate-peer-connection (peer)
@@ -58,7 +60,8 @@ peer socket."
                                  initially (progn (send-unchoke-message socket)
                                                   (setf (am-choking-p peer) nil))
                                  unless (am-choking-p peer)
-                                   do (read-peer-wire-message peer stream)
+                                   do (wait-for-input socket)
+                                      (read-peer-wire-message peer stream)
                                  ;; abandon the peer
                                  finally (with-lock-held (*peer-list-lock*)
                                            (socket-close socket)
