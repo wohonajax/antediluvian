@@ -41,8 +41,14 @@ peer socket."
                                               :element-type '(unsigned-byte 8)
                                               :timeout 10)
                   ;; if the connection fails, abandon the peer
-                  (connection-refused-error () (return-from thread-block))
-                  (timeout-error () (return-from thread-block)))))
+                  (connection-refused-error ()
+                    (with-lock-held (*peer-list-lock*)
+                      (setf *peer-list* (remove peer *peer-list* :count 1)))
+                    (return-from thread-block))
+                  (timeout-error ()
+                    (with-lock-held (*peer-list-lock*)
+                      (setf *peer-list* (remove peer *peer-list* :count 1)))
+                    (return-from thread-block)))))
     (push (make-thread (lambda ()
                          (block thread-block
                            (setf (peer-socket peer) (try-socket-connection))
