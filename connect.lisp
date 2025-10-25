@@ -25,6 +25,8 @@ peer socket."
               (peer (receive-handshake accepted-socket)))
     (push (make-thread (lambda ()
                          (loop with stream = (socket-stream accepted-socket)
+                               initially (send-unchoke-message accepted-socket)
+                                         (setf (am-choking-p peer) nil)
                                ;; TODO: send pieces from the
                                ;; had-pieces slot of the peer
                                do (wait-for-input accepted-socket)
