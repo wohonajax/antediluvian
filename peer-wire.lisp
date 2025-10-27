@@ -83,19 +83,19 @@ Returns the peer object, or NIL if the handshake failed."
                                  :id peer-id)))
       (wait-for-input socket)
       (close-unless (= (read-byte stream) 19))
-      (read-sequence protocol-vector stream)
+      (read-octets protocol-vector stream)
       (close-unless (string= (byte-array-to-ascii-string protocol-vector)
                              "BitTorrent protocol"))
-      (read-sequence extensions-vector stream)
+      (read-octets extensions-vector stream)
       (parse-extensions-for-peer peer extensions-vector)
-      (read-sequence hash stream)
+      (read-octets hash stream)
       (close-unless (gethash hash *torrent-hashes*))
       ;; we've checked that the hash is among our active
       ;; torrents, so just write the hash back to confirm
       (write-sequence hash stream)
       (finish-output stream)
       (setf (peer-torrent peer) (gethash hash *torrent-hashes*))
-      (read-sequence peer-id stream)
+      (read-octets peer-id stream)
       (with-lock-held (*peer-list-lock*)
         (push peer *peer-list*)))))
 
@@ -115,7 +115,7 @@ Returns the peer object, or NIL if the handshake failed."
 (defun read-4-bytes-to-integer (stream)
   "Reads 4 big-endian bytes from STREAM and converts the result to an integer."
   (let ((vector (make-octets 4)))
-    (read-sequence vector stream)
+    (read-octets vector stream)
     (octets-to-integer vector)))
 
 (defun read-peer-wire-length-header (stream)
@@ -142,7 +142,7 @@ Returns the peer object, or NIL if the handshake failed."
   (let* ((torrent (peer-torrent peer))
          (length (read-peer-wire-length-header stream))
          (message-bytes (make-octets length)))
-    (read-sequence message-bytes stream)
+    (read-octets message-bytes stream)
     (case (message-id-to-message-type (aref message-bytes 0))
       (:choke (setf (choking-us-p peer) t))
       (:unchoke (setf (choking-us-p peer) nil))
@@ -209,7 +209,7 @@ NIL if not."
     ;; the one we send, sever the connection
     (let ((peer-hash (make-octets 20)))
       (wait-for-input socket)
-      (read-sequence peer-hash stream)
+      (read-octets peer-hash stream)
       (unless (equalp hash peer-hash)
         (socket-close socket)
         (with-lock-held (*peer-list-lock*)
