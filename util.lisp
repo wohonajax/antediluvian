@@ -55,10 +55,3 @@ random data."
         for i below num-bytes
         do (setf (aref result i) (random 256 random-state))
         finally (return result)))
-
-(defun read-octets (byte-vector stream)
-  "Reads bytes from STREAM into BYTE-VECTOR until it's full."
-  (loop with total-length = (length byte-vector)
-        with bytes-read = 0
-        until (= bytes-read total-length)
-        do (setf bytes-read (read-sequence result stream :start bytes-read))))
