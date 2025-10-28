@@ -17,10 +17,6 @@
 (defvar *torrent-hashes* (make-hash-table :test #'equalp)
   "A hash table mapping info hashes to torrent objects.")
 
-(defun magnet-link-p (item)
-  "Tests whether ITEM is a magnet link."
-  (and (stringp item) (starts-with-p "magnet:?" item)))
-
 (defun extract-sha1-from-parsed-magnet-link (hash-table)
   "Extracts a BitTorrent info hash from HASH-TABLE, a parsed magnet link."
   (loop for (protocol hash)
@@ -67,23 +63,23 @@ to ROOT-PATH for a given torrent's INFO-DICTIONARY."
 (defun parse-source (source)
   "Parses SOURCE into a torrent object. SOURCE should be a magnet link,
 a filespec to a torrent file, or a SHA1 hash."
-  (let* ((parsed-source (cond ((magnet-link-p source)
+  (let* ((parsed-source (cond ((magnet:magnet-link-p source)
                                (magnet:parse source))
                               ((filespecp source)
                                (bdecode-torrent-file (truenamize source)))
                               (t source)))
-         (hash (cond ((magnet-link-p source)
+         (hash (cond ((magnet:magnet-link-p source)
                       (extract-sha1-from-parsed-magnet-link parsed-source))
                      ((filespecp source)
                       (get-info-hash-from-bdecoded-torrent-file parsed-source))
                      (t source)))
-         (name (cond ((magnet-link-p source)
+         (name (cond ((magnet:magnet-link-p source)
                       ;; all parameters in a parsed
                       ;; magnet link have list values
                       (first (gethash :dn parsed-source)))
                      ((filespecp source)
                       (gethash "name" (gethash "info" parsed-source)))))
-         (info (when (and (not (magnet-link-p source))
+         (info (when (and (not (magnet:magnet-link-p source))
                           (filespecp source))
                  parsed-source))
          (download-path (make-download-pathname name)))
