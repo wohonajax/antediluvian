@@ -112,7 +112,13 @@ TORRENT to disk."
                         :end ending-index)
         (incf bytes-so-far (- current-file-length bytes-to-write))))
     ;; just return nil
-    nil))
+    nil)
+  ;; after writing the chunk, check whether the piece is complete
+  ;; remove the piece from the list of needed pieces if so
+  (when (have-piece-p torrent piece-index)
+    (pushnew piece-index (had-pieces torrent))
+    (setf (needed-pieces torrent)
+          (remove piece-index (needed-pieces torrent)))))
 
 (defun write-piece (torrent piece piece-index)
   "Writes the given PIECE-INDEXth PIECE of TORRENT to its file."
