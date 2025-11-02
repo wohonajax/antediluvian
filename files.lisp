@@ -117,7 +117,7 @@ TORRENT to disk."
   ;; remove the piece from the list of needed pieces if so
   (when (have-piece-p torrent piece-index)
     (pushnew piece-index (had-pieces torrent))
-    (removef piece-index (needed-pieces torrent))))
+    (removef (needed-pieces torrent) piece-index)))
 
 (defun write-piece (torrent piece piece-index)
   "Writes the given PIECE-INDEXth PIECE of TORRENT to its file."

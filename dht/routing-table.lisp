@@ -88,5 +88,5 @@ replacement cache."
               ;; the replacement candidate will be added again if the
               ;; replacement check fails. if it doesn't, we don't want
               ;; it in the replacement cache anyway
-              (removef candidate *replacement-cache* :count 1))))
+              (removef *replacement-cache* candidate :count 1))))
         *replacement-cache*))
