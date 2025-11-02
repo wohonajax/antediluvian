@@ -126,6 +126,5 @@ if successful, NIL otherwise."
          (mid (truncate max 2))
          (small-bucket (make-new-bucket min mid))
          (large-bucket (make-new-bucket (1+ mid) max)))
-    (setf *routing-table*
-          (remove bucket *routing-table* :test #'eql :count 1))
+    (removef bucket *routing-table* :count 1)
     (seed-buckets small-bucket large-bucket bucket)))

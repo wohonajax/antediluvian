@@ -185,12 +185,11 @@ Returns the peer object, or NIL if the handshake failed."
                                     (subseq message-content 4 8)))
                       (block-length (octets-to-integer
                                      (subseq message-content 8))))
-                 (setf (requested-pieces peer)
-                       (remove (make-block-request :piece-index piece-index
-                                                   :byte-offset byte-offset
-                                                   :block-length block-length)
-                               (requested-pieces peer)
-                               :test #'equalp))))
+                 (removef (make-block-request :piece-index piece-index
+                                              :byte-offset byte-offset
+                                              :block-length block-length)
+                          (requested-pieces peer)
+                          :test #'equalp)))
       (:port (send-message :ping (peer-ip peer)
                            (port-from-octet-buffer (subseq message-bytes 1))
                            (generate-transaction-id))))))
@@ -213,7 +212,7 @@ NIL if not."
       (unless (equalp hash peer-hash)
         (socket-close socket)
         (with-lock-held (*peer-list-lock*)
-          (setf *peer-list* (remove peer *peer-list* :count 1)))
+          (removef peer *peer-list* :count 1))
         (return-from perform-handshake)))
     (write-sequence *peer-id* stream)
     (finish-output stream)

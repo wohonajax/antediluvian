@@ -85,5 +85,5 @@ peer socket."
                                  finally (socket-close socket)))
                          ;; (return-from thread-block) takes us here
                          (with-lock-held (*peer-list-lock*)
-                           (setf *peer-list* (remove peer *peer-list* :count 1)))))
+                           (removef peer *peer-list* :count 1))))
           *peer-connection-threads*)))

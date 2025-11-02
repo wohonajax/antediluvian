@@ -6,6 +6,7 @@
                 ;; general utilities
                 #:extremum
                 #:lastcar
+                #:removef
                 ;; higher order functions
                 #:compose
                 #:curry
