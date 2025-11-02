@@ -61,11 +61,29 @@ peer socket."
                                              (send-port-message socket))
                                  initially (send-unchoke-message socket)
                                            (setf (am-choking-p peer) nil)
+                                 ;; read protocol messages
                                  unless (am-choking-p peer)
                                    do (wait-for-input socket)
                                       (read-peer-wire-message peer stream)
+                                 ;; seeding
+                                 unless (choking-us-p peer)
+                                   do (when-let* ((request (pop (requested-pieces peer)))
+                                                  (piece-index (block-request-piece-index request))
+                                                  (byte-offset (block-request-byte-offset request))
+                                                  (block-length (block-request-block-length request))
+                                                  (requested-block (read-chunk torrent
+                                                                               piece-index
+                                                                               byte-offset
+                                                                               block-length
+                                                                               block
+                                                                               block)))
+                                        (send-piece-message piece-index
+                                                            byte-offset
+                                                            requested-block
+                                                            socket))
                                  ;; (loop-finish) takes us here
                                  finally (socket-close socket)))
+                         ;; (return-from thread-block) takes us here
                          (with-lock-held (*peer-list-lock*)
                            (setf *peer-list* (remove peer *peer-list* :count 1)))))
           *peer-connection-threads*)))
