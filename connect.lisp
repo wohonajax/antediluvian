@@ -72,6 +72,7 @@ peer socket."
                                      do (request-piece torrent
                                                        (first (needed-pieces torrent))
                                                        socket)
+                                 unless (choking-us-p peer)
                                    ;; seeding
                                    do (when-let* ((request (pop (requested-pieces peer)))
                                                   (piece-index (block-request-piece-index request))
