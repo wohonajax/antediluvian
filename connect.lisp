@@ -65,8 +65,14 @@ peer socket."
                                  unless (am-choking-p peer)
                                    do (wait-for-input socket)
                                       (read-peer-wire-message peer stream)
-                                 ;; seeding
+                                 ;; send protocol messages
                                  unless (choking-us-p peer)
+                                   ;; requesting pieces
+                                   when (needed-pieces torrent)
+                                     do (request-piece torrent
+                                                       (first (needed-pieces torrent))
+                                                       socket)
+                                   ;; seeding
                                    do (when-let* ((request (pop (requested-pieces peer)))
                                                   (piece-index (block-request-piece-index request))
                                                   (byte-offset (block-request-byte-offset request))

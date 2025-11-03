@@ -364,3 +364,19 @@ this DHT node is listening on."
     (write-byte (message-id-for-message-type :port) stream)
     (write-sequence (port-to-octet-buffer *default-port* (make-octets 2))
                     stream)))
+
+(defun request-piece (torrent piece-index socket)
+  "Sends request messages for the PIECE-INDEXth piece of TORRENT to the peer
+connected to SOCKET."
+  (loop with piece-length = (gethash "piece length" (torrent-info torrent))
+        with bytes-requested-so-far = 0
+        with current-request-length = +length-offset+
+        until (= bytes-requested-so-far piece-length)
+        do (send-request-message piece-index
+                                 bytes-requested-so-far
+                                 current-request-length
+                                 socket)
+           (incf bytes-requested-so-far current-request-length)
+        when (> bytes-requested-so-far piece-length)
+          do (setf bytes-requested-so-far (- bytes-requested-so-far +length-offset+))
+             (setf current-request-length (- piece-length bytes-requested-so-far))))
