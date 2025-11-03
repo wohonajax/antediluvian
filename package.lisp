@@ -8,7 +8,6 @@
                 #:lastcar
                 #:removef
                 ;; higher order functions
-                #:compose
                 #:curry
                 #:rcurry
                 ;; switch

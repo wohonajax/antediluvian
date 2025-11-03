@@ -102,7 +102,8 @@ peer socket."
                   (timeout-error () (return-from thread-block)))))
     (push (make-thread (lambda ()
                          (block thread-block
-                           (setf (peer-socket peer) (try-socket-connection))
+                           (with-lock-held ((peer-lock peer))
+                             (setf (peer-socket peer) (try-socket-connection)))
                            (loop with socket = (peer-socket peer)
                                  with stream = (socket-stream socket)
                                  with torrent = (peer-torrent peer)
@@ -117,7 +118,8 @@ peer socket."
                                  initially (when (supports-bittorrent-dht-p peer)
                                              (send-port-message socket))
                                  initially (send-unchoke-message socket)
-                                           (setf (am-choking-p peer) nil)
+                                           (with-lock-held ((peer-lock peer))
+                                             (setf (am-choking-p peer) nil))
                                  ;; read protocol messages
                                  unless (am-choking-p peer)
                                    do (wait-for-input socket)
@@ -125,13 +127,17 @@ peer socket."
                                  ;; send protocol messages
                                  unless (choking-us-p peer)
                                    ;; requesting pieces
-                                   when (needed-pieces torrent)
-                                     do (request-piece torrent
-                                                       (first (needed-pieces torrent))
-                                                       socket)
+                                   do (when-let* ((piece-to-request
+                                                   (with-lock-held ((torrent-lock torrent))
+                                                     (first (needed-pieces torrent))))
+                                                  (peer-hash-piece-p
+                                                   (with-lock-held ((peer-lock peer))
+                                                     (member piece-to-request (had-pieces peer))))
+                                        (request-piece torrent piece-to-request socket))
                                  unless (choking-us-p peer)
                                    ;; seeding
-                                   do (when-let* ((request (pop (requested-pieces peer)))
+                                   do (when-let* ((request (with-lock-held ((peer-lock peer))
+                                                             (pop (requested-pieces peer))))
                                                   (piece-index (block-request-piece-index request))
                                                   (byte-offset (block-request-byte-offset request))
                                                   (block-length (block-request-block-length request))
@@ -146,7 +152,8 @@ peer socket."
                                                             requested-block
                                                             socket))
                                  ;; (loop-finish) takes us here
-                                 finally (socket-close socket)))
+                                 finally (with-lock-held ((peer-lock peer))
+                                           (socket-close socket)))))
                          ;; (return-from thread-block) takes us here
                          (with-lock-held (*peer-list-lock*)
                            (removef *peer-list* peer :count 1))))

@@ -24,6 +24,8 @@
    ;; whether this peer is interested in something we have
    ;; if true then requests will be incoming when we unchoke
    (interested-in-us-p :initform nil :accessor interested-in-us-p)
+   ;; lock for this peer object, to allow for thread-safe modification
+   (lock :initform (make-lock) :accessor peer-lock)
    ;;; supported protocol extensions indicated
    ;;; by the reserved bytes in the handshake header
    (supports-azureus-messaging-protocol-p

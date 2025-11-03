@@ -68,56 +68,58 @@ Binds the chunk to CHUNK-VAR and returns the result of RETURN-FORM."
 (defun have-piece-p (torrent piece-index)
   "Returns T if we have the piece number PIECE-INDEX of TORRENT. Returns NIL if
 we don't have the piece, or if PIECE-INDEX is out of bounds."
-  (let ((piece-length (gethash "piece length" (torrent-info torrent))))
-    (read-chunk torrent piece-index 0 piece-length chunk
-      (let* ((pieces (gethash "pieces" (torrent-info torrent)))
-             (sha1-index (* piece-index 20))
-             ;; if the piece is out of bounds, return nil
-             (sha1-hash (handler-case (subseq pieces sha1-index (+ sha1-index 20))
-                          (error () (return-from have-piece-p nil)))))
-        (equalp sha1-hash (digest-sequence :sha1 chunk))))))
+  (with-lock-held ((torrent-lock torrent))
+    (let ((piece-length (gethash "piece length" (torrent-info torrent))))
+      (read-chunk torrent piece-index 0 piece-length chunk
+        (let* ((pieces (gethash "pieces" (torrent-info torrent)))
+               (sha1-index (* piece-index 20))
+               ;; if the piece is out of bounds, return nil
+               (sha1-hash (handler-case (subseq pieces sha1-index (+ sha1-index 20))
+                            (error () (return-from have-piece-p nil)))))
+          (equalp sha1-hash (digest-sequence :sha1 chunk)))))))
 
 (defun write-chunk (torrent piece-index byte-offset chunk chunk-length)
   "Writes a CHUNK indicated by a BYTE-OFFSET into the PIECE-INDEXth piece of
 TORRENT to disk."
-  (with-chunk (chunk chunk)
-    torrent piece-index byte-offset chunk-length
-    ;; initially form
-    (let* ((current-file-length
-            (gethash "length" (nth current-file-number file-dict-list)))
-           (bytes-to-write (- current-file-length offset-into-file)))
-      (with-open-file (file-stream
-                       (nth current-file-number file-list)
-                       :direction :output
-                       :element-type '(unsigned-byte 8)
-                       :if-exists :overwrite
-                       :if-does-not-exist :create)
-        (file-position file-stream offset-into-file)
-        (write-sequence chunk file-stream :end bytes-to-write)
-        (setf bytes-so-far bytes-to-write)
-        (incf current-file-number)))
-    ;; loop body form
-    (let* ((current-file-length
-            (gethash "length" (nth current-file-number file-dict-list)))
-           (ending-index (+ bytes-so-far current-file-length))
-           (bytes-to-write (- chunk-length ending-index)))
-      (with-open-file (file-stream
-                       (nth current-file-number file-list)
-                       :direction :output
-                       :element-type '(unsigned-byte 8)
-                       :if-exists :overwrite
-                       :if-does-not-exist :create)
-        (write-sequence chunk file-stream
-                        :start bytes-so-far
-                        :end ending-index)
-        (incf bytes-so-far (- current-file-length bytes-to-write))))
-    ;; just return nil
-    nil)
-  ;; after writing the chunk, check whether the piece is complete
-  ;; remove the piece from the list of needed pieces if so
-  (when (have-piece-p torrent piece-index)
-    (pushnew piece-index (had-pieces torrent))
-    (removef (needed-pieces torrent) piece-index)))
+  (with-lock-held ((torrent-lock torrent))
+    (with-chunk (chunk chunk)
+      torrent piece-index byte-offset chunk-length
+      ;; initially form
+      (let* ((current-file-length
+              (gethash "length" (nth current-file-number file-dict-list)))
+             (bytes-to-write (- current-file-length offset-into-file)))
+        (with-open-file (file-stream
+                         (nth current-file-number file-list)
+                         :direction :output
+                         :element-type '(unsigned-byte 8)
+                         :if-exists :overwrite
+                         :if-does-not-exist :create)
+          (file-position file-stream offset-into-file)
+          (write-sequence chunk file-stream :end bytes-to-write)
+          (setf bytes-so-far bytes-to-write)
+          (incf current-file-number)))
+      ;; loop body form
+      (let* ((current-file-length
+              (gethash "length" (nth current-file-number file-dict-list)))
+             (ending-index (+ bytes-so-far current-file-length))
+             (bytes-to-write (- chunk-length ending-index)))
+        (with-open-file (file-stream
+                         (nth current-file-number file-list)
+                         :direction :output
+                         :element-type '(unsigned-byte 8)
+                         :if-exists :overwrite
+                         :if-does-not-exist :create)
+          (write-sequence chunk file-stream
+                          :start bytes-so-far
+                          :end ending-index)
+          (incf bytes-so-far (- current-file-length bytes-to-write))))
+      ;; just return nil
+      nil)
+    ;; after writing the chunk, check whether the piece is complete
+    ;; remove the piece from the list of needed pieces if so
+    (when (have-piece-p torrent piece-index)
+      (pushnew piece-index (had-pieces torrent))
+      (removef (needed-pieces torrent) piece-index))))
 
 (defun write-piece (torrent piece piece-index)
   "Writes the given PIECE-INDEXth PIECE of TORRENT to its file."
@@ -155,7 +157,8 @@ TORRENT to the appropriate file."
 (defun read-block (torrent piece-index byte-offset block-length)
   "Reads a block from TORRENT indicated by PIECE-INDEX, BYTE-OFFSET, and
 BLOCK-LENGTH and returns it as a byte vetor."
-  (read-chunk torrent piece-index byte-offset block-length block block))
+  (with-lock-held ((torrent-lock torrent))
+    (read-chunk torrent piece-index byte-offset block-length block block)))
 
 (defstruct block-request piece-index byte-offset block-length)
 
