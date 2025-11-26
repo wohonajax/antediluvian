@@ -132,7 +132,7 @@ peer socket."
                                                      (first (needed-pieces torrent))))
                                                   (peer-hash-piece-p
                                                    (with-lock-held ((peer-lock peer))
-                                                     (member piece-to-request (had-pieces peer))))
+                                                     (member piece-to-request (had-pieces peer)))))
                                         (request-piece torrent piece-to-request socket))
                                  unless (choking-us-p peer)
                                    ;; seeding
@@ -153,7 +153,7 @@ peer socket."
                                                             socket))
                                  ;; (loop-finish) takes us here
                                  finally (with-lock-held ((peer-lock peer))
-                                           (socket-close socket)))))
+                                           (socket-close socket))))
                          ;; (return-from thread-block) takes us here
                          (with-lock-held (*peer-list-lock*)
                            (removef *peer-list* peer :count 1))))
