@@ -86,8 +86,9 @@ peer socket."
                                          (setf (am-choking-p peer) nil)
                                ;; TODO: send pieces from the
                                ;; had-pieces slot of the peer
-                               do (wait-for-input accepted-socket)
-                                  (read-peer-wire-message peer stream))))
+                               unless (am-choking-p peer)
+                                 do (wait-for-input accepted-socket)
+                                 and do (read-peer-wire-message peer stream))))
           *peer-connection-threads*)))
 
 (defun initiate-peer-connection (peer)
