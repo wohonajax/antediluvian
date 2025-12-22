@@ -76,6 +76,24 @@ peer socket."
                            (port-from-octet-buffer (subseq message-bytes 1))
                            (generate-transaction-id))))))
 
+(defun send-piece-to-peer (peer)
+  "Sends a requested piece to PEER."
+  (when-let* ((request (with-lock-held ((peer-lock peer))
+                         (pop (requested-pieces peer))))
+              (piece-index (block-request-piece-index request))
+              (byte-offset (block-request-byte-offset request))
+              (block-length (block-request-block-length request))
+              (requested-block (read-chunk (peer-torrent peer)
+                                           piece-index
+                                           byte-offset
+                                           block-length
+                                           block
+                                           block)))
+    (send-piece-message piece-index
+                        byte-offset
+                        requested-block
+                        (peer-socket peer))))
+
 (defun accept-peer-connection (socket)
   "Accepts a peer connection from a SOCKET and listens in a new thread."
   (when-let* ((accepted-socket (socket-accept socket))
@@ -137,21 +155,7 @@ peer socket."
                                         (request-piece torrent piece-to-request socket))
                                  unless (choking-us-p peer)
                                    ;; seeding
-                                   do (when-let* ((request (with-lock-held ((peer-lock peer))
-                                                             (pop (requested-pieces peer))))
-                                                  (piece-index (block-request-piece-index request))
-                                                  (byte-offset (block-request-byte-offset request))
-                                                  (block-length (block-request-block-length request))
-                                                  (requested-block (read-chunk torrent
-                                                                               piece-index
-                                                                               byte-offset
-                                                                               block-length
-                                                                               block
-                                                                               block)))
-                                        (send-piece-message piece-index
-                                                            byte-offset
-                                                            requested-block
-                                                            socket))
+                                   do (send-piece-to-peer peer)
                                  ;; (loop-finish) takes us here
                                  finally (with-lock-held ((peer-lock peer))
                                            (socket-close socket))))
