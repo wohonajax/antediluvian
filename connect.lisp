@@ -131,7 +131,7 @@ peer socket."
                                    do (when-let* ((piece-to-request
                                                    (with-lock-held ((torrent-lock torrent))
                                                      (first (needed-pieces torrent))))
-                                                  (peer-hash-piece-p
+                                                  (peer-has-piece-p
                                                    (with-lock-held ((peer-lock peer))
                                                      (member piece-to-request (had-pieces peer)))))
                                         (request-piece torrent piece-to-request socket))
