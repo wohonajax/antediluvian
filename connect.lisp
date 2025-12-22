@@ -120,11 +120,11 @@ peer socket."
                                ;; read protocol messages
                                unless (am-choking-p peer)
                                  do (wait-for-input accepted-socket)
-                                 and do (read-peer-wire-message peer stream)
+                                    (read-peer-wire-message peer stream)
                                ;; send protocol messages
                                unless (choking-us-p peer)
                                  do (send-piece-to-peer peer)
-                                 and do (request-had-piece peer)
+                                    (request-had-piece peer)
                                finally (with-lock-held ((peer-lock peer))
                                          (socket-close accepted-socket))
                                        (with-lock-held (*peer-list-lock*)
@@ -164,11 +164,11 @@ peer socket."
                                  ;; read protocol messages
                                  unless (am-choking-p peer)
                                    do (wait-for-input socket)
-                                   and do (read-peer-wire-message peer stream)
+                                      (read-peer-wire-message peer stream)
                                  ;; send protocol messages
                                  unless (choking-us-p peer)
                                    do (request-had-piece peer)
-                                   and do (send-piece-to-peer peer)
+                                      (send-piece-to-peer peer)
                                  ;; (loop-finish) takes us here
                                  finally (with-lock-held ((peer-lock peer))
                                            (socket-close socket))))
