@@ -225,14 +225,6 @@ the PIECE-INDEXth piece of a torrent."
     (write-byte (message-id-for-message-type :have) stream)
     (write-sequence (pad-integer-to-octets piece-index 4) stream)))
 
-(defmacro bitfield-body (pieces-length &body body)
-  `(loop with piece-index = 0
-         for vector-index below pieces-length
-         do (loop with bitfield = 0
-                  for i from 7 downto 0
-                  do ,@body
-                  finally (setf (svref bitfield-vector)))))
-
 (defun send-bitfield-message (torrent socket)
   "Sends a bitfield message to the peer connected to SOCKET regarding TORRENT.
 Bitfield messages essentially communicate which pieces of a torrent we already
