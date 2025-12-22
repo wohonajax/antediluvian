@@ -125,6 +125,7 @@ peer socket."
                                unless (choking-us-p peer)
                                  do (send-piece-to-peer peer)
                                     (request-had-piece peer)
+                               ;; (loop-finish) takes us here
                                finally (with-lock-held ((peer-lock peer))
                                          (socket-close accepted-socket))
                                        (with-lock-held (*peer-list-lock*)
