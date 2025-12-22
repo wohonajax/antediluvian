@@ -103,7 +103,7 @@ peer socket."
               (peer-has-piece-p
                (with-lock-held ((peer-lock peer))
                  (member piece-to-request (had-pieces peer)))))
-    (request-piece torrent piece-to-request socket)))
+    (request-piece torrent piece-to-request (peer-socket peer))))
 
 (defun accept-peer-connection (socket)
   "Accepts a peer connection from a SOCKET and listens in a new thread."
