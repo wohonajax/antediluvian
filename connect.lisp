@@ -112,7 +112,10 @@ peer socket."
     (push (make-thread (lambda ()
                          (loop with stream = (socket-stream accepted-socket)
                                with torrent = (peer-torrent peer)
-                               initially (send-unchoke-message accepted-socket)
+                               initially (send-bitfield-message torrent accepted-socket)
+                                         (when (supports-bittorrent-dht-p peer)
+                                           (send-port-message accepted-socket))
+                                         (send-unchoke-message accepted-socket)
                                          (setf (am-choking-p peer) nil)
                                ;; read protocol messages
                                unless (am-choking-p peer)
@@ -152,10 +155,10 @@ peer socket."
                                              ;; handshake fails, so in that
                                              ;; case just exit the whole block
                                              (return-from thread-block))
-                                 initially (send-bitfield-message torrent socket)
-                                 initially (when (supports-bittorrent-dht-p peer)
+                                           (send-bitfield-message torrent socket)
+                                           (when (supports-bittorrent-dht-p peer)
                                              (send-port-message socket))
-                                 initially (send-unchoke-message socket)
+                                           (send-unchoke-message socket)
                                            (with-lock-held ((peer-lock peer))
                                              (setf (am-choking-p peer) nil))
                                  ;; read protocol messages
