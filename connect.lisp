@@ -111,13 +111,21 @@ peer socket."
               (peer (receive-handshake accepted-socket)))
     (push (make-thread (lambda ()
                          (loop with stream = (socket-stream accepted-socket)
+                               with torrent = (peer-torrent peer)
                                initially (send-unchoke-message accepted-socket)
                                          (setf (am-choking-p peer) nil)
-                               ;; TODO: send pieces from the
-                               ;; had-pieces slot of the peer
+                               ;; read protocol messages
                                unless (am-choking-p peer)
                                  do (wait-for-input accepted-socket)
-                                 and do (read-peer-wire-message peer stream))))
+                                 and do (read-peer-wire-message peer stream)
+                               ;; send protocol messages
+                               unless (choking-us-p peer)
+                                 do (send-piece-to-peer peer)
+                                 and do (request-had-piece peer)
+                               finally (with-lock-held ((peer-lock peer))
+                                         (socket-close accepted-socket))
+                                       (with-lock-held (*peer-list-lock*)
+                                         (removef *peer-list* peer :count 1)))))
           *peer-connection-threads*)))
 
 (defun initiate-peer-connection (peer)
