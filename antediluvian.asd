@@ -13,7 +13,6 @@
                (:file "peers")
                (:file "files")
                (:file "peer-wire")
-               (:file "connect")
                (:module "dht"
                         :serial t
                         :components ((:file "peers")
@@ -25,6 +24,7 @@
                                      (:file "lookups")
                                      (:file "networking")
                                      (:file "dht")))
+               (:file "connect")
                (:file "antediluvian"))
   :serial t
   :depends-on (alexandria
