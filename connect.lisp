@@ -94,6 +94,17 @@ peer socket."
                         requested-block
                         (peer-socket peer))))
 
+(defun request-had-piece (peer)
+  "Requests a piece that PEER has."
+  (when-let* ((torrent (peer-torrent peer))
+              (piece-to-request
+               (with-lock-held ((torrent-lock torrent))
+                 (first (needed-pieces torrent))))
+              (peer-has-piece-p
+               (with-lock-held ((peer-lock peer))
+                 (member piece-to-request (had-pieces peer)))))
+    (request-piece torrent piece-to-request socket)))
+
 (defun accept-peer-connection (socket)
   "Accepts a peer connection from a SOCKET and listens in a new thread."
   (when-let* ((accepted-socket (socket-accept socket))
@@ -146,13 +157,7 @@ peer socket."
                                  ;; send protocol messages
                                  unless (choking-us-p peer)
                                    ;; requesting pieces
-                                   do (when-let* ((piece-to-request
-                                                   (with-lock-held ((torrent-lock torrent))
-                                                     (first (needed-pieces torrent))))
-                                                  (peer-has-piece-p
-                                                   (with-lock-held ((peer-lock peer))
-                                                     (member piece-to-request (had-pieces peer)))))
-                                        (request-piece torrent piece-to-request socket))
+                                   do (request-had-piece peer)
                                  unless (choking-us-p peer)
                                    ;; seeding
                                    do (send-piece-to-peer peer)
