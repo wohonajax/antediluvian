@@ -124,7 +124,7 @@ peer socket."
                                  ;; read protocol messages
                                  unless (am-choking-p peer)
                                    do (wait-for-input socket)
-                                      (read-peer-wire-message peer stream)
+                                   and do (read-peer-wire-message peer stream)
                                  ;; send protocol messages
                                  unless (choking-us-p peer)
                                    ;; requesting pieces
