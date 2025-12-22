@@ -156,11 +156,8 @@ peer socket."
                                    and do (read-peer-wire-message peer stream)
                                  ;; send protocol messages
                                  unless (choking-us-p peer)
-                                   ;; requesting pieces
                                    do (request-had-piece peer)
-                                 unless (choking-us-p peer)
-                                   ;; seeding
-                                   do (send-piece-to-peer peer)
+                                   and do (send-piece-to-peer peer)
                                  ;; (loop-finish) takes us here
                                  finally (with-lock-held ((peer-lock peer))
                                            (socket-close socket))))
