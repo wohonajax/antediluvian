@@ -38,7 +38,10 @@
 (defun connect-datagram-socket (port)
   "Attempts to connect a UDP socket listening on PORT. Returns a usocket object
 if successful, NIL if it fails."
-  (handler-case (socket-connect nil nil :protocol :datagram :local-port port)
+  (handler-case (socket-connect nil nil
+                                :protocol :datagram
+                                :local-port port
+                                :element-type '(unsigned-byte 8))
     (error ())))
 
 (defun try-ports (port)
