@@ -22,6 +22,7 @@ Useful for NATs.")
   "Saves settings."
   (macrolet ((make-setting (setting)
                `(list 'setf ',setting ,setting)))
+    (ensure-directories-exist (xdg-config-home "antediluvian/"))
     (with-open-file (file *settings-location*
                           :direction :output
                           :if-exists :overwrite
