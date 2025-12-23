@@ -87,7 +87,7 @@ a filespec to a torrent file, or a SHA1 hash."
     (make-instance 'torrent :info-hash hash :name name
                             :destination download-path
                             :file-list (get-file-list info download-path)
-                            :info info)))
+                            :info parsed-source)))
 
 (defun parse-sources (list-of-sources)
   "Converts every source in LIST-OF-SOURCES to a SHA1 hash."
