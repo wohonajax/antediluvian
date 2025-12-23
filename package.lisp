@@ -26,6 +26,8 @@
                 ;; locks
                 #:make-lock
                 #:with-lock-held)
+  (:import-from #:do-urlencode
+                #:urlencode)
   (:import-from #:ironclad
                 ;; digests (i.e. hash functions)
                 #:digest-sequence

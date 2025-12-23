@@ -25,12 +25,15 @@
                                      (:file "networking")
                                      (:file "dht")))
                (:file "connect")
+               (:file "trackers")
                (:file "antediluvian"))
   :serial t
   :depends-on (alexandria
                bencode
                bordeaux-threads
                chanl
+               dexador
+               do-urlencode
                ironclad/core
                ironclad/digests
                lparallel
