@@ -63,11 +63,7 @@ the request fails."
           (incf current-tier)
           (setf current-tracker 0))
         (unless (= current-tracker 0)
-          (let* ((operative-tier (nth current-tier announce-list))
-                 (responsive-tracker (nth current-tracker operative-tier)))
-            (setf (nth current-tier announce-list)
-                  (cons responsive-tracker
-                        (remove responsive-tracker
-                                operative-tier
-                                :test #'string=))))))
+          (let ((operative-tier (nth current-tier announce-list)))
+            (rotatef (nth 0 operative-tier)
+                     (nth current-tracker operative-tier)))))
       (announce-to-tracker torrent (gethash "announce" metadata)))))
