@@ -24,11 +24,11 @@
   "Announces peer status for TORRENT to its associated tracker(s)."
   (let ((metadata (torrent-info torrent)))
     (if-let (announce-list (gethash "announce-list" metadata))
-      (dolist (tier-or-url announce-list)
-        (cond ((listp tier-or-url)
-               ;; FIXME: announce to one URL at a time and
-               ;; RETURN if the announce is successful
-               (mapc (lambda (url) (announce-to-tracker torrent url))
-                     tier-or-url))
-              (t (announce-to-tracker torrent tier-or-url))))
+      (dolist (tier announce-list)
+        ;; TODO: keep track of which URLs are responsive
+        ;; and move them to the front of the list
+        (mapc (lambda (url)
+                (when (announce-to-tracker torrent url)
+                  (return)))
+              tier))
       (announce-to-tracker torrent (gethash "announce" metadata)))))
