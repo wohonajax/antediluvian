@@ -101,7 +101,8 @@ torrent file, or a SHA1 hash."
     (unless (member torrent *torrents* :key #'torrent-info-hash :test #'equalp)
       (push torrent *torrents*)
       (setf (gethash info-hash *torrent-hashes*) torrent)
-      (add-hash (torrent-info-hash torrent)))))
+      (add-hash (torrent-info-hash torrent))
+      (torrent-announce torrent))))
 
 (defun torrent-pieces (torrent)
   "Gets the pieces from the metainfo for TORRENT."

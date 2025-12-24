@@ -9,8 +9,10 @@ list of SHA1 hashes, magnet links, or torrent file paths."
                                                :element-type '(unsigned-byte 8))
         *peer-listener-thread* (start-listener-thread)
         *file-writer-thread* (start-file-writer-thread))
-  ;; FIXME: Figure out a better interface than the DHT function
-  (apply #'dht (mapcar #'torrent-info-hash (parse-sources sources))))
+  (let ((torrents (parse-sources sources)))
+    ;; FIXME: Figure out a better interface than the DHT function
+    (apply #'dht (mapcar #'torrent-info-hash torrents))
+    (mapc #'torrent-announce torrents)))
 
 (defun cleanup ()
   "Performs cleanup on shutdown."
