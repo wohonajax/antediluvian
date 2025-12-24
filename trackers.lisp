@@ -15,10 +15,10 @@
     (princ *default-port* str)
     (princ "&compact=1" str)))
 
-(defun announce-to-tracker (torrent url)
-  "Sends an announce GET request for TORRENT to URL."
-  (let ((hash (torrent-info-hash torrent)))
-    (dex:get (build-tracker-announce-url hash url))))
+(defun announce-to-tracker (torrent announce-url)
+  "Sends an announce GET request for TORRENT to ANNOUNCE-URL."
+  (dex:get (build-tracker-announce-url announce-url (torrent-info-hash torrent))
+           :keep-alive nil))
 
 (defun torrent-announce (torrent)
   "Announces peer status for TORRENT to its associated tracker(s)."
