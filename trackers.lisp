@@ -27,11 +27,22 @@ the request fails."
   "Announces peer status for TORRENT to its associated tracker(s)."
   (let ((metadata (torrent-info torrent)))
     (if-let (announce-list (gethash "announce-list" metadata))
-      (dolist (tier announce-list)
-        ;; TODO: keep track of which URLs are responsive
-        ;; and move them to the front of the list
-        (mapc (lambda (url)
-                (when (announce-to-tracker torrent url)
-                  (return)))
-              tier))
+      (let ((current-tier 0)
+            (current-tracker 0))
+        (dolist (tier announce-list)
+          (mapc (lambda (url)
+                  (when (announce-to-tracker torrent url)
+                    (return))
+                  (incf current-tracker))
+                tier)
+          (incf current-tier)
+          (setf current-tracker 0))
+        (unless (= current-tracker 0)
+          (let* ((operative-tier (nth current-tier announce-list))
+                 (responsive-tracker (nth current-tracker operative-tier)))
+            (setf (nth current-tracker operative-tier)
+                  (cons responsive-tracker
+                        (remove responsive-tracker
+                                operative-tier
+                                :test #'string=))))))
       (announce-to-tracker torrent (gethash "announce" metadata)))))
