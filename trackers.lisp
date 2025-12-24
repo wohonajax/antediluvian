@@ -27,10 +27,9 @@
 request. Returns a list of peers."
   (let* ((bencode:*binary-key-p* (rcurry #'equal '("peers")))
          (peers-vector (gethash "peers" (bencode:decode response-string)))
-         (total-length (length peers-vector))
-         (results-list))
+         (total-length (length peers-vector)))
     (do ((i 0 (+ i 6)))
-        ((= i total-length) results-list)
+        ((= i total-length))
       (multiple-value-bind (ip port)
           (parse-node-ip (subseq peers-vector i (+ i 6)))
         (let ((peer (make-peer ip port info-hash)))
