@@ -40,7 +40,7 @@ the request fails."
         (unless (= current-tracker 0)
           (let* ((operative-tier (nth current-tier announce-list))
                  (responsive-tracker (nth current-tracker operative-tier)))
-            (setf (nth current-tracker operative-tier)
+            (setf (nth current-tier announce-list)
                   (cons responsive-tracker
                         (remove responsive-tracker
                                 operative-tier
