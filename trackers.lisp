@@ -13,7 +13,14 @@
     (princ (urlencode (byte-array-to-ascii-string *peer-id*)) str)
     (princ "&port=" str)
     (princ *default-port* str)
-    (princ "&compact=1" str)))
+    ;; TODO: keep track of upload/download/left
+    (princ "&uploaded=0" str)
+    (princ "&downloaded=0" str)
+    (princ "&left=0" str)
+    (princ "&compact=1" str)
+    (princ "&no_peer_id=1" str)
+    ;; TODO: determine whether to send started, stopped, or completed
+    (princ "&event=started" str)))
 
 (defun announce-to-tracker (torrent announce-url)
   "Sends an announce GET request for TORRENT to ANNOUNCE-URL. Returns NIL if
