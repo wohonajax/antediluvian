@@ -31,3 +31,14 @@ list of SHA1 hashes, magnet links, or torrent file paths."
   "Starts up the torrent client with SOURCES, which should be SHA1 hashes,
 magnet links, or torrent file specifiers."
   (setup sources))
+
+(defun add-torrent (source)
+  "Adds a torrent from SOURCE, which should be a magnet link, a filespec to a
+torrent file, or a SHA1 hash."
+  (let* ((torrent (parse-source source))
+         (info-hash (torrent-info-hash torrent)))
+    (unless (member torrent *torrents* :key #'torrent-info-hash :test #'equalp)
+      (push torrent *torrents*)
+      (setf (gethash info-hash *torrent-hashes*) torrent)
+      (add-hash (torrent-info-hash torrent))
+      (torrent-announce torrent))))
