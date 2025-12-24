@@ -10,7 +10,7 @@ Useful for NATs.")
 (defvar *settings-location* (xdg-config-home "antediluvian/settings.sexp")
   "Where to store and load settings.")
 
-(defvar *default-download-directory* (uiop:truenamize "~/Downloads/")
+(defvar *default-download-directory* (truenamize "~/Downloads/")
   "The default directory to download torrents into.")
 ;;; TODO: sanitize settings
 (defun load-settings ()
