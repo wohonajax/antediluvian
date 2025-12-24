@@ -24,7 +24,7 @@ the request fails."
     (error ())))
 
 (defun torrent-announce (torrent)
-  "Announces peer status for TORRENT to its associated tracker(s)."
+  "Sends announce GET requests for TORRENT to its associated trackers."
   (let ((metadata (torrent-info torrent)))
     (if-let (announce-list (gethash "announce-list" metadata))
       (let ((current-tier 0)
