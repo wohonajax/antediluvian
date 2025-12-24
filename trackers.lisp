@@ -16,9 +16,12 @@
     (princ "&compact=1" str)))
 
 (defun announce-to-tracker (torrent announce-url)
-  "Sends an announce GET request for TORRENT to ANNOUNCE-URL."
-  (dex:get (build-tracker-announce-url announce-url (torrent-info-hash torrent))
-           :keep-alive nil))
+  "Sends an announce GET request for TORRENT to ANNOUNCE-URL. Returns NIL if
+the request fails."
+  (handler-case (dex:get (build-tracker-announce-url announce-url
+                                                     (torrent-info-hash torrent))
+                         :keep-alive nil)
+    (error ())))
 
 (defun torrent-announce (torrent)
   "Announces peer status for TORRENT to its associated tracker(s)."
