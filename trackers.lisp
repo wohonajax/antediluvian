@@ -7,6 +7,7 @@
 <https://wiki.theory.org/BitTorrentSpecification#Tracker_Request_Parameters>."
   (with-output-to-string (str)
     (princ base-url str)
+    ;; FIXME: find the right method to URLencode binary data
     (princ "?info_hash=" str)
     (princ (urlencode (byte-array-to-ascii-string info-hash)) str)
     (princ "&peer_id=" str)
