@@ -22,15 +22,15 @@
     ;; TODO: determine whether to send started, stopped, or completed
     (princ "&event=started" str)))
 
-(defun parse-announce-response (response-string info-hash)
-  "Parses RESPONSE-STRING, a Bencoded string result from an announce GET
+(defun parse-announce-response (response-vector info-hash)
+  "Parses RESPONSE-VECTOR, a Bencoded byte vector result from an announce GET
 request. Returns a list of peers."
   (let* ((bencode:*binary-key-p* (curry #'equal '("peers")))
          ;; FIXME: there may be endianness issues
          ;; resulting from the http get request.
          ;; either way bencode:decode isn't giving
          ;; us what we want
-         (peers-vector (gethash "peers" (bencode:decode response-string)))
+         (peers-vector (gethash "peers" (bencode:decode response-vector)))
          (total-length (length peers-vector)))
     (do ((i 0 (+ i 6)))
         ((= i total-length))
