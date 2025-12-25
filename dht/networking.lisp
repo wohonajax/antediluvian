@@ -111,8 +111,8 @@ then tries to add it to the routing table. Returns the node object."
               (when (member info-hash *torrents* :key #'torrent-info-hash
                             :test #'equalp)
                 (let ((peer (make-peer ip port info-hash)))
-                  (unless (member peer *peer-list* :key #'peer-ip :test #'equalp)
-                    (with-lock-held (*peer-list-lock*)
+                  (with-lock-held (*peer-list-lock*)
+                    (unless (member peer *peer-list* :key #'peer-ip :test #'equalp)
                       (push peer *peer-list*))
                     (initiate-peer-connection peer))))
               (send-response :announce_peer node dict :source-port port))
