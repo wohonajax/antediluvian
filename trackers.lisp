@@ -26,8 +26,10 @@
   "Parses RESPONSE-STRING, a Bencoded string result from an announce GET
 request. Returns a list of peers."
   (let* ((bencode:*binary-key-p* (curry #'equal '("peers")))
-         ;; FIXME: bencode:decode doesn't decode
-         ;; bencoded string inputs the way we want
+         ;; FIXME: there may be endianness issues
+         ;; resulting from the http get request.
+         ;; either way bencode:decode isn't giving
+         ;; us what we want
          (peers-vector (gethash "peers" (bencode:decode response-string)))
          (total-length (length peers-vector)))
     (do ((i 0 (+ i 6)))
