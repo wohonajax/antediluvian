@@ -14,8 +14,7 @@ peer socket."
   (make-thread
    (lambda ()
      (loop for socket-list = (wait-for-input *listening-peer-socket* :ready-only t)
-           do (loop for socket in socket-list
-                    do (accept-peer-connection socket))))
+           do (mapc #'accept-peer-connection socket-list)))
    :name "Peer socket listener thread"))
 
 (defvar *peer-listener-thread* nil
