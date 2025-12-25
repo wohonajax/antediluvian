@@ -13,8 +13,10 @@
 peer socket."
   (make-thread
    (lambda ()
-     (loop for socket in (wait-for-input *listening-peer-socket* :ready-only t)
-           do (accept-peer-connection socket)))))
+     (loop for socket-list = (wait-for-input *listening-peer-socket* :ready-only t)
+           do (loop for socket in socket-list
+                    do (accept-peer-connection socket))))
+   :name "Peer socket listener thread"))
 
 (defvar *peer-listener-thread* nil
   "A thread listening for incoming TCP connections.")
