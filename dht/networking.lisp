@@ -221,7 +221,9 @@ node in the response."
       (equal keys '("id" "r"))
       (equal keys '("token" "r"))
       (equal keys '("nodes" "r"))
-      (equal keys '("values" "r"))))
+      (equal keys '("values" "r"))
+      ;; extensions
+      (equal keys '("ip"))))
 
 (defun parse-message ()
   "Parses a KRPC message."
