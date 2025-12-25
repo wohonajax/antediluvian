@@ -186,7 +186,7 @@ values."
      (loop (multiple-value-call #'write-chunk
                                 (write-instruction-values
                                  (chanl:recv *write-instructions-channel*)))))
-   :name "file-writer"))
+   :name "File writer thread"))
 
 (defvar *file-writer-thread* nil
   "A thread managing file write operations.")

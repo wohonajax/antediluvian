@@ -30,7 +30,7 @@ port as multiple values."
                                *current-secret*
                                (make-secret))
                        (sleep 300)))
-               :name "dht-secret-rotation"))
+               :name "DHT secret rotation thread"))
 
 (defvar *secret-rotation-thread* nil
   "A thread that rotates secrets for tokens every 5 minutes.")
