@@ -55,3 +55,21 @@ random data."
         for i below num-bytes
         do (setf (aref result i) (random 256 random-state))
         finally (return result)))
+;;; this code is adapted from the
+;;; do-urlencode library without much change
+(defun urlencode-binary-data (byte-array)
+  "Percent-encodes BYTE-ARRAY."
+  (loop with result = (make-string (* 3 (length byte-array)))
+        with i of-type fixnum = 0
+        for octet across byte-array
+        do (flet ((push-char (char)
+                    (setf (aref result i) char)
+                    (incf i)))
+             (if (do-urlencode::unreserved-octet-p octet)
+                 (push-char (do-urlencode::octet-to-ascii octet))
+                 (let ((big-byte (digit-char (ash (dpb 0 (byte 4 0) octet) -4) 16))
+                       (little-byte (digit-char (dpb 0 (byte 4 4) octet) 16)))
+                   (push-char #\%)
+                   (push-char big-byte)
+                   (push-char little-byte))))
+        finally (return (subseq result 0 i))))

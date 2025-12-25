@@ -9,9 +9,9 @@
     (princ base-url str)
     ;; FIXME: find the right method to URLencode binary data
     (princ "?info_hash=" str)
-    (princ (urlencode (byte-array-to-ascii-string info-hash)) str)
+    (princ (urlencode-binary-data info-hash) str)
     (princ "&peer_id=" str)
-    (princ (urlencode (byte-array-to-ascii-string *peer-id*)) str)
+    (princ (urlencode-binary-data *peer-id*) str)
     (princ "&port=" str)
     (princ *default-port* str)
     ;; TODO: keep track of upload/download/left
