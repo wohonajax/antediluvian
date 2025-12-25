@@ -113,8 +113,8 @@ then tries to add it to the routing table. Returns the node object."
                 (let ((peer (make-peer ip port info-hash)))
                   (with-lock-held (*peer-list-lock*)
                     (unless (member peer *peer-list* :key #'peer-ip :test #'equalp)
-                      (push peer *peer-list*))
-                    (initiate-peer-connection peer))))
+                      (push peer *peer-list*)
+                      (initiate-peer-connection peer)))))
               (send-response :announce_peer node dict :source-port port))
              (t (send-response :dht_error node dict :error-type :protocol)))))))
 
