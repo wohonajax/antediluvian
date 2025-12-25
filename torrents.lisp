@@ -32,10 +32,7 @@
 
 (defun get-info-hash-from-bdecoded-torrent-file (hash-table)
   "Gets the SHA1 info hash from HASH-TABLE, a decoded torrent file."
-  (let ((dict (make-hash-table :test #'equal)))
-    ;; we need a dictionary of only the "info" part of the torrent file
-    (setf (gethash "info" dict) (gethash "info" hash-table))
-    (digest-sequence :sha1 (bencode:encode dict nil))))
+  (digest-sequence :sha1 (bencode:encode (gethash "info" hash-table) nil)))
 
 (defun make-download-pathname (filename)
   "Creates a download destination directory pathname from FILENAME."
