@@ -48,7 +48,8 @@ the request fails."
   (let ((info-hash (torrent-info-hash torrent)))
     (handler-case (parse-announce-response
                    (dex:get (build-tracker-announce-url announce-url info-hash)
-                            :keep-alive nil)
+                            :keep-alive nil
+                            :force-binary t)
                    info-hash)
       (error ()))))
 
