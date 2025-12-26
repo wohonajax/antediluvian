@@ -178,3 +178,10 @@ peer socket."
                          (with-lock-held (*peer-list-lock*)
                            (removef *peer-list* peer :count 1))))
           *peer-connection-threads*)))
+
+(defun connect-to-peer (peer)
+  "Attempts to add PEER to the peer list and establish a connection."
+  (with-lock-held (*peer-list-lock*)
+    (unless (member peer *peer-list* :key #'peer-ip :test #'equalp)
+      (push peer *peer-list*)
+      (initiate-peer-connection peer))))
