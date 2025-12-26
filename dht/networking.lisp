@@ -174,15 +174,15 @@ node in the response."
   "Parses a Bencoded response dictionary."
   (let* ((now (get-universal-time))
          (transaction-id (gethash "t" dict))
-         (arguments (gethash "a" dict))
-         (id (gethash "id" arguments))
+         (response-arguments (gethash "r" dict))
+         (id (gethash "id" response-arguments))
          ;; TOKEN comes from a get_peers response, needed for announce_peer
-         (token (gethash "token" arguments))
+         (token (gethash "token" response-arguments))
          ;; NODES comes from a find_node or get_peers response
-         (nodes (gethash "nodes" arguments))
+         (nodes (gethash "nodes" response-arguments))
          ;; VALUES is a list of byte vectors which are compact peer info
          ;; Comes from a get_peers response
-         (values (gethash "values" arguments))
+         (values (gethash "values" response-arguments))
          (node (find-node-in-table id)))
     ;; no implied_port or port arguments in responses so they're both nil here
     (setf node (handle-node-bookkeeping node now nil nil id ip port))
