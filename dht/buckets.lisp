@@ -12,11 +12,11 @@
   (nodes (make-array +k+ :initial-element nil))
   (last-changed (get-universal-time)))
 
-(defun make-new-bucket (min max)
-  "Adds a bucket to the routing table with a range from MIN to MAX."
 (defvar *routing-table* (list (make-bucket))
   "The routing table of known and added nodes.")
 
+(defun make-new-bucket (min max)
+  "Adds a bucket to the routing table with a range from MIN to MAX."
   (let ((new-bucket (make-bucket :min min :max max)))
     (setf *routing-table*
           (insert new-bucket *routing-table* #'< :key #'bucket-min))
