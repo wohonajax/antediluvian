@@ -87,7 +87,7 @@ a filespec to a torrent file, or a SHA1 hash."
                             :info parsed-source)))
 
 (defun parse-sources (list-of-sources)
-  "Converts every source in LIST-OF-SOURCES to a SHA1 hash."
+  "Converts every source in LIST-OF-SOURCES to a torrent object."
   (mapcar #'parse-source list-of-sources))
 
 (defun torrent-pieces (torrent)
