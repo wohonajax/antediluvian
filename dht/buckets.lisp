@@ -2,8 +2,6 @@
 
 (in-package #:antediluvian)
 
-(defvar *routing-table* (list))
-
 ;;; recommended bucket size limit is 8
 (defconstant +k+ 8
   "Replication parameter. Used for the bucket size limit, among other things.")
@@ -16,6 +14,9 @@
 
 (defun make-new-bucket (min max)
   "Adds a bucket to the routing table with a range from MIN to MAX."
+(defvar *routing-table* (list (make-bucket))
+  "The routing table of known and added nodes.")
+
   (let ((new-bucket (make-bucket :min min :max max)))
     (setf *routing-table*
           (insert new-bucket *routing-table* #'< :key #'bucket-min))
