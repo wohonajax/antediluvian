@@ -34,9 +34,18 @@
   "Gets the SHA1 info hash from HASH-TABLE, a decoded torrent file."
   (digest-sequence :sha1 (bencode:encode (gethash "info" hash-table) nil)))
 
+(defun sanitize-namestring (pathspec)
+  "Escapes brackets for use in pathnames."
+  (with-output-to-string (str)
+    (map nil (lambda (char)
+               (when (char= char #\[)
+                 (write-char #\\ str))
+               (write-char char str))
+         pathspec)))
+
 (defun make-download-pathname (filename)
   "Creates a download destination directory pathname from FILENAME."
-  (merge-pathnames (concatenate 'string filename "/")
+  (merge-pathnames (sanitize-namestring (concatenate 'string filename "/"))
                    *default-download-directory*))
 
 (defun get-true-download-path (info-dictionary)
@@ -52,7 +61,8 @@ to ROOT-PATH for a given torrent's INFO-DICTIONARY."
     (mapcar (lambda (file-dictionary)
               ;; the path entry will be a list of (sub-)directories
               ;; and the filename. potentially only the filename
-              (merge-pathnames (join "/" (gethash "path" file-dictionary))
+              (merge-pathnames (sanitize-namestring
+                                (join "/" (gethash "path" file-dictionary)))
                                root-path))
             files)
     ;; if there's no files entry in the info dictionary, use the name entry
