@@ -54,7 +54,7 @@ NODE must be closer to us than the kth closest node in the routing table."
   "Does nothing if NODE is already in the routing table. If it isn't, splits
 the bucket NODE fits into if it's a candidate for splitting. Initiates the
 procedure for potentially adding a node to a bucket."
-  (let ((bucket (correct-bucket node)))
+  (let ((bucket (correct-bucket (node-id node))))
     (when (contains node bucket)
       (return-from maybe-add-node))
     (when (bucket-split-candidate-p node bucket)
@@ -70,7 +70,7 @@ candidates or add those candidates to the replacement cache."
                ;; giving it more time to be fulfilled
                (when (fulfilledp promise)
                  (case (force promise)
-                   (timeout (setf (svref (correct-bucket node) 0) node))
+                   (timeout (setf (svref (correct-bucket (node-id node)) 0) node))
                    (response (push node *replacement-cache*)))
                  (remhash transaction-id *replacement-candidates*))))
            *replacement-candidates*))
@@ -79,7 +79,7 @@ candidates or add those candidates to the replacement cache."
   "Checks whether to replace stale nodes in the routing table with nodes in the
 replacement cache."
   (mapc (lambda (candidate)
-          (let* ((bucket (correct-bucket candidate))
+          (let* ((bucket (correct-bucket (node-id candidate)))
                  (incumbent (oldest-node-in-bucket bucket)))
             (when (and (> (minutes-since (bucket-last-changed bucket))
                           15)
