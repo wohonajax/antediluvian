@@ -42,4 +42,4 @@ torrent file, or a SHA1 hash."
       (push torrent *torrents*)
       (setf (gethash info-hash *torrent-hashes*) torrent)
       (add-hash (torrent-info-hash torrent))
-      (torrent-announce torrent))))
+      (mapc #'connect-to-peer (torrent-announce torrent)))))
