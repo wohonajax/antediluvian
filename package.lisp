@@ -47,11 +47,13 @@
   (:import-from #:serapeum
                 #:dict
                 #:firstn
+                #:lret
                 #:lret*)
   (:import-from #:str
                 #:join
                 #:starts-with-p)
   (:import-from #:uiop
+                #:ensure-all-directories-exist
                 #:truenamize
                 #:xdg-config-home)
   (:import-from #:usocket

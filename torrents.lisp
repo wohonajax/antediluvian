@@ -42,7 +42,7 @@
 (defun get-true-download-path (info-dictionary)
   "Returns a download pathname for a single-file torrent from its
 INFO-DICTIONARY."
-  (merge-pathnames (gethash "name" info-dictionary)
+  (merge-pathnames (concatenate 'string (gethash "name" info-dictionary) "/")
                    *default-download-directory*))
 
 (defun get-file-list (info-dictionary root-path)
@@ -80,10 +80,12 @@ a filespec to a torrent file, or a SHA1 hash."
          (info (when (and (not (magnet:magnet-link-p source))
                           (filespecp source))
                  (gethash "info" parsed-source)))
-         (download-path (make-download-pathname name)))
+         (download-path (make-download-pathname name))
+         (file-list (get-file-list info download-path)))
+    (ensure-all-directories-exist file-list)
     (make-instance 'torrent :info-hash hash :name name
                             :destination download-path
-                            :file-list (get-file-list info download-path)
+                            :file-list file-list
                             :info parsed-source)))
 
 (defun parse-sources (list-of-sources)
