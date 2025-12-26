@@ -232,7 +232,11 @@ node in the response."
       (receive-data)
     (let* ((packet (subseq data 0 size))
            (bencode:*binary-key-p* #'binary-key-test)
-           (dict (bencode:decode packet)))
+           (dict (handler-case (bencode:decode packet)
+                   ;; TODO: handle errors better
+                   ;; (we need this because libtorrent's
+                   ;;  "y" entries precede "v" entries)
+                   (error () (invoke-restart :continue)))))
       (eswitch ((gethash "y" dict) :test #'string=)
         ("q" (parse-query dict host port))
         ("r" (parse-response dict host port))
