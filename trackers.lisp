@@ -31,7 +31,8 @@ request. Returns a list of peers."
          ;; either way bencode:decode isn't giving
          ;; us what we want
          (peers-vector (gethash "peers" (bencode:decode response-vector)))
-         (total-length (length peers-vector)))
+         (total-length (length peers-vector))
+         peers)
     (do ((i 0 (+ i 6)))
         ((= i total-length))
       (multiple-value-bind (ip port)
@@ -39,8 +40,10 @@ request. Returns a list of peers."
         (let ((peer (make-peer ip port info-hash)))
           (with-lock-held (*peer-list-lock*)
             (unless (member peer *peer-list* :key #'peer-ip :test #'equalp)
+              (push peer peers)
               (push peer *peer-list*)
-              (initiate-peer-connection peer))))))))
+              (initiate-peer-connection peer))))))
+    peers))
 
 (defun announce-to-tracker (torrent announce-url)
   "Sends an announce GET request for TORRENT to ANNOUNCE-URL. Returns NIL if
@@ -58,10 +61,12 @@ the request fails."
   (let ((metadata (torrent-info torrent)))
     (if-let (announce-list (gethash "announce-list" metadata))
       (let ((current-tier 0)
-            (current-tracker 0))
+            (current-tracker 0)
+            peers)
         (dolist (tier announce-list)
           (mapc (lambda (url)
-                  (when (announce-to-tracker torrent url)
+                  (when-let (intermediate-list (announce-to-tracker torrent url))
+                    (setf peers intermediate-list)
                     (return))
                   (incf current-tracker))
                 tier)
@@ -70,5 +75,6 @@ the request fails."
         (unless (= current-tracker 0)
           (let ((operative-tier (nth current-tier announce-list)))
             (rotatef (nth 0 operative-tier)
-                     (nth current-tracker operative-tier)))))
+                     (nth current-tracker operative-tier))))
+        peers) ; return the list of peers
       (announce-to-tracker torrent (gethash "announce" metadata)))))
