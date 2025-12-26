@@ -13,6 +13,12 @@
    (health :initarg :health :accessor node-health)
    (failed-rpcs :initform 0 :accessor node-failed-rpcs)))
 
+(defmethod print-object ((object node) stream)
+  (format stream "<NODE ID: ~A IP: ~A PORT: ~A>"
+          (node-id object)
+          (node-ip object)
+          (node-port object)))
+
 (defun create-node (&key id ip port last-activity (health :questionable))
   "Creates a node object with the specified attributes."
   (make-instance 'node :id id :ip ip :port port
