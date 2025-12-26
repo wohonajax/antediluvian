@@ -27,7 +27,7 @@ whose cdr is the node to add to the bucket.")
 to replace the least-recently-active node in BUCKET."
   (if-let (empty-slot-index (first-empty-slot bucket))
     ;; the bucket isn't full
-    (setf (svref bucket empty-slot-index) node)
+    (setf (svref (bucket-nodes bucket) empty-slot-index) node)
     ;; the bucket is full
     (node-replacement-check (oldest-node-in-bucket bucket) node)))
 
@@ -55,7 +55,7 @@ NODE must be closer to us than the kth closest node in the routing table."
 the bucket NODE fits into if it's a candidate for splitting. Initiates the
 procedure for potentially adding a node to a bucket."
   (let ((bucket (correct-bucket (node-id node))))
-    (when (contains node bucket)
+    (when (contains node (bucket-nodes bucket))
       (return-from maybe-add-node))
     (when (bucket-split-candidate-p node bucket)
       (split-bucket bucket))
