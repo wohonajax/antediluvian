@@ -62,7 +62,10 @@ PORT of the UDP packet."
   (setf (node-port node)
         (cond ((and implied-port (= implied-port 1))
                port)
-              (given-port given-port))))
+              (given-port given-port)
+              ;; nothing else to work with
+              ;; use the originating port
+              (t port))))
 
 (defun handle-node-bookkeeping (node time implied-port given-port id ip port)
   "Either adjusts NODE's settings or creates a node based on those settings,
