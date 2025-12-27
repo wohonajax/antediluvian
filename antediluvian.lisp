@@ -40,10 +40,11 @@ magnet links, or torrent file specifiers."
     (unless (member torrent *torrents* :key #'torrent-info-hash :test #'equalp)
       (push torrent *torrents*)
       (setf (gethash info-hash *torrent-hashes*) torrent)
-      (add-hash info-hash)
       (mapc #'connect-to-peer (torrent-announce torrent)))))
 
 (defun add-source-as-torrent (source)
   "Adds a torrent from SOURCE, which should be a magnet link, a filespec to a
 torrent file, or a SHA1 hash."
-  (add-torrent (parse-source source)))
+  (let ((torrent (parse-source source)))
+    (add-torrent torrent)
+    (add-hash (torrent-info-hash torrent))))
