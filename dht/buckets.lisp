@@ -24,7 +24,7 @@
 
 (defun correct-bucket (id)
   "Returns the proper bucket for ID."
-  (loop with id-int = (convert-id-to-int id )
+  (loop with id-int = (convert-id-to-int id)
         for bucket in *routing-table*
         when (<= (bucket-min bucket) id-int (bucket-max bucket))
           return bucket))
