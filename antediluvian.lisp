@@ -10,6 +10,7 @@ list of SHA1 hashes, magnet links, or torrent file paths."
         *peer-listener-thread* (start-listener-thread)
         *file-writer-thread* (start-file-writer-thread))
   (lret ((torrents (parse-sources sources)))
+    (mapc #'add-torrent torrents)
     ;; FIXME: Figure out a better interface than the DHT function
     (apply #'dht (mapcar #'torrent-info-hash torrents))
     (dolist (peer-list (mapcar #'torrent-announce torrents))
@@ -33,13 +34,16 @@ list of SHA1 hashes, magnet links, or torrent file paths."
 magnet links, or torrent file specifiers."
   (setup sources))
 
-(defun add-torrent (source)
-  "Adds a torrent from SOURCE, which should be a magnet link, a filespec to a
-torrent file, or a SHA1 hash."
-  (let* ((torrent (parse-source source))
-         (info-hash (torrent-info-hash torrent)))
+(defun add-torrent (torrent)
+  "Adds TORRENT to the registry of active torrents. Must be a torrent object."
+  (let ((info-hash (torrent-info-hash torrent)))
     (unless (member torrent *torrents* :key #'torrent-info-hash :test #'equalp)
       (push torrent *torrents*)
       (setf (gethash info-hash *torrent-hashes*) torrent)
-      (add-hash (torrent-info-hash torrent))
+      (add-hash info-hash)
       (mapc #'connect-to-peer (torrent-announce torrent)))))
+
+(defun add-source-as-torrent (source)
+  "Adds a torrent from SOURCE, which should be a magnet link, a filespec to a
+torrent file, or a SHA1 hash."
+  (add-torrent (parse-source source)))

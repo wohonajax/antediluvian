@@ -80,5 +80,5 @@
                 ;; conditions
                 #:connection-refused-error
                 #:timeout-error)
-  (:export #:add-torrent
+  (:export #:add-source-as-torrent
            #:start))
