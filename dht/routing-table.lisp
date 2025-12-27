@@ -89,6 +89,7 @@ replacement cache."
               ;; replacement check fails, since we'll (eventually) get
               ;; a DHT response (if we don't, the node is unresponsive
               ;; and we don't want it anyway). if it doesn't fail, we
-              ;; don't want it in the replacement cache anyway
+              ;; don't want it in the replacement cache anyway, since
+              ;; it's in the routing table
               (removef *replacement-cache* candidate :count 1))))
         *replacement-cache*))
