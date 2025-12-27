@@ -10,7 +10,7 @@
    ;; this peer's ID
    (id :initform nil :initarg :id :accessor peer-id)
    ;; torrent this peer is associated with
-   (torrent :initform nil :accessor peer-torrent)
+   (torrent :initform nil :initarg :torrent :accessor peer-torrent)
    ;; list of pieces this peer already has
    (had-pieces :initform '() :accessor had-pieces)
    ;; list of piece indices this peer has requested
