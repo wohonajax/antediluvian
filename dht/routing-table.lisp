@@ -86,7 +86,9 @@ replacement cache."
                        (node-stale-p incumbent))
               (node-replacement-check incumbent candidate)
               ;; the replacement candidate will be added again if the
-              ;; replacement check fails. if it doesn't, we don't want
-              ;; it in the replacement cache anyway
+              ;; replacement check fails, since we'll (eventually) get
+              ;; a DHT response (if we don't, the node is unresponsive
+              ;; and we don't want it anyway). if it doesn't fail, we
+              ;; don't want it in the replacement cache anyway
               (removef *replacement-cache* candidate :count 1))))
         *replacement-cache*))
