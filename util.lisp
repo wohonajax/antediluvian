@@ -17,7 +17,8 @@
 (defun insert (item list predicate &key (key #'identity))
   "Inserts ITEM into LIST and sorts it according to PREDICATE. Duplicates are
 not allowed."
-  (cond ((equalp item (first list)) list)
+  (cond ((null list) (list item))
+        ((equalp item (first list)) list)
         ((funcall predicate
                   (funcall key item)
                   (funcall key (first list)))
