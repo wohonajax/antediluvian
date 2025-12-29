@@ -71,9 +71,10 @@ if successful, NIL otherwise."
 
 (defun first-empty-slot (bucket)
   "Returns the index of the first empty slot in BUCKET."
-  (dotimes (i +k+)
-    (unless (svref (bucket-nodes bucket) i)
-      (return i))))
+  (let ((nodes (bucket-nodes bucket)))
+    (dotimes (i +k+)
+      (unless (svref nodes i)
+        (return i)))))
 
 (defun update-bucket (bucket)
   "Updates BUCKET's LAST-CHANGED property."
