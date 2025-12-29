@@ -236,11 +236,14 @@ node in the response."
       (receive-data)
     (let* ((packet (subseq data 0 size))
            (bencode:*binary-key-p* #'binary-key-test)
-           (dict (handler-case (bencode:decode packet)
-                   ;; TODO: handle errors better
-                   ;; (we need this because libtorrent's
-                   ;;  "y" entries precede "v" entries)
-                   (error () (invoke-restart :continue)))))
+           ;; we need this handler-bind
+           ;; because libtorrent puts "y"
+           ;; keys before "v" keys
+           ;; (non-alphabetical sorting)
+           (dict (handler-bind ((error (lambda (e)
+                                         (declare (ignore e))
+                                         (invoke-restart 'bencode::continue))))
+                   (bencode:decode packet))))
       (eswitch ((gethash "y" dict) :test #'string=)
         ("q" (parse-query dict host port))
         ("r" (parse-response dict host port))
