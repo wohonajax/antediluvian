@@ -17,10 +17,9 @@
 
 (defun make-new-bucket (min max)
   "Adds a bucket to the routing table with a range from MIN to MAX."
-  (let ((new-bucket (make-bucket :min min :max max)))
+  (lret ((new-bucket (make-bucket :min min :max max)))
     (setf *routing-table*
-          (insert new-bucket *routing-table* #'< :key #'bucket-min))
-    new-bucket))
+          (insert new-bucket *routing-table* #'< :key #'bucket-min))))
 
 (defun correct-bucket (id)
   "Returns the proper bucket for ID."

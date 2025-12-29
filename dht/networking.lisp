@@ -137,7 +137,8 @@ substrings."
       ;; TODO: error handling for out-of-bounds
       ;; (node's health may be bad--malformed response sent?)
       ;; also possibly sending IPv6 addresses
-      (error () (return-from parse-nodes nodes)))))
+      (error () (return-from parse-nodes nodes)))
+    nodes))
 
 (defun parse-peers (peers-list)
   "Parses a list of peers out of a list of compact peer info byte vectors."
@@ -166,12 +167,12 @@ node in the response."
   "Handle a list of peers that have been searched for."
   (with-lock-held (*peer-list-lock*)
     (loop for (ip . port) in (parse-peers peers)
-        for peer = (make-peer ip port target)
-        ;; TODO: remove duplicate peers when there's
-        ;; a peer with a failed socket connection
-        unless (member ip *peer-list* :key #'peer-ip :test #'equalp)
-          do (push peer *peer-list*)
-             (initiate-peer-connection peer))))
+          for peer = (make-peer ip port target)
+          ;; TODO: remove duplicate peers when there's
+          ;; a peer with a failed socket connection
+          unless (member ip *peer-list* :key #'peer-ip :test #'equalp)
+            do (push peer *peer-list*)
+               (initiate-peer-connection peer))))
 
 (defun parse-response (dict ip port)
   "Parses a Bencoded response dictionary."

@@ -41,12 +41,11 @@ port as multiple values."
 
 (defun invent-token (info-hash node)
   "Creates a token associated with INFO-HASH and NODE."
-  (let* ((ip (node-ip node))
-         (token (hash-ip-and-secret ip *current-secret*)))
+  (lret* ((ip (node-ip node))
+          (token (hash-ip-and-secret ip *current-secret*)))
     (setf (gethash token *token-births*) (get-universal-time))
     (pushnew token (gethash ip *token-ips*) :test #'equalp)
-    (pushnew token (gethash info-hash *token-hashes*) :test #'equalp)
-    token))
+    (pushnew token (gethash info-hash *token-hashes*) :test #'equalp)))
 ;; TODO: verify that tokens came from us (in networking.lisp probably)
 (defun verify-token (token node)
   "Verifies whether TOKEN comes from us and is valid for a given NODE."
