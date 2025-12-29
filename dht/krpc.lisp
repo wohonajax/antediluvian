@@ -94,14 +94,13 @@ format."
 (defun send-message (type ip port transaction-id &key id info-hash)
   "Sends NODE a TYPE message. TYPE should be a keyword like
 :PING or :FIND_NODE."
-  (handler-case (case type
-                  (:ping (ping-node ip port transaction-id))
-                  (:find_node (find-node ip port id transaction-id))
-                  (:get_peers (get-peers ip port info-hash transaction-id))
-                  (:announce_peer (announce-peer ip port info-hash
-                                                 transaction-id
-                                                 (gethash ip *token-ips*))))
-    (simple-error () (invoke-restart :continue))))
+  (case type
+    (:ping (ping-node ip port transaction-id))
+    (:find_node (find-node ip port id transaction-id))
+    (:get_peers (get-peers ip port info-hash transaction-id))
+    (:announce_peer (announce-peer ip port info-hash
+                                   transaction-id
+                                   (gethash ip *token-ips*)))))
 
 ;;; Responses to queries
 
@@ -197,14 +196,13 @@ sends a protocol error message."
 (defun send-response (type node dict &key error-type source-port)
   (let ((ip (node-ip node))
         (port (node-port node)))
-    (handler-case (case type
-                    (:ping
-                     (respond-to-ping ip port dict))
-                    (:find_node
-                     (respond-to-find-node ip port dict))
-                    (:get_peers
-                     (respond-to-get-peers ip port dict node))
-                    (:announce_peer
-                     (respond-to-announce-peer ip dict node source-port))
-                    (:dht_error (dht-error ip port error-type dict)))
-      (simple-error () (invoke-restart :continue)))))
+    (case type
+      (:ping
+       (respond-to-ping ip port dict))
+      (:find_node
+       (respond-to-find-node ip port dict))
+      (:get_peers
+       (respond-to-get-peers ip port dict node))
+      (:announce_peer
+       (respond-to-announce-peer ip dict node source-port))
+      (:dht_error (dht-error ip port error-type dict)))))
