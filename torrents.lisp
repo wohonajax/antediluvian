@@ -38,6 +38,8 @@
   "Escapes pattern characters for use in pathnames."
   (with-output-to-string (str)
     (map nil (lambda (char)
+               ;; TODO: check implementations
+               ;; for characters in need of escaping
                (when (or (char= char #\[)
                          (char= char #\?))
                  (write-char #\\ str))
