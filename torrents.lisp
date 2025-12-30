@@ -43,16 +43,25 @@
                (write-char char str))
          pathspec)))
 
+(defun make-directory-namestring (name)
+  "Makes NAME into a (relative) directory namestring."
+  (sanitize-namestring (concatenate 'string name "/")))
+
+(defun make-download-directory-pathname (filespec download-directory)
+  "Makes a download destination pathname using FILESPEC and a parent
+DOWNLOAD-DIRECTORY."
+  (merge-pathnames (make-directory-namestring filespec)
+                   download-directory))
+
 (defun make-download-pathname (filename)
   "Creates a download destination directory pathname from FILENAME."
-  (merge-pathnames (sanitize-namestring (concatenate 'string filename "/"))
-                   *default-download-directory*))
+  (make-download-directory-pathname filename *default-download-directory*))
 
-(defun get-true-download-path (info-dictionary)
+(defun make-single-file-download-path (info-dictionary)
   "Returns a download pathname for a single-file torrent from its
 INFO-DICTIONARY."
-  (merge-pathnames (concatenate 'string (gethash "name" info-dictionary) "/")
-                   *default-download-directory*))
+  (make-download-directory-pathname (gethash "name" info-dictionary)
+                                    *default-download-directory*))
 
 (defun get-file-list (info-dictionary root-path)
   "Returns a list of pathnames specifying download locations relative
@@ -66,7 +75,7 @@ to ROOT-PATH for a given torrent's INFO-DICTIONARY."
                                root-path))
             files)
     ;; if there's no files entry in the info dictionary, use the name entry
-    (list (get-true-download-path info-dictionary))))
+    (list (make-single-file-download-path info-dictionary))))
 
 (defun parse-source (source)
   "Parses SOURCE into a torrent object. SOURCE should be a magnet link,
