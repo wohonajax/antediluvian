@@ -35,10 +35,11 @@
   (digest-sequence :sha1 (bencode:encode (gethash "info" hash-table) nil)))
 
 (defun sanitize-namestring (pathspec)
-  "Escapes brackets for use in pathnames."
+  "Escapes pattern characters for use in pathnames."
   (with-output-to-string (str)
     (map nil (lambda (char)
-               (when (char= char #\[)
+               (when (or (char= char #\[)
+                         (char= char #\?))
                  (write-char #\\ str))
                (write-char char str))
          pathspec)))
