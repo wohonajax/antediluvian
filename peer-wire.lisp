@@ -71,7 +71,7 @@ Returns the peer object, or NIL if the handshake failed."
   (macrolet ((close-unless (test)
                `(unless ,test
                   (socket-close socket)
-                  (return-from receive-handshake))))
+                  (return-from receive-handshake nil))))
     (lret* ((stream (socket-stream socket))
             (protocol-vector (make-octets 19))
             (extensions-vector (make-octets 8))
@@ -157,7 +157,7 @@ NIL if not."
           (socket-close socket))
         (with-lock-held (*peer-list-lock*)
           (removef *peer-list* peer :count 1))
-        (return-from perform-handshake)))
+        (return-from perform-handshake nil)))
     (write-sequence *peer-id* stream)
     (finish-output stream)
     ;; return t if the handshake was successful

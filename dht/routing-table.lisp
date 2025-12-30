@@ -37,7 +37,7 @@ be split, a bucket's range must encapsulate both the node's ID and our ID, and
 NODE must be closer to us than the kth closest node in the routing table."
   (when (first-empty-slot bucket)
     ;; bucket isn't full; don't split it
-    (return-from bucket-split-candidate-p))
+    (return-from bucket-split-candidate-p nil))
   (flet ((node-distance-from-us (node)
            (calculate-node-distance node *id*)))
     (let ((id (node-id node))
