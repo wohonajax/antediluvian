@@ -23,6 +23,7 @@
                 ;; threads
                 #:destroy-thread
                 #:make-thread
+                #:thread-alive-p
                 ;; locks
                 #:make-lock
                 #:with-lock-held)
