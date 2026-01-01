@@ -26,7 +26,7 @@ evaluated in a FINALLY (RETURN RETURN-FORM) clause."
   (with-unique-names (info-dictionary piece-length byte-index indexed-file-number)
     `(let* ((,info-dictionary (gethash "info" (torrent-info ,torrent)))
             (file-dict-list (or (gethash "files" ,info-dictionary)
-                                (dict "path" (get-true-download-path ,info-dictionary)
+                                (dict "path" (make-single-file-download-path ,info-dictionary)
                                       "length" (gethash "length" ,info-dictionary))))
             (,piece-length (gethash "piece length" ,info-dictionary))
             (,byte-index (+ (* ,piece-index ,piece-length)
