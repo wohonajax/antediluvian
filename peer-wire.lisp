@@ -172,7 +172,7 @@ keyword."
   "Converts INTEGER to a big-endian vector of octets of length LENGTH. Pads
 with zeros from the left."
   (let ((integer-vector (integer-to-octets integer)))
-    (concat-vec (make-array (- (length integer-vector) length)
+    (concat-vec (make-array (- length (length integer-vector))
                             :initial-element 0)
                 integer-vector)))
 
