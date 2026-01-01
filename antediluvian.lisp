@@ -12,9 +12,7 @@ list of SHA1 hashes, magnet links, or torrent file paths."
   (lret ((torrents (parse-sources sources)))
     (mapc #'add-torrent torrents)
     ;; FIXME: Figure out a better interface than the DHT function
-    (apply #'dht (mapcar #'torrent-info-hash torrents))
-    (dolist (peer-list (mapcar #'torrent-announce torrents))
-      (mapc #'connect-to-peer peer-list))))
+    (apply #'dht (mapcar #'torrent-info-hash torrents))))
 
 (defun cleanup ()
   "Performs cleanup on shutdown."
