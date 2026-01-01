@@ -22,7 +22,7 @@ list of SHA1 hashes, magnet links, or torrent file paths."
   (mapc (lambda (thread)
           (when (thread-alive-p thread)
             (destroy-thread thread)))
-       *peer-connection-threads*)
+        *peer-connection-threads*)
   (with-lock-held (*peer-list-lock*)
     (mapc (lambda (peer)
             (with-lock-held ((peer-lock peer))
