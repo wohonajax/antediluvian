@@ -34,21 +34,9 @@
   "Gets the SHA1 info hash from HASH-TABLE, a decoded torrent file."
   (digest-sequence :sha1 (bencode:encode (gethash "info" hash-table) nil)))
 
-(defun sanitize-namestring (pathspec)
-  "Escapes pattern characters for use in pathnames."
-  (with-output-to-string (str)
-    (map nil (lambda (char)
-               ;; TODO: check implementations
-               ;; for characters in need of escaping
-               (when (or (char= char #\[)
-                         (char= char #\?))
-                 (write-char #\\ str))
-               (write-char char str))
-         pathspec)))
-
 (defun make-directory-namestring (name)
   "Makes NAME into a (relative) directory namestring."
-  (sanitize-namestring (concatenate 'string name "/")))
+  (parse-native-namestring (concatenate 'string name "/")))
 
 (defun make-download-directory-pathname (filespec download-directory)
   "Makes a download destination pathname using FILESPEC and a parent
@@ -73,7 +61,7 @@ to ROOT-PATH for a given torrent's INFO-DICTIONARY."
     (mapcar (lambda (file-dictionary)
               ;; the path entry will be a list of (sub-)directories
               ;; and the filename. potentially only the filename
-              (merge-pathnames (sanitize-namestring
+              (merge-pathnames (parse-native-namestring
                                 (join "/" (gethash "path" file-dictionary)))
                                root-path))
             files)

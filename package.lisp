@@ -55,6 +55,7 @@
                 #:starts-with-p)
   (:import-from #:uiop
                 #:ensure-all-directories-exist
+                #:parse-native-namestring
                 #:truenamize
                 #:xdg-config-home)
   (:import-from #:usocket
