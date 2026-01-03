@@ -111,8 +111,7 @@ then tries to add it to the routing table. Returns the node object."
       ("get_peers" (send-response :get_peers node dict))
       ("announce_peer"
        (cond ((member token (recall-tokens info-hash) :test #'equalp)
-              (when (member info-hash *torrents* :key #'torrent-info-hash
-                            :test #'equalp)
+              (when (member info-hash *torrents* :key #'torrent-info-hash :test #'equalp)
                 (let ((peer (make-peer ip port info-hash)))
                   (with-lock-held (*peer-list-lock*)
                     (unless (member (peer-ip peer) *peer-list* :key #'peer-ip :test #'equalp)
