@@ -7,13 +7,12 @@ Torrent client in Common Lisp
 First, you'll need the "magnet" library, which isn't on quicklisp yet.
 To get it, do:
 ```
-cd ~/quicklisp/local-projects
-git clone https://codeberg.org/wohonajax/cl-magnet.git
+git clone https://codeberg.org/wohonajax/cl-magnet.git ~/quicklisp/local-projects/cl-magnet
 ```
 
 Next, you'll need to clone this repository:
 ```
-git clone https://codeberg.org/wohonajax/antediluvian.git
+git clone https://codeberg.org/wohonajax/antediluvian.git ~/quicklisp/local-projects/antediluvian
 ```
 
 After that, simply quickload it:
