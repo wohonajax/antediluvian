@@ -51,11 +51,11 @@
                 #:lret
                 #:lret*)
   (:import-from #:str
-                #:join
                 #:starts-with-p)
   (:import-from #:uiop
                 #:ensure-all-directories-exist
                 #:parse-native-namestring
+                #-mezzano
                 #:xdg-config-home)
   (:import-from #:usocket
                 ;; variables and constants

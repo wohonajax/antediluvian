@@ -7,11 +7,15 @@
   "Whether peers should use the visible port (T) or the given port (NIL).
 Useful for NATs.")
 
-(defvar *settings-location* (xdg-config-home "antediluvian/settings.sexp")
+(defvar *settings-location*
+        #-mezzano (xdg-config-home "antediluvian/settings.sexp")
+        #+mezzano (merge-pathnames "antediluvian;settings.sexp"
+                                   (user-homedir-pathname))
   "Where to store and load settings.")
 
 (defvar *default-download-directory*
-        (lret ((path (truename "~/Downloads/")))
+        (lret ((path (merge-pathnames (make-pathname :directory "Downloads")
+                                      (user-homedir-pathname))))
           (ensure-directories-exist path))
   "The default directory to download torrents into.")
 ;;; TODO: sanitize settings
@@ -24,7 +28,9 @@ Useful for NATs.")
   "Saves settings."
   (macrolet ((make-setting (setting)
                `(list 'setf ',setting ,setting)))
-    (ensure-directories-exist (xdg-config-home "antediluvian/"))
+    (ensure-directories-exist #-mezzano (xdg-config-home "antediluvian/")
+                              #+mezzano (merge-pathnames "antediluvian;"
+                                                         (user-homedir-pathname)))
     (with-open-file (file *settings-location*
                           :direction :output
                           :if-exists :overwrite
