@@ -57,11 +57,8 @@ to ROOT-PATH for a given torrent's INFO-DICTIONARY."
     (mapcar (lambda (file-dictionary)
               ;; the path entry will be a list of (sub-)directories
               ;; and the filename. potentially only the filename
-              (let* ((pathlist (gethash "path" file-dictionary))
-                     (directory-list (butlast pathlist)))
-                (merge-pathnames (make-pathname :directory (if directory-list
-                                                               `(:relative ,@directory-list)
-                                                               nil)
+              (let ((pathlist (gethash "path" file-dictionary)))
+                (merge-pathnames (make-pathname :directory `(:relative ,@(butlast pathlist))
                                                 :defaults
                                                 (parse-native-namestring (lastcar pathlist)))
                                  root-path)))
