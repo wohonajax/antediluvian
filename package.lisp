@@ -50,8 +50,6 @@
                 #:firstn
                 #:lret
                 #:lret*)
-  (:import-from #:str
-                #:starts-with-p)
   (:import-from #:uiop
                 #:ensure-all-directories-exist
                 #:parse-native-namestring

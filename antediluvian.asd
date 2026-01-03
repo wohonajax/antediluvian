@@ -39,6 +39,5 @@
                lparallel
                magnet
                serapeum
-               str
                uiop
                usocket))
