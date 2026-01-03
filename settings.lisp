@@ -11,7 +11,7 @@ Useful for NATs.")
   "Where to store and load settings.")
 
 (defvar *default-download-directory*
-        (lret ((path (truenamize "~/Downloads/")))
+        (lret ((path (truename "~/Downloads/")))
           (ensure-directories-exist path))
   "The default directory to download torrents into.")
 ;;; TODO: sanitize settings

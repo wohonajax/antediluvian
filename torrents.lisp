@@ -74,7 +74,7 @@ a filespec to a torrent file, or a SHA1 hash."
   (let* ((parsed-source (cond ((magnet:magnet-link-p source)
                                (magnet:parse source))
                               ((filespecp source)
-                               (bdecode-torrent-file (truenamize source)))
+                               (bdecode-torrent-file (truename source)))
                               (t source)))
          (hash (cond ((magnet:magnet-link-p source)
                       (extract-sha1-from-parsed-magnet-link parsed-source))
