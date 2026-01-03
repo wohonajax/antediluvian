@@ -38,7 +38,7 @@ magnet links, or torrent file specifiers."
 (defun add-torrent (torrent)
   "Adds TORRENT to the registry of active torrents. Must be a torrent object."
   (let ((info-hash (torrent-info-hash torrent)))
-    (unless (member torrent *torrents* :key #'torrent-info-hash :test #'equalp)
+    (unless (member info-hash *torrents* :key #'torrent-info-hash :test #'equalp)
       (push torrent *torrents*)
       (setf (gethash info-hash *torrent-hashes*) torrent)
       (mapc #'connect-to-peer (torrent-announce torrent)))))

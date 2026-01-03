@@ -39,7 +39,7 @@ request. Returns a list of peers."
           (parse-node-ip (subseq peers-vector i (+ i 6)))
         (let ((peer (make-peer ip port info-hash)))
           (with-lock-held (*peer-list-lock*)
-            (unless (member peer *peer-list* :key #'peer-ip :test #'equalp)
+            (unless (member (peer-ip peer) *peer-list* :key #'peer-ip :test #'equalp)
               (push peer peers)
               (push peer *peer-list*)
               (initiate-peer-connection peer))))))

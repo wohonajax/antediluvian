@@ -182,6 +182,6 @@ peer socket."
 (defun connect-to-peer (peer)
   "Attempts to add PEER to the peer list and establish a connection."
   (with-lock-held (*peer-list-lock*)
-    (unless (member peer *peer-list* :key #'peer-ip :test #'equalp)
+    (unless (member (peer-ip peer) *peer-list* :key #'peer-ip :test #'equalp)
       (push peer *peer-list*)
       (initiate-peer-connection peer))))

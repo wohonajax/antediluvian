@@ -115,7 +115,7 @@ then tries to add it to the routing table. Returns the node object."
                             :test #'equalp)
                 (let ((peer (make-peer ip port info-hash)))
                   (with-lock-held (*peer-list-lock*)
-                    (unless (member peer *peer-list* :key #'peer-ip :test #'equalp)
+                    (unless (member (peer-ip peer) *peer-list* :key #'peer-ip :test #'equalp)
                       (push peer *peer-list*)
                       (initiate-peer-connection peer)))))
               (send-response :announce_peer node dict :source-port port))
