@@ -79,5 +79,8 @@
                 ;; conditions
                 #:connection-refused-error
                 #:timeout-error)
-  (:export #:add-source-as-torrent
+  (:export #:*default-download-directory*
+           #:*default-port*
+           #:*use-implied-port-p*
+           #:add-source-as-torrent
            #:start))
