@@ -33,7 +33,7 @@ Useful for NATs.")
                                                          (user-homedir-pathname)))
     (with-open-file (file *settings-location*
                           :direction :output
-                          :if-exists :overwrite
+                          :if-exists :supersede
                           :if-does-not-exist :create)
       (format file "~{~S~^~%~}"
               (list (make-setting *default-port*)
