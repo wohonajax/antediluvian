@@ -81,7 +81,6 @@ Returns the peer object, or NIL if the handshake failed."
                                  :port (get-peer-port socket)
                                  :socket socket
                                  :id peer-id)))
-      (wait-for-input socket)
       (close-unless (= (read-byte stream) 19))
       (read-sequence protocol-vector stream)
       (close-unless (string= (byte-array-to-ascii-string protocol-vector)
@@ -150,7 +149,6 @@ NIL if not."
     ;; if we don't get the same hash back as
     ;; the one we send, sever the connection
     (let ((peer-hash (make-octets 20)))
-      (wait-for-input socket)
       (read-sequence peer-hash stream)
       (unless (equalp hash peer-hash)
         (with-lock-held ((peer-lock peer))
