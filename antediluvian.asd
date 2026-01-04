@@ -34,6 +34,7 @@
                chanl
                dexador
                do-urlencode
+               filepaths
                ironclad/core
                ironclad/digests
                lparallel

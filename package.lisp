@@ -52,7 +52,6 @@
                 #:lret*)
   (:import-from #:uiop
                 #:ensure-all-directories-exist
-                #:parse-native-namestring
                 #-mezzano
                 #:xdg-config-home)
   (:import-from #:usocket
