@@ -145,6 +145,7 @@ NIL if not."
     (write-handshake-header stream) ; protocol length prefix and string
     (write-handshake-header-reserved-bytes stream)
     (write-sequence hash stream)
+    (write-sequence *peer-id* stream)
     (finish-output stream)
     ;; if we don't get the same hash back as
     ;; the one we send, sever the connection
@@ -156,8 +157,6 @@ NIL if not."
         (with-lock-held (*peer-list-lock*)
           (removef *peer-list* peer :count 1))
         (return-from perform-handshake nil)))
-    (write-sequence *peer-id* stream)
-    (finish-output stream)
     ;; return t if the handshake was successful
     t))
 
