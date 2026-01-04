@@ -37,8 +37,7 @@
 (defun make-download-directory-pathname (filespec download-directory)
   "Makes a download destination pathname using FILESPEC and a parent
 DOWNLOAD-DIRECTORY."
-  (merge-pathnames (make-pathname :directory `(:relative ,filespec))
-                   download-directory))
+  (merge-pathnames (filepaths:ensure-directory filespec) download-directory))
 
 (defun make-download-pathname (filename)
   "Creates a download destination directory pathname from FILENAME."
