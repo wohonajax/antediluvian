@@ -7,7 +7,7 @@
 (defun bootstrap-node (host port)
   "Bootstraps the routing table using a known node at HOST and PORT."
   (send-message :find_node host port (generate-transaction-id)
-                :info-hash *id*))
+                :info-hash *node-id*))
 ;;; TODO: find_node each found node for nodes near the hash
 (defun main-dht-loop ()
   (loop (parse-message)))

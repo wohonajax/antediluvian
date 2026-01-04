@@ -39,15 +39,15 @@ NODE must be closer to us than the kth closest node in the routing table."
     ;; bucket isn't full; don't split it
     (return-from bucket-split-candidate-p nil))
   (flet ((node-distance-from-us (node)
-           (calculate-node-distance node *id*)))
+           (calculate-node-distance node *node-id*)))
     (let ((id (node-id node))
           (lower-bound (bucket-min bucket))
           (upper-bound (bucket-max bucket))
-          (kth-closest-node-to-us (extremum (find-closest-nodes *id*) #'>
+          (kth-closest-node-to-us (extremum (find-closest-nodes *node-id*) #'>
                                             :key #'node-distance-from-us)))
       (and (<= lower-bound (convert-id-to-int id) upper-bound)
-           (<= lower-bound (convert-id-to-int *id*) upper-bound)
-           (< (calculate-distance id *id*)
+           (<= lower-bound (convert-id-to-int *node-id*) upper-bound)
+           (< (calculate-distance id *node-id*)
               (node-distance-from-us kth-closest-node-to-us))))))
 
 (defun maybe-add-node (node)

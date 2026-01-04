@@ -2,7 +2,7 @@
 
 (in-package #:antediluvian)
 
-(defvar *id* (digest-sequence :sha1 (random-data 20))
+(defvar *node-id* (digest-sequence :sha1 (random-data 20))
   "The node ID for this session.")
 
 (defclass node ()
