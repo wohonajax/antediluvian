@@ -2,9 +2,10 @@
 
 (in-package #:antediluvian)
 
-(defun build-tracker-announce-url (base-url info-hash)
+(defun build-tracker-announce-url (base-url info-hash &key (event :started))
   "Builds a GET request URL as described at
-<https://wiki.theory.org/BitTorrentSpecification#Tracker_Request_Parameters>."
+<https://wiki.theory.org/BitTorrentSpecification#Tracker_Request_Parameters>.
+The EVENT keyword argument should be one of :STARTED, :STOPPED, or :COMPLETED."
   (with-output-to-string (str)
     (princ base-url str)
     (princ "?info_hash=" str)
@@ -20,7 +21,11 @@
     (princ "&compact=1" str)
     (princ "&no_peer_id=1" str)
     ;; TODO: determine whether to send started, stopped, or completed
-    (princ "&event=started" str)))
+    (princ "&event=" str)
+    (case event
+      (:started (princ "started" str))
+      (:stopped (princ "stopped" str))
+      (:completed (princ "completed" str)))))
 
 (defun parse-announce-response (response-vector info-hash)
   "Parses RESPONSE-VECTOR, a Bencoded byte vector result from an announce GET
