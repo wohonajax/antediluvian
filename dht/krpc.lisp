@@ -80,7 +80,7 @@ format."
     (setf (gethash "id" query-arguments) *id*
           (gethash "implied_port" query-arguments) (if *use-implied-port-p* 1 0)
           (gethash "info_hash" query-arguments) info-hash
-          (gethash "port" query-arguments) *default-port*
+          (gethash "port" query-arguments) *port*
           (gethash "token" query-arguments) token
 
           (gethash "t" query-dict) transaction-id

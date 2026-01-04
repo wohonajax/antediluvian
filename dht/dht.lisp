@@ -61,8 +61,8 @@ fails, try ports 6881 through 6889."
 (defun dht-setup (hashes)
   "Performs DHT setup on program startup. Sets up initial variables, etc."
   (load-settings)
-  (try-ports *default-port*)
-  (setf *default-port* (get-local-port *listening-dht-socket*))
+  (try-ports *port*)
+  (setf *port* (get-local-port *listening-dht-socket*))
   (setf *secret-rotation-thread* (start-sercret-rotation-thread)
         *main-dht-thread* (make-thread #'main-dht-loop
                                        :name "Main DHT thread")

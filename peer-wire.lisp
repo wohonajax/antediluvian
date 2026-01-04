@@ -300,8 +300,7 @@ this DHT node is listening on."
   (with-socket-stream (stream socket)
     (send-peer-message-length-header 3 socket)
     (write-byte (message-id-for-message-type :port) stream)
-    (write-sequence (port-to-octet-buffer *default-port* (make-octets 2))
-                    stream)))
+    (write-sequence (port-to-octet-buffer *port* (make-octets 2)) stream)))
 
 (defun request-piece (torrent piece-index socket)
   "Sends request messages for the PIECE-INDEXth piece of TORRENT to the peer

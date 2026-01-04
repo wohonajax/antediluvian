@@ -5,7 +5,7 @@
 (defun setup (sources)
   "Sets up antediluvian and initiates the DHT using SOURCES, which should be a
 list of SHA1 hashes, magnet links, or torrent file paths."
-  (setf *listening-peer-socket* (socket-listen *wildcard-host* *default-port*
+  (setf *listening-peer-socket* (socket-listen *wildcard-host* *port*
                                                :element-type '(unsigned-byte 8))
         *peer-listener-thread* (start-listener-thread)
         *file-writer-thread* (start-file-writer-thread))

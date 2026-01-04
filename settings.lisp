@@ -1,6 +1,6 @@
 (in-package #:antediluvian)
 
-(defvar *default-port* 6881
+(defvar *port* 6881
   "The default port for antediluvian to use for network communications.")
 
 (defvar *use-implied-port-p* nil
@@ -13,7 +13,7 @@ Useful for NATs.")
                                    (user-homedir-pathname))
   "Where to store and load settings.")
 
-(defvar *default-download-directory*
+(defvar *download-directory*
         (lret ((path (merge-pathnames (make-pathname :directory '(:relative "Downloads"))
                                       (user-homedir-pathname))))
           (ensure-directories-exist path))
@@ -36,6 +36,6 @@ Useful for NATs.")
                           :if-exists :supersede
                           :if-does-not-exist :create)
       (format file "~{~S~^~%~}"
-              (list (make-setting *default-port*)
+              (list (make-setting *port*)
                     (make-setting *use-implied-port-p*)
-                    (make-setting *default-download-directory*))))))
+                    (make-setting *download-directory*))))))

@@ -12,7 +12,7 @@
     (princ "&peer_id=" str)
     (princ (urlencode-binary-data *peer-id*) str)
     (princ "&port=" str)
-    (princ *default-port* str)
+    (princ *port* str)
     ;; TODO: keep track of upload/download/left
     (princ "&uploaded=0" str)
     (princ "&downloaded=0" str)

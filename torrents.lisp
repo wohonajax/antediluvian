@@ -41,13 +41,13 @@ DOWNLOAD-DIRECTORY."
 
 (defun make-download-pathname (filename)
   "Creates a download destination directory pathname from FILENAME."
-  (make-download-directory-pathname filename *default-download-directory*))
+  (make-download-directory-pathname filename *download-directory*))
 
 (defun make-single-file-download-path (info-dictionary)
   "Returns a download pathname for a single-file torrent from its
 INFO-DICTIONARY."
   (make-download-directory-pathname (gethash "name" info-dictionary)
-                                    *default-download-directory*))
+                                    *download-directory*))
 
 (defun get-file-list (info-dictionary root-path)
   "Returns a list of pathnames specifying download locations relative
