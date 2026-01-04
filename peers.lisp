@@ -6,7 +6,7 @@
   ((ip :initarg :ip :accessor peer-ip)
    (port :initarg :port :accessor peer-port)
    ;; stream socket object for the connection to this peer
-   (socket :initarg :socket :accessor peer-socket)
+   (socket :initform nil :initarg :socket :accessor peer-socket)
    ;; this peer's ID
    (id :initform nil :initarg :id :accessor peer-id)
    ;; torrent this peer is associated with
