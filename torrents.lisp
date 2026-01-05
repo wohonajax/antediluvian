@@ -39,9 +39,10 @@
 parent PARENT-DIRECTORY."
   (merge-pathnames (filepaths:ensure-directory subdirectory) parent-directory))
 
-(defun make-download-pathname (filename)
-  "Creates a download destination directory pathname from FILENAME."
-  (make-download-directory-pathname filename *download-directory*))
+(defun make-download-pathname (destination-subdirectory)
+  "Creates a download destination directory pathname from
+DESTINATION-SUBDIRECTORY."
+  (make-download-directory-pathname destination-subdirectory *download-directory*))
 
 (defun make-single-file-download-path (info-dictionary)
   "Returns a download pathname for a single-file torrent from its
