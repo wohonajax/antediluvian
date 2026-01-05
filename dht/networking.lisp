@@ -210,7 +210,10 @@ node in the response."
         (handle-values-response values target))
       (handle-lookup-response transaction-id target))
     (when token
-      (store-received-token token now transaction-id node))
+      (store-received-token token now transaction-id node)
+      (let ((searched-info-hash (gethash transaction-id *active-searches*)))
+        (push-to-search-results node searched-info-hash)
+        (handle-search-response transaction-id searched-info-hash)))
     (remhash transaction-id *transactions*)))
 
 (defun binary-key-test (keys)

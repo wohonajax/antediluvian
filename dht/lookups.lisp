@@ -31,16 +31,26 @@ from find_node lookups.")
                   :id target)
     (setf (gethash transaction-id *active-lookups*) target)))
 
-(defun active-lookups (target)
-  "Returns the number of active lookups for TARGET that haven't completed yet."
-  (loop for target-id being the hash-values of *active-lookups*
+(defun count-active-transactions (target hash-table)
+  "Counts the number of active transactions under TARGET that haven't completed
+yet."
+  (loop for target-id being the hash-values of hash-table
         when (equalp target target-id)
           count it))
 
+(defun active-lookups (target)
+  "Returns the number of active lookups for TARGET that haven't completed yet."
+  (count-active-transactions target *active-lookups*))
+
+(defun initiate-dht-procedure (target procedure)
+  "Initiates a DHT procedure for TARGET, calling PROCEDURE on each of the alpha
+closest nodes in the routing table."
+  (let ((alpha-closest-nodes (firstn +alpha+ (find-closest-nodes target))))
+    (mapc procedure alpha-closest-nodes)))
+
 (defun initiate-lookup (target)
   "Initiates a lookup procedure for TARGET."
-  (let ((alpha-closest-nodes (firstn +alpha+ (find-closest-nodes target))))
-    (mapc (curry #'lookup target) alpha-closest-nodes)))
+  (initiate-dht-procedure target (curry #'lookup target)))
 
 (defun recurse-on-lookup-results (target)
   "Begins lookups of TARGET using nodes in the intermediary results list."
@@ -48,13 +58,18 @@ from find_node lookups.")
         do (lookup target node)
         finally (remhash target *lookup-results-lists*)))
 
-(defun push-to-best-results (node target)
-  (setf (gethash target *best-lookup-results*)
-        (insert node (gethash target *best-lookup-results*) #'<
+(defun push-to-results (node target hash-table)
+  "Pushes NODE to the list of TARGET-related results under HASH-TABLE."
+  (setf (gethash target hash-table)
+        (insert node (gethash target hash-table) #'<
                 :key (rcurry #'calculate-node-distance target)))
   ;; we only want the k closest nodes
-  (setf (gethash target *best-lookup-results*)
-        (firstn +k+ (gethash target *best-lookup-results*))))
+  (setf (gethash target hash-table)
+        (firstn +k+ (gethash target hash-table))))
+
+(defun push-to-lookup-results (node target)
+  "Pushes NODE to the list of lookup results under TARGET."
+  (push-to-results node target *best-lookup-results*))
 
 (defun handle-lookup-response (transaction-id target)
   "Handles a find_node response. Recursively calls find_node until the best
@@ -66,7 +81,7 @@ results are the same as the previous best results."
   (unless (= 0 (active-lookups target))
     (return-from handle-lookup-response))
   (when-let (results (gethash target *lookup-results-lists*))
-    (mapc (rcurry #'push-to-best-results target) results)
+    (mapc (rcurry #'push-to-lookup-results target) results)
     (remhash target *lookup-results-lists*))
   (cond ;; if the previous results are the same as the
         ;; current results, stop recursion. add the
@@ -83,3 +98,39 @@ results are the same as the previous best results."
                    nil)
            (mapc (curry #'lookup target)
                  (gethash target *previous-best-lookup-results*)))))
+
+;;; Announcing peer status
+
+(defvar *active-searches* (make-hash-table :test #'equalp)
+  "A hash table mapping transaction IDs to search targets.")
+
+(defvar *search-results* (make-hash-table :test #'equalp)
+  "A hash table mapping info hashes to lists of nodes received when searching
+the DHT for nearby nodes.")
+
+(defun search-for-closest-nodes (info-hash)
+  "Initiates a search of the DHT network for the k closest nodes to INFO-HASH."
+  (initiate-dht-procedure
+   info-hash
+   (lambda (node)
+     (let ((transaction-id (generate-transaction-id)))
+       (send-message :get_peers (node-ip node) (node-port node)
+                     transaction-id
+                     :info-hash info-hash)
+       (setf (gethash transaction-id *active-searches*) info-hash)))))
+
+(defun active-searches (info-hash)
+  "Returns the number of active search transactions for INFO-HASH."
+  (count-active-transactions info-hash *active-searches*))
+
+(defun push-to-search-results (node info-hash)
+  "Pushes NODE to the search results under INFO-HASH."
+  (push-to-results node info-hash *search-results*))
+
+(defun handle-search-response (transaction-id info-hash)
+  "Handles a response to a get_peers query."
+  (remhash transaction-id *active-searches*)
+  (unless (= (active-searches info-hash) 0)
+    (return-from handle-search-response))
+  (lret ((results (gethash info-hash *search-results*)))
+    (remhash info-hash *search-results*)))
