@@ -54,8 +54,8 @@ NODE must be closer to us than the kth closest node in the routing table."
 
 (defun maybe-add-node (node)
   "Does nothing if NODE is already in the routing table. If it isn't, splits
-the bucket NODE fits into if it's a candidate for splitting. Initiates the
-procedure for potentially adding a node to a bucket."
+the bucket NODE fits into if that bucket is a candidate for splitting and
+initiates the procedure for potentially adding a node to a bucket."
   (let ((bucket (correct-bucket (node-id node))))
     (when (contains node (bucket-nodes bucket))
       (return-from maybe-add-node))
