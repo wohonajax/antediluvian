@@ -196,11 +196,11 @@ node in the response."
       (return-from parse-response))
     ;; we're getting a response, so the node isn't stale
     (setf (node-failed-rpcs node) 0)
-    (check-replacement-candidates)
     ;; if this is a response to a test for a candidate's replacement,
     ;; fulfill the promise/indicate that we got a response
     (when-let (promise-node-cons (gethash transaction-id *replacement-candidates*))
       (fulfill (car promise-node-cons) 'response))
+    (check-replacement-candidates)
     (when-let* ((target (gethash transaction-id *transactions*))
                 ;; target is an info hash or node ID
                 (targetp (not (eql target t))))
