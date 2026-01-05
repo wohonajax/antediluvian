@@ -180,11 +180,11 @@ STREAM-VAR bound, and finally calls FINISH-OUTPUT on the stream."
      ,@body
      (finish-output ,stream-var)))
 
-(defun send-peer-message-length-header (length socket)
+(defun send-peer-message-length-header (message-length socket)
   "Sends a peer wire protocol message length header to the peer connected to
 SOCKET."
   (with-socket-stream (stream socket)
-    (write-sequence (pad-integer-to-octets length 4) stream)))
+    (write-sequence (pad-integer-to-octets message-length 4) stream)))
 
 (defun send-keep-alive-message (socket)
   "Sends a keep-alive message to the peer connected to SOCKET."
