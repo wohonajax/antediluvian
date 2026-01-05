@@ -307,10 +307,13 @@ connected to SOCKET."
         with bytes-requested-so-far = 0
         with current-request-length = +length-offset+
         until (= bytes-requested-so-far piece-length)
+        ;; we need to change current-request-length
+        ;; before we actually make the request
+        ;; or we'll go past the end of the piece
+        when (> (+ bytes-requested-so-far current-request-length) piece-length)
+          do (setf current-request-length (- piece-length bytes-requested-so-far))
         do (send-request-message piece-index
                                  bytes-requested-so-far
                                  current-request-length
                                  socket)
-           (incf bytes-requested-so-far current-request-length)
-        when (> (+ bytes-requested-so-far current-request-length) piece-length)
-          do (setf current-request-length (- piece-length bytes-requested-so-far))))
+           (incf bytes-requested-so-far current-request-length)))
