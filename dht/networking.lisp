@@ -199,8 +199,7 @@ node in the response."
     (check-replacement-candidates)
     ;; if this is a response to a test for a candidate's replacement,
     ;; fulfill the promise/indicate that we got a response
-    (when-let (promise-node-cons (gethash transaction-id
-                                          *replacement-candidates*))
+    (when-let (promise-node-cons (gethash transaction-id *replacement-candidates*))
       (fulfill (car promise-node-cons) 'response))
     (when-let* ((target (gethash transaction-id *transactions*))
                 ;; target is an info hash or node ID
