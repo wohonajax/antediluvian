@@ -65,9 +65,9 @@ initiates the procedure for potentially adding a node to a bucket."
 
 (defun replace-incumbent (candidate)
   "Replaces the oldest node in the appropriate bucket with CANDIDATE."
-  (setf (svref (bucket-nodes (correct-bucket (node-id candidate)))
-               0)
-        candidate))
+  (let ((bucket (correct-bucket (node-id candidate))))
+    (sort-bucket-by-age bucket)
+    (setf (svref (bucket-nodes bucket) 0) candidate)))
 
 (defun check-replacement-candidates ()
   "Checks whether to replace potentially stale nodes with replacement
