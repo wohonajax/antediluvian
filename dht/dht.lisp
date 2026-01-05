@@ -76,6 +76,7 @@ fails, try ports 6881 through 6889."
   (bootstrap-node "dht.transmissionbt.com" 6881)
   (bootstrap-node "dht.aelitis.com" 6881)
   (bootstrap-node "bootstrap.jami.net" 4222)
+  (sleep 10) ; wait for the DHT to bootstrap itself
   (mapc #'add-hash hashes))
 
 (defun dht-cleanup ()
