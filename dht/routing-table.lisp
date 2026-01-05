@@ -63,6 +63,12 @@ procedure for potentially adding a node to a bucket."
       (split-bucket bucket))
     (maybe-add-to-bucket node bucket)))
 
+(defun replace-incumbent (candidate)
+  "Replaces the oldest node in the appropriate bucket with CANDIDATE."
+  (setf (svref (bucket-nodes (correct-bucket (node-id candidate)))
+               0)
+        candidate))
+
 (defun check-replacement-candidates ()
   "Checks whether to replace potentially stale nodes with replacement
 candidates or add those candidates to the replacement cache."
@@ -72,7 +78,7 @@ candidates or add those candidates to the replacement cache."
                ;; giving it more time to be fulfilled
                (when (fulfilledp promise)
                  (case (force promise)
-                   (timeout (setf (svref (correct-bucket (node-id node)) 0) node))
+                   (timeout (replace-incumbent node))
                    (response (push node *replacement-cache*)))
                  (remhash transaction-id *replacement-candidates*))))
            *replacement-candidates*))
