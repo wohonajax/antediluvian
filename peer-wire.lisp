@@ -160,10 +160,10 @@ NIL if not."
     ;; return t if the handshake was successful
     t))
 
-(defun message-id-for-message-type (type)
-  "Returns the byte to be sent to a peer for a TYPE message. TYPE must be a
-keyword."
-  (car (rassoc type *message-id-to-message-type-alist*)))
+(defun message-id-for-message-type (message-type)
+  "Returns the byte to be sent to a peer for a MESSAGE-TYPE message.
+MESSAGE-TYPE must be a keyword."
+  (car (rassoc message-type *message-id-to-message-type-alist*)))
 
 (defun pad-integer-to-octets (integer length)
   "Converts INTEGER to a big-endian vector of octets of length LENGTH. Pads
