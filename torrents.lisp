@@ -56,7 +56,7 @@ to ROOT-PATH for a given torrent's INFO-DICTIONARY."
     (mapcar (lambda (file-dictionary)
               ;; the path entry will be a list of (sub-)directories
               ;; and the filename. potentially only the filename
-              (filepaths:from-list (cons root-path (gethash "path" file-dictionary))))
+              (apply #'filepaths:join root-path (gethash "path" file-dictionary)))
             files)
     ;; if there's no files entry in the info dictionary, use the name entry
     (list (make-single-file-download-path info-dictionary))))
