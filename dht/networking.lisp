@@ -213,7 +213,12 @@ node in the response."
       (store-received-token token now transaction-id node)
       (let ((searched-info-hash (gethash transaction-id *active-searches*)))
         (push-to-search-results node searched-info-hash)
-        (handle-search-response transaction-id searched-info-hash)))
+        (when-let (search-results (handle-search-response transaction-id searched-info-hash))
+          (mapc (lambda (x)
+                  (send-message :announce_peer (node-ip x) (node-port x)
+                                (generate-transaction-id)
+                                :info-hash searched-info-hash))
+                search-results))))
     (remhash transaction-id *transactions*)))
 
 (defun binary-key-test (keys)
