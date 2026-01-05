@@ -77,7 +77,7 @@ the request fails."
           (let ((operative-tier (nth current-tier announce-list)))
             (rotatef (nth 0 operative-tier)
                      (nth current-tracker operative-tier))))
+        ;; return the list of peers after populating their torrent slots
         (mapc (lambda (peer) (setf (peer-torrent peer) torrent))
-              peers)
-        peers) ; return the list of peers
+              peers))
       (announce-to-tracker torrent (gethash "announce" metadata)))))
