@@ -312,6 +312,5 @@ connected to SOCKET."
                                  current-request-length
                                  socket)
            (incf bytes-requested-so-far current-request-length)
-        when (> bytes-requested-so-far piece-length)
-          do (setf bytes-requested-so-far (- bytes-requested-so-far +length-offset+))
-             (setf current-request-length (- piece-length bytes-requested-so-far))))
+        when (> (+ bytes-requested-so-far current-request-length) piece-length)
+          do (setf current-request-length (- piece-length bytes-requested-so-far))))
