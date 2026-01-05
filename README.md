@@ -15,6 +15,11 @@ Next, you'll need to clone this repository:
 git clone https://codeberg.org/wohonajax/antediluvian.git ~/quicklisp/local-projects/antediluvian
 ```
 
+Some dependencies aren't on the quicklisp dist. You'll need to add ultralisp like so:
+```
+(ql-dist:install-dist "http://dist.ultralisp.org/" :prompt nil)
+```
+
 After that, simply quickload it:
 ```
 (ql:quickload "antediluvian")
