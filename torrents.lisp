@@ -34,10 +34,10 @@
   "Gets the SHA1 info hash from HASH-TABLE, a decoded torrent file."
   (digest-sequence :sha1 (bencode:encode (gethash "info" hash-table) nil)))
 
-(defun make-download-directory-pathname (filespec download-directory)
-  "Makes a download destination pathname using FILESPEC and a parent
-DOWNLOAD-DIRECTORY."
-  (merge-pathnames (filepaths:ensure-directory filespec) download-directory))
+(defun make-download-directory-pathname (subdirectory parent-directory)
+  "Makes a download destination directory pathname using SUBDIRECTORY and a
+parent PARENT-DIRECTORY."
+  (merge-pathnames (filepaths:ensure-directory subdirectory) parent-directory))
 
 (defun make-download-pathname (filename)
   "Creates a download destination directory pathname from FILENAME."
