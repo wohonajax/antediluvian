@@ -106,6 +106,11 @@ if successful, NIL otherwise."
   (sort-bucket-by-age bucket)
   (svref (bucket-nodes bucket) 0))
 
+(defun insert-into-bucket (node bucket)
+  "Inserts NODE into the first empty slot in BUCKET."
+  (setf (svref (bucket-nodes bucket) (first-empty-slot bucket))
+        node))
+
 (defun seed-buckets (smaller larger seed)
   "Seeds the values of a bucket into 2 fresh buckets."
   (iterate-bucket
@@ -113,12 +118,8 @@ if successful, NIL otherwise."
    (lambda (node)
      (if (<= (convert-id-to-int (node-id node))
              (bucket-max smaller))
-         (setf (svref (bucket-nodes smaller)
-                      (first-empty-slot smaller))
-               node)
-         (setf (svref (bucket-nodes larger)
-                      (first-empty-slot larger))
-               node)))))
+         (insert-into-bucket node smaller)
+         (insert-into-bucket node larger)))))
 
 (defun split-bucket (bucket)
   "Splits BUCKET into two new buckets."
