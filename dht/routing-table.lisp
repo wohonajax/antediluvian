@@ -93,11 +93,10 @@ replacement cache."
                           15)
                        (node-stale-p incumbent))
               (node-replacement-check incumbent candidate)
-              ;; the replacement candidate will be added again if the
-              ;; replacement check fails, since we'll (eventually) get
-              ;; a DHT response (if we don't, the node is unresponsive
-              ;; and we don't want it anyway). if it doesn't fail, we
-              ;; don't want it in the replacement cache anyway, since
-              ;; it's in the routing table
+              ;; if the incumbent responds, the replacement
+              ;; candidate will be added to the cache again.
+              ;; if they don't, the replacement candidate
+              ;; will be added to the routing table anyway.
+              ;; either way, we want it removed here
               (removef *replacement-cache* candidate :count 1))))
         *replacement-cache*))
