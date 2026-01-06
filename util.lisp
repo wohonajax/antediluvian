@@ -14,18 +14,6 @@
   "Converts a node ID from an ID byte vector to a decimal integer."
   (octets-to-integer id))
 
-(defun insert (item list predicate &key (key #'identity))
-  "Inserts ITEM into LIST and sorts it according to PREDICATE. Duplicates are
-not allowed."
-  (cond ((null list) (list item))
-        ((equalp item (first list)) list)
-        ((funcall predicate
-                  (funcall key item)
-                  (funcall key (first list)))
-         (cons item list))
-        (t (cons (first list)
-                 (insert item (rest list) predicate :key key)))))
-
 (defun concat-vec (x y)
   "Concatenates X and Y into a byte vector."
   (concatenate '(vector (unsigned-byte 8)) x y))

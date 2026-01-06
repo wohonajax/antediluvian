@@ -50,6 +50,8 @@ closest nodes in the routing table."
 
 (defun initiate-lookup (target)
   "Initiates a lookup procedure for TARGET."
+  (setf (gethash target *best-lookup-results*)
+        (doubly-linked-list:make-list))
   (initiate-dht-procedure target (curry #'lookup target)))
 
 (defun recurse-on-lookup-results (target)
@@ -64,8 +66,9 @@ closest nodes in the routing table."
         (insert node (gethash target hash-table) #'<
                 :key (rcurry #'calculate-node-distance target)))
   ;; we only want the k closest nodes
-  (setf (gethash target hash-table)
-        (firstn +k+ (gethash target hash-table))))
+  (let ((closest-nodes (gethash target hash-table)))
+    (when (> (doubly-linked-list:length closest-nodes) +k+)
+      (pop-from-end closest-nodes))))
 
 (defun push-to-lookup-results (node target)
   "Pushes NODE to the list of lookup results under TARGET."
@@ -83,21 +86,23 @@ results are the same as the previous best results."
   (when-let (results (gethash target *lookup-results-lists*))
     (mapc (rcurry #'push-to-lookup-results target) results)
     (remhash target *lookup-results-lists*))
-  (cond ;; if the previous results are the same as the
-        ;; current results, stop recursion. add the
-        ;; best lookup results to the routing table
-        ((equalp (gethash target *best-lookup-results*)
-                 (gethash target *previous-best-lookup-results*))
-         (remhash target *previous-best-lookup-results*)
-         (mapc #'maybe-add-node (gethash target *best-lookup-results*))
-         (remhash target *best-lookup-results*))
-        ;; if the previous results aren't the same as the
-        ;; current results, recurse on the results we got
-        (t (shiftf (gethash target *previous-best-lookup-results*)
-                   (gethash target *best-lookup-results*)
-                   nil)
-           (mapc (curry #'lookup target)
-                 (gethash target *previous-best-lookup-results*)))))
+  (let ((best-results-list (doubly-linked-list:list-values
+                            (gethash target *best-lookup-results*)))
+        (previous-best-results-list (doubly-linked-list:list-values
+                                     (gethash target *previous-best-lookup-results*))))
+    (cond ;; if the previous results are the same as the
+          ;; current results, stop recursion. add the
+          ;; best lookup results to the routing table
+          ((equalp best-results-list previous-best-results-list)
+           (remhash target *previous-best-lookup-results*)
+           (mapc #'maybe-add-node best-results-list)
+           (remhash target *best-lookup-results*))
+          ;; if the previous results aren't the same as the
+          ;; current results, recurse on the results we got
+          (t (shiftf (gethash target *previous-best-lookup-results*)
+                     (gethash target *best-lookup-results*)
+                     (doubly-linked-list:make-list))
+             (mapc (curry #'lookup target) previous-best-results-list)))))
 
 ;;; Announcing peer status
 
@@ -110,6 +115,7 @@ the DHT for nearby nodes.")
 
 (defun search-for-closest-nodes (info-hash)
   "Initiates a search of the DHT network for the k closest nodes to INFO-HASH."
+  (setf (gethash info-hash *search-results*) (doubly-linked-list:make-list))
   (initiate-dht-procedure
    info-hash
    (lambda (node)
@@ -132,5 +138,6 @@ the DHT for nearby nodes.")
   (remhash transaction-id *active-searches*)
   (unless (= (active-searches info-hash) 0)
     (return-from handle-search-response))
-  (lret ((results (gethash info-hash *search-results*)))
+  (lret ((results (doubly-linked-list:list-values
+                   (gethash info-hash *search-results*))))
     (remhash info-hash *search-results*)))

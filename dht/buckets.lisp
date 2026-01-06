@@ -49,25 +49,17 @@ if successful, NIL otherwise."
                     (when (equalp id (node-id node))
                       (return-from find-node-in-table node)))))
 
-(defun find-closest-nodes (id)
-  "Returns a list of the K closest nodes to ID."
-  (let (worst winners)
-    (flet ((lessp (x y)
-             (cond ((and x y) (< x y))
-                   (x t))))
-      (iterate-table
-       (lambda (node)
-         (let ((distance (calculate-node-distance node id)))
-           ;; if worst is set, check if the node's distance is closer
-           ;; than the worst so far. if worst isn't set, the node's distance
-           ;; is closer since there are no nodes in winners farther away
-           (when (lessp distance worst) ; if worst is nil, this returns t
-             (setf winners (insert node winners (curry #'node-closer-p id)))
-             (when (> (length winners) +k+)
-               (setf winners (butlast winners)))
-             (setf worst (calculate-node-distance (lastcar winners) id)))))
-       :nodely t))
-    winners))
+(defun find-closest-nodes (target)
+  "Returns a list of the k closest nodes to TARGET."
+  (let ((results (doubly-linked-list:make-list)))
+    (iterate-table
+     (lambda (node)
+       (setf results (insert node results #'<
+                             :key (curry #'node-closer-p target)))
+       (when (> (doubly-linked-list:length results) +k+)
+         (pop-from-end results)))
+     :nodely t)
+    (doubly-linked-list:list-values results)))
 
 (defun first-empty-slot (bucket)
   "Returns the index of the first empty slot in BUCKET."
