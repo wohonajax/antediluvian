@@ -23,8 +23,10 @@ will be sorted according to PREDICATE."
             do (let ((new-node (doubly-linked-list::make-node :value item
                                                               :previous previous
                                                               :next current-node)))
-                 (setf (doubly-linked-list:next previous) new-node
-                       (doubly-linked-list:previous current-node) new-node)
+                 (if previous
+                     (setf (doubly-linked-list:next previous) new-node)
+                     (setf (doubly-linked-list:head doubly-linked-list) new-node))
+                 (setf (doubly-linked-list:previous current-node) new-node)
                  (return doubly-linked-list))
           ;; we've reached the end of the list
           finally (let ((new-node (doubly-linked-list::make-node :value item
