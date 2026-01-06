@@ -9,6 +9,7 @@
   :components ((:file "package")
                (:file "settings")
                (:file "util")
+               (:file "doubly-linked-lists")
                (:file "torrents")
                (:file "peers")
                (:file "files")
