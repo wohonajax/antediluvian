@@ -30,10 +30,11 @@ will be sorted according to PREDICATE."
                    (setf (doubly-linked-list:previous current-node) new-node)
                    (return doubly-linked-list))
             ;; we've reached the end of the list
-            finally (let ((new-node (doubly-linked-list::make-node :value item
-                                                                   :previous previous)))
-                      ;; previous is still set to the old
-                      ;; previous value, not the last element
+            ;; previous is still set to the second-to-last element
+            ;; since assignment only occurs while current-node isn't nil
+            finally (let* ((true-previous (doubly-linked-list:next previous))
+                           (new-node (doubly-linked-list::make-node :value item
+                                                                    :previous true-previous)))
                       (setf (doubly-linked-list:next (doubly-linked-list:next previous)) new-node
                             (doubly-linked-list:tail doubly-linked-list) new-node)
                       (return doubly-linked-list))))))
