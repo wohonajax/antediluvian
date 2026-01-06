@@ -11,8 +11,8 @@ will be sorted according to PREDICATE."
     (unless (doubly-linked-list:next head)
       (return-from insert (let ((head-value (doubly-linked-list:value head)))
                             (if (funcall predicate
-                                       (funcall key item)
-                                       (funcall key head-value))
+                                         (funcall key item)
+                                         (funcall key head-value))
                                 (doubly-linked-list:make-list item head-value)
                                 (doubly-linked-list:make-list head-value item))))))
   (loop for current-node = (doubly-linked-list:head doubly-linked-list)
