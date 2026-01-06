@@ -14,29 +14,29 @@ will be sorted according to PREDICATE."
         (return-from insert (let ((head-value (doubly-linked-list:value head)))
                               (if (compare item head-value)
                                   (doubly-linked-list:make-list item head-value)
-                                  (doubly-linked-list:make-list head-value item))))))
-    (loop for current-node = (doubly-linked-list:head doubly-linked-list)
-            then (doubly-linked-list:next current-node)
-          with previous
-          while current-node
-          do (setf previous (doubly-linked-list:previous current-node))
-          when (compare item (doubly-linked-list:value current-node))
-            do (let ((new-node (doubly-linked-list::make-node :value item
-                                                              :previous previous
-                                                              :next current-node)))
-                 (if previous
-                     (setf (doubly-linked-list:next previous) new-node)
-                     (setf (doubly-linked-list:head doubly-linked-list) new-node))
-                 (setf (doubly-linked-list:previous current-node) new-node)
-                 (return doubly-linked-list))
-          ;; we've reached the end of the list
-          finally (let ((new-node (doubly-linked-list::make-node :value item
-                                                                 :previous previous)))
-                    ;; previous is still set to the old
-                    ;; previous value, not the last element
-                    (setf (doubly-linked-list:next (doubly-linked-list:next previous)) new-node
-                          (doubly-linked-list:tail doubly-linked-list) new-node)
-                    (return doubly-linked-list)))))
+                                  (doubly-linked-list:make-list head-value item)))))
+      (loop for current-node = head
+              then (doubly-linked-list:next current-node)
+            with previous
+            while current-node
+            do (setf previous (doubly-linked-list:previous current-node))
+            when (compare item (doubly-linked-list:value current-node))
+              do (let ((new-node (doubly-linked-list::make-node :value item
+                                                                :previous previous
+                                                                :next current-node)))
+                   (if previous
+                       (setf (doubly-linked-list:next previous) new-node)
+                       (setf (doubly-linked-list:head doubly-linked-list) new-node))
+                   (setf (doubly-linked-list:previous current-node) new-node)
+                   (return doubly-linked-list))
+            ;; we've reached the end of the list
+            finally (let ((new-node (doubly-linked-list::make-node :value item
+                                                                   :previous previous)))
+                      ;; previous is still set to the old
+                      ;; previous value, not the last element
+                      (setf (doubly-linked-list:next (doubly-linked-list:next previous)) new-node
+                            (doubly-linked-list:tail doubly-linked-list) new-node)
+                      (return doubly-linked-list))))))
 
 (defun pop-from-end (doubly-linked-list)
   "Removes the last element from DOUBLY-LINKED-LIST."
