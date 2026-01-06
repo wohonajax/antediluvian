@@ -17,8 +17,9 @@ will be sorted according to PREDICATE."
                                   (doubly-linked-list:make-list head-value item))))))
     (loop for current-node = (doubly-linked-list:head doubly-linked-list)
             then (doubly-linked-list:next current-node)
-          for previous = (doubly-linked-list:previous current-node)
+          with previous
           while current-node
+          do (setf previous (doubly-linked-list:previous current-node))
           when (compare item (doubly-linked-list:value current-node))
             do (let ((new-node (doubly-linked-list::make-node :value item
                                                               :previous previous
@@ -29,12 +30,11 @@ will be sorted according to PREDICATE."
                  (setf (doubly-linked-list:previous current-node) new-node)
                  (return doubly-linked-list))
           ;; we've reached the end of the list
-          ;; FIXME: sbcl deletes this as unreachable code
-          ;; FIXME: inserting an element whose place is at the
-          ;; end of the list gives an error (nil is not of type doubly-linked-list:node)
           finally (let ((new-node (doubly-linked-list::make-node :value item
                                                                  :previous previous)))
-                    (setf (doubly-linked-list:next previous) new-node
+                    ;; previous is still set to the old
+                    ;; previous value, not the last element
+                    (setf (doubly-linked-list:next (doubly-linked-list:next previous)) new-node
                           (doubly-linked-list:tail doubly-linked-list) new-node)
                     (return doubly-linked-list)))))
 
