@@ -29,6 +29,9 @@ will be sorted according to PREDICATE."
                  (setf (doubly-linked-list:previous current-node) new-node)
                  (return doubly-linked-list))
           ;; we've reached the end of the list
+          ;; FIXME: sbcl deletes this as unreachable code
+          ;; FIXME: inserting an element whose place is at the
+          ;; end of the list gives an error (nil is not of type doubly-linked-list:node)
           finally (let ((new-node (doubly-linked-list::make-node :value item
                                                                  :previous previous)))
                     (setf (doubly-linked-list:next previous) new-node
