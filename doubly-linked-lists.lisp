@@ -20,18 +20,16 @@ will be sorted according to PREDICATE."
           for previous = (doubly-linked-list:previous current-node)
           while current-node
           when (compare item (doubly-linked-list:value current-node))
-            do (let ((new-node (make-instance 'doubly-linked-list:node
-                                              :value item
-                                              :previous previous
-                                              :next current-node)))
+            do (let ((new-node (doubly-linked-list::make-node :value item
+                                                              :previous previous
+                                                              :next current-node)))
                  (setf (doubly-linked-list:next previous) new-node
                        (doubly-linked-list:previous current-node) new-node)
                  (return doubly-linked-list))
           ;; we've reached the end of the list
-          finally (let ((new-node (make-instance 'doubly-linked-list:node
-                                                 :value item
-                                                 :previous current-node)))
-                    (setf (doubly-linked-list:next current-node) new-node
+          finally (let ((new-node (doubly-linked-list::make-node :value item
+                                                                 :previous previous)))
+                    (setf (doubly-linked-list:next previous) new-node
                           (doubly-linked-list:tail doubly-linked-list) new-node)
                     (return doubly-linked-list)))))
 
