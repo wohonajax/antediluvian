@@ -9,12 +9,14 @@ will be sorted according to PREDICATE."
            (funcall predicate (funcall key item1) (funcall key item2))))
     (let ((head (doubly-linked-list:head doubly-linked-list)))
       (unless head
-        (return-from insert (doubly-linked-list:make-list item)))
+        (doubly-linked-list:insert doubly-linked-list item)
+        (return-from insert doubly-linked-list))
       (unless (doubly-linked-list:next head)
-        (return-from insert (let ((head-value (doubly-linked-list:value head)))
-                              (if (compare item head-value)
-                                  (doubly-linked-list:make-list item head-value)
-                                  (doubly-linked-list:make-list head-value item)))))
+        (doubly-linked-list:insert doubly-linked-list item :where
+                                   (if (compare item (doubly-linked-list:value head))
+                                       :before
+                                       :after))
+        (return-from insert doubly-linked-list))
       (loop for current-node = head
               then (doubly-linked-list:next current-node)
             with previous
