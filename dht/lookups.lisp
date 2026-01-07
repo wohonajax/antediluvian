@@ -62,9 +62,8 @@ closest nodes in the routing table."
 
 (defun push-to-results (node target hash-table)
   "Pushes NODE to the list of TARGET-related results under HASH-TABLE."
-  (setf (gethash target hash-table)
-        (insert node (gethash target hash-table) #'<
-                :key (rcurry #'calculate-node-distance target)))
+  (insert node (gethash target hash-table) #'<
+          :key (rcurry #'calculate-node-distance target))
   ;; we only want the k closest nodes
   (let ((closest-nodes (gethash target hash-table)))
     (when (> (doubly-linked-list:length closest-nodes) +k+)

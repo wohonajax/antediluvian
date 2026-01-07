@@ -54,7 +54,7 @@ if successful, NIL otherwise."
   (let ((results (doubly-linked-list:make-list)))
     (iterate-table
      (lambda (node)
-       (setf results (insert node results (curry #'node-closer-p target)))
+       (insert node results (curry #'node-closer-p target))
        (when (> (doubly-linked-list:length results) +k+)
          (pop-from-end results)))
      :nodely t)
