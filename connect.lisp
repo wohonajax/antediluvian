@@ -148,7 +148,7 @@ peer socket."
                            (with-lock-held ((peer-lock peer))
                              (setf (peer-socket peer) (try-socket-connection)))
                            (let* ((socket (peer-socket peer))
-                                  (stream (peer-socket peer))
+                                  (stream (socket-stream socket))
                                   (torrent (peer-torrent peer)))
                              (loop initially (unless (perform-handshake peer)
                                                ;; perform-handshake closes the
