@@ -7,10 +7,11 @@
 will be sorted according to PREDICATE."
   (flet ((compare (item1 item2)
            (funcall predicate (funcall key item1) (funcall key item2))))
-    ;; sbcl doesn't initialize loop variables before
-    ;; initially clauses so we bind the initial value
-    ;; before the loop form and check that binding
-    ;; in the initially clause
+    ;; loop variables aren't initialized to their
+    ;; initial values before initially clauses
+    ;; are run, so we need to bind the initial
+    ;; value before the loop form. then we
+    ;; check that binding in the initially clause
     (let ((head (doubly-linked-list:head doubly-linked-list)))
       (loop for current-node = head
               then (doubly-linked-list:next current-node)
