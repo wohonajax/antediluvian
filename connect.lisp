@@ -147,33 +147,33 @@ peer socket."
                          (block thread-block
                            (with-lock-held ((peer-lock peer))
                              (setf (peer-socket peer) (try-socket-connection)))
-                           (loop with socket = (peer-socket peer)
-                                 with stream = (socket-stream socket)
-                                 with torrent = (peer-torrent peer)
-                                 initially (unless (perform-handshake peer)
-                                             ;; perform-handshake closes the
-                                             ;; socket and removes the peer
-                                             ;; from the peer list if the
-                                             ;; handshake fails, so in that
-                                             ;; case just exit the whole block
-                                             (return-from thread-block))
-                                           (send-bitfield-message torrent socket)
-                                           (when (supports-bittorrent-dht-p peer)
-                                             (send-port-message socket))
-                                           (send-unchoke-message socket)
-                                           (with-lock-held ((peer-lock peer))
-                                             (setf (am-choking-p peer) nil))
-                                 ;; read protocol messages
-                                 unless (am-choking-p peer)
-                                   do (wait-for-input socket)
-                                      (read-peer-wire-message peer stream)
-                                 ;; send protocol messages
-                                 unless (choking-us-p peer)
-                                   do (request-had-piece peer)
-                                      (send-piece-to-peer peer)
-                                 ;; (loop-finish) takes us here
-                                 finally (with-lock-held ((peer-lock peer))
-                                           (socket-close socket))))
+                           (let* ((socket (peer-socket peer))
+                                  (stream (peer-socket peer))
+                                  (torrent (peer-torrent peer)))
+                             (loop initially (unless (perform-handshake peer)
+                                               ;; perform-handshake closes the
+                                               ;; socket and removes the peer
+                                               ;; from the peer list if the
+                                               ;; handshake fails, so in that
+                                               ;; case just exit the whole block
+                                               (return-from thread-block))
+                                             (send-bitfield-message torrent socket)
+                                             (when (supports-bittorrent-dht-p peer)
+                                               (send-port-message socket))
+                                             (send-unchoke-message socket)
+                                             (with-lock-held ((peer-lock peer))
+                                               (setf (am-choking-p peer) nil))
+                                   ;; read protocol messages
+                                   unless (am-choking-p peer)
+                                     do (wait-for-input socket)
+                                        (read-peer-wire-message peer stream)
+                                   ;; send protocol messages
+                                   unless (choking-us-p peer)
+                                     do (request-had-piece peer)
+                                        (send-piece-to-peer peer)
+                                   ;; (loop-finish) takes us here
+                                   finally (with-lock-held ((peer-lock peer))
+                                             (socket-close socket)))))
                          ;; (return-from thread-block) takes us here
                          (with-lock-held (*peer-list-lock*)
                            (removef *peer-list* peer :count 1))))
