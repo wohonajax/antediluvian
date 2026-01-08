@@ -46,15 +46,20 @@ request. Returns a list of peers."
               (initiate-peer-connection peer))))))
     peers))
 
+(defun send-announce (announce-url info-hash &key (event :started))
+  "Sends an announce request of type EVENT to the tracker at ANNOUNCE-URL."
+  (dex:get (build-tracker-announce-url announce-url info-hash :event event)
+           :keep-alive nil
+           ;; not every tracker responds with binary
+           ;; data, causing issues when bdecoding
+           :force-binary t))
+
 (defun announce-to-tracker (torrent announce-url)
   "Sends an announce GET request for TORRENT to ANNOUNCE-URL. Returns NIL if
 the request fails."
   (let ((info-hash (torrent-info-hash torrent)))
-    (handler-case (parse-announce-response
-                   (dex:get (build-tracker-announce-url announce-url info-hash)
-                            :keep-alive nil
-                            :force-binary t)
-                   info-hash)
+    (handler-case (parse-announce-response (send-announce announce-url info-hash)
+                                           info-hash)
       (error ()))))
 
 (defun torrent-announce (torrent)
