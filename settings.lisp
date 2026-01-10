@@ -1,6 +1,6 @@
 (in-package #:antediluvian)
 
-(defvar *version* "0000"
+(defparameter *version* "0000"
   "String denoting client version. Four characters for major and minor
 versions, e.g.: 0.00.0")
 
