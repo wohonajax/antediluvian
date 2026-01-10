@@ -18,7 +18,7 @@ Useful for NATs.")
   "Where to store and load settings.")
 
 (defvar *download-directory*
-        (lret ((path (merge-pathnames (make-pathname :directory '(:relative "Downloads"))
+        (lret ((path (merge-pathnames (filepaths:ensure-directory "Downloads")
                                       (user-homedir-pathname))))
           (ensure-directories-exist path))
   "The default directory to download torrents into.")
