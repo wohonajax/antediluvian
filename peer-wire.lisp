@@ -118,9 +118,9 @@ Returns the peer object, or NIL if the handshake failed."
     (read-sequence vector stream)
     (octets-to-integer vector)))
 
-(defun read-peer-wire-length-header (stream)
-  "Reads a 4-byte peer wire message length header from STREAM."
-  (read-4-bytes-to-integer stream))
+(defun read-peer-wire-length-header (socket)
+  "Reads a 4-byte peer wire message length header from SOCKET's stream."
+  (read-4-bytes-to-integer (socket-stream socket)))
 
 (defun message-id-to-message-type (id)
   "Translates a message ID byte to a keyword denoting the message type."

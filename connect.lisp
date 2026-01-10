@@ -20,12 +20,13 @@ peer socket."
 (defvar *peer-listener-thread* nil
   "A thread listening for incoming TCP connections.")
 
-(defun read-peer-wire-message (peer stream)
-  "Reads PEER's peer wire protocol message from STREAM."
+(defun read-peer-wire-message (peer)
+  "Reads a peer wire protocol message from PEER."
   (let* ((torrent (peer-torrent peer))
-         (length (read-peer-wire-length-header stream))
-         (message-bytes (make-octets length)))
-    (read-sequence message-bytes stream)
+         (socket (peer-socket peer))
+         (message-length (read-peer-wire-length-header socket))
+         (message-bytes (make-octets message-length)))
+    (read-sequence message-bytes (socket-stream socket))
     (case (message-id-to-message-type (aref message-bytes 0))
       (:choke (setf (choking-us-p peer) t))
       (:unchoke (setf (choking-us-p peer) nil))
@@ -121,7 +122,7 @@ peer socket."
                                ;; read protocol messages
                                unless (am-choking-p peer)
                                  do (wait-for-input accepted-socket)
-                                    (read-peer-wire-message peer stream)
+                                    (read-peer-wire-message peer)
                                ;; send protocol messages
                                unless (choking-us-p peer)
                                  do (send-piece-to-peer peer)
@@ -147,9 +148,8 @@ peer socket."
                          (block thread-block
                            (with-lock-held ((peer-lock peer))
                              (setf (peer-socket peer) (try-socket-connection)))
-                           (let* ((socket (peer-socket peer))
-                                  (stream (socket-stream socket))
-                                  (torrent (peer-torrent peer)))
+                           (let ((socket (peer-socket peer))
+                                 (torrent (peer-torrent peer)))
                              (loop initially (unless (perform-handshake peer)
                                                ;; perform-handshake closes the
                                                ;; socket and removes the peer
@@ -166,7 +166,7 @@ peer socket."
                                    ;; read protocol messages
                                    unless (am-choking-p peer)
                                      do (wait-for-input socket)
-                                        (read-peer-wire-message peer stream)
+                                        (read-peer-wire-message peer)
                                    ;; send protocol messages
                                    unless (choking-us-p peer)
                                      do (request-had-piece peer)
