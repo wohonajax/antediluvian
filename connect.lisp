@@ -107,31 +107,40 @@ peer socket."
                  (member piece-to-request (had-pieces peer)))))
     (request-piece torrent piece-to-request (peer-socket peer))))
 
+(defun peer-connection-loop (peer)
+  "Main loop for communicating with a PEER using peer wire protocol."
+  (let ((socket (peer-socket peer))
+        (torrent (peer-torrent peer)))
+    (handler-case
+        ;; TODO: send keep-alive messages every 2 minutes
+        (loop initially (send-bitfield-message torrent socket)
+                        (when (supports-bittorrent-dht-p peer)
+                          (send-port-message socket))
+                        (send-unchoke-message socket)
+                        (with-lock-held ((peer-lock peer))
+                          (setf (am-choking-p peer) nil))
+              ;; read protocol messages
+              unless (with-lock-held ((peer-lock peer))
+                       (am-choking-p peer))
+                do (wait-for-input socket)
+                   (read-peer-wire-message peer)
+              ;; send protocol messages
+              unless (with-lock-held ((peer-lock peer))
+                       (choking-us-p peer))
+                do (send-piece-to-peer peer)
+                   (request-had-piece peer))
+      (error ()))
+    ;; errors take us here; do cleanup
+    (with-lock-held ((peer-lock peer))
+      (socket-close socket))
+    (with-lock-held (*peer-list-lock*)
+      (removef *peer-list* peer :count 1))))
+
 (defun accept-peer-connection (socket)
   "Accepts a peer connection from a SOCKET and listens in a new thread."
   (when-let* ((accepted-socket (socket-accept socket))
               (peer (receive-handshake accepted-socket)))
-    (push (make-thread (lambda ()
-                         (loop with stream = (socket-stream accepted-socket)
-                               with torrent = (peer-torrent peer)
-                               initially (send-bitfield-message torrent accepted-socket)
-                                         (when (supports-bittorrent-dht-p peer)
-                                           (send-port-message accepted-socket))
-                                         (send-unchoke-message accepted-socket)
-                                         (setf (am-choking-p peer) nil)
-                               ;; read protocol messages
-                               unless (am-choking-p peer)
-                                 do (wait-for-input accepted-socket)
-                                    (read-peer-wire-message peer)
-                               ;; send protocol messages
-                               unless (choking-us-p peer)
-                                 do (send-piece-to-peer peer)
-                                    (request-had-piece peer)
-                               ;; (loop-finish) takes us here
-                               finally (with-lock-held ((peer-lock peer))
-                                         (socket-close accepted-socket))
-                                       (with-lock-held (*peer-list-lock*)
-                                         (removef *peer-list* peer :count 1)))))
+    (push (make-thread (lambda () (peer-connection-loop peer)))
           *peer-connection-threads*)))
 
 (defun initiate-peer-connection (peer)
@@ -148,35 +157,9 @@ peer socket."
                          (block thread-block
                            (with-lock-held ((peer-lock peer))
                              (setf (peer-socket peer) (try-socket-connection)))
-                           (let ((socket (peer-socket peer))
-                                 (torrent (peer-torrent peer)))
-                             (loop initially (unless (perform-handshake peer)
-                                               ;; perform-handshake closes the
-                                               ;; socket and removes the peer
-                                               ;; from the peer list if the
-                                               ;; handshake fails, so in that
-                                               ;; case just exit the whole block
-                                               (return-from thread-block))
-                                             (send-bitfield-message torrent socket)
-                                             (when (supports-bittorrent-dht-p peer)
-                                               (send-port-message socket))
-                                             (send-unchoke-message socket)
-                                             (with-lock-held ((peer-lock peer))
-                                               (setf (am-choking-p peer) nil))
-                                   ;; read protocol messages
-                                   unless (am-choking-p peer)
-                                     do (wait-for-input socket)
-                                        (read-peer-wire-message peer)
-                                   ;; send protocol messages
-                                   unless (choking-us-p peer)
-                                     do (request-had-piece peer)
-                                        (send-piece-to-peer peer)
-                                   ;; (loop-finish) takes us here
-                                   finally (with-lock-held ((peer-lock peer))
-                                             (socket-close socket)))))
-                         ;; (return-from thread-block) takes us here
-                         (with-lock-held (*peer-list-lock*)
-                           (removef *peer-list* peer :count 1))))
+                           (unless (perform-handshake peer)
+                             (return-from thread-block))
+                           (peer-connection-loop peer))))
           *peer-connection-threads*)))
 
 (defun connect-to-peer (peer)
