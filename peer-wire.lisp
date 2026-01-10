@@ -231,9 +231,7 @@ have."
            ;; we want the ceiling so we don't lose pieces.
            ;; extra bits are zeros
            (pieces-length (ceiling number-of-pieces 8))
-           ;; for some reason write-sequence doesn't work here
-           ;; unless its sequence argument is a simple-vector
-           (bitfield-vector (make-array pieces-length :initial-element 0)))
+           (bitfield-vector (make-octets pieces-length :initial-element 0)))
       (if-let (had-pieces (with-lock-held ((torrent-lock torrent))
                             (had-pieces torrent)))
         (loop with piece-index = 0
@@ -243,7 +241,7 @@ have."
                        when (member piece-index had-pieces)
                          do (setf (ldb (byte 1 i) bitfield) 1)
                        do (incf piece-index)
-                       finally (setf (svref bitfield-vector vector-index) bitfield)))
+                       finally (setf (aref bitfield-vector vector-index) bitfield)))
         (loop with piece-index = 0
               for vector-index below pieces-length
               do (loop with bitfield = 0
@@ -254,7 +252,7 @@ have."
                        else do (with-lock-held ((torrent-lock torrent))
                                  (push piece-index (needed-pieces torrent)))
                        do (incf piece-index)
-                       finally (setf (svref bitfield-vector vector-index) bitfield))))
+                       finally (setf (aref bitfield-vector vector-index) bitfield))))
       (send-peer-message-length-header (1+ number-of-pieces) socket)
       (write-byte (message-id-for-message-type :bitfield) stream)
       (write-sequence bitfield-vector stream))))
