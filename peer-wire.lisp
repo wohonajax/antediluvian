@@ -231,7 +231,9 @@ have."
            ;; we want the ceiling so we don't lose pieces.
            ;; extra bits are zeros
            (pieces-length (ceiling number-of-pieces 8))
-           (bitfield-vector (make-octets pieces-length :initial-element 0)))
+           ;; for some reason write-sequence doesn't work here
+           ;; unless its sequence argument is a simple-vector
+           (bitfield-vector (make-array pieces-length :initial-element 0)))
       (if-let (had-pieces (with-lock-held ((torrent-lock torrent))
                             (had-pieces torrent)))
         (loop with piece-index = 0
