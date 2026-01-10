@@ -1,5 +1,9 @@
 (in-package #:antediluvian)
 
+(defvar *version* "0000"
+  "String denoting client version. Four characters for major and minor
+versions, e.g.: 0.00.0")
+
 (defvar *port* 6881
   "The default port for antediluvian to use for network communications.")
 

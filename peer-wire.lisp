@@ -5,7 +5,8 @@
 (defun generate-peer-id ()
   "Generates a 20-byte peer ID for this session. Uses \"AD\" for the client
 header (for AnteDiluvian). Uses an Azureus-style client ID string."
-  (concat-vec (ascii-string-to-byte-array "-AD0000-")
+  (concat-vec (ascii-string-to-byte-array
+               (concatenate 'string "-AD" *version* "-"))
               ;; 2 hyphens + 2 client ID characters
               ;; + 4 version number characters = 8
               ;; 20 - 8 = 12
