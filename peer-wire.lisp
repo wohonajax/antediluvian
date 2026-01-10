@@ -222,40 +222,38 @@ the PIECE-INDEXth piece of a torrent."
     (write-byte (message-id-for-message-type :have) stream)
     (write-sequence (pad-integer-to-octets piece-index 4) stream)))
 
+(defun make-bitfield-vector (torrent)
+  "Returns a vector of bitfields corresponding to the pieces of TORRENT that we
+have."
+  (loop with had-pieces = (had-pieces torrent)
+        with bits-per-byte = 8
+        ;; we want the ceiling so we don't lose pieces. extra bits are zeros
+        with pieces-length = (ceiling (number-of-pieces torrent) bits-per-byte)
+        with bitfield-vector = (make-octets pieces-length :initial-element 0)
+        with piece-index = 0
+        for vector-index below pieces-length
+        do (loop with bitfield = 0
+                 for i from 7 downto 0
+                 when (member piece-index had-pieces)
+                   do (setf (ldb (byte 1 i) bitfield) 1)
+                 do (incf piece-index)
+                 finally (setf (aref bitfield-vector vector-index) bitfield)
+                         (return bitfield-vector))))
+
 (defun send-bitfield-message (torrent socket)
   "Sends a bitfield message to the peer connected to SOCKET regarding TORRENT.
 Bitfield messages essentially communicate which pieces of a torrent we already
 have."
   (with-socket-stream (stream socket)
-    (let* ((number-of-pieces (number-of-pieces torrent))
-           ;; we want the ceiling so we don't lose pieces.
-           ;; extra bits are zeros
-           (pieces-length (ceiling number-of-pieces 8))
-           (bitfield-vector (make-octets pieces-length :initial-element 0)))
-      (if-let (had-pieces (with-lock-held ((torrent-lock torrent))
-                            (had-pieces torrent)))
-        (loop with piece-index = 0
-              for vector-index below pieces-length
-              do (loop with bitfield = 0
-                       for i from 7 downto 0
-                       when (member piece-index had-pieces)
-                         do (setf (ldb (byte 1 i) bitfield) 1)
-                       do (incf piece-index)
-                       finally (setf (aref bitfield-vector vector-index) bitfield)))
-        (loop with piece-index = 0
-              for vector-index below pieces-length
-              do (loop with bitfield = 0
-                       for i from 7 downto 0
-                       if (have-piece-p torrent piece-index)
-                         do (with-lock-held ((torrent-lock torrent))
-                              (push piece-index (had-pieces torrent)))
-                       else do (with-lock-held ((torrent-lock torrent))
-                                 (push piece-index (needed-pieces torrent)))
-                       do (incf piece-index)
-                       finally (setf (aref bitfield-vector vector-index) bitfield))))
-      (send-peer-message-length-header (1+ number-of-pieces) socket)
-      (write-byte (message-id-for-message-type :bitfield) stream)
-      (write-sequence bitfield-vector stream))))
+    (flet ((write-bitfield-message-components (bitfield-vector)
+             (send-peer-message-length-header (1+ (number-of-pieces torrent))
+                                              socket)
+             (write-byte (message-id-for-message-type :bitfield) stream)
+             (write-sequence bitfield-vector stream)))
+      (cond ((had-pieces torrent)
+             (write-bitfield-message-components (make-bitfield-vector torrent)))
+            (t (populate-torrent-piece-slots torrent)
+               (write-bitfield-message-components (make-bitfield-vector torrent)))))))
 
 (defun send-request-message (piece-index byte-offset block-length socket)
   "Sends a request message for PIECE-INDEX, with a BYTE-OFFSET byte offset

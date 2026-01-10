@@ -165,6 +165,17 @@ BLOCK-LENGTH and returns it as a byte vetor."
   (with-lock-held ((torrent-lock torrent))
     (read-chunk torrent piece-index byte-offset block-length block block)))
 
+(defun populate-torrent-piece-slots (torrent)
+  "Populates TORRENT's HAD-PIECES and NEEDED-PIECES slots according to whether
+we have each piece on disk or not."
+  (loop for piece-index below (number-of-pieces torrent)
+        if (have-piece-p torrent piece-index)
+          do (with-lock-held ((torrent-lock torrent))
+               (push piece-index (had-pieces torrent)))
+        else do (with-lock-held ((torrent-lock torrent))
+                  (push piece-index (needed-pieces torrent)))
+        do (incf piece-index)))
+
 (defstruct block-request piece-index byte-offset block-length)
 
 (defstruct write-instruction torrent block piece-index byte-offset block-length)
@@ -181,7 +192,6 @@ values."
           (write-instruction-block write-instruction)
           (write-instruction-block-length write-instruction)))
   
-
 (defun start-file-writer-thread ()
   "Starts a thread that manages writing files to disk."
   (make-thread
