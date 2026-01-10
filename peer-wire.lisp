@@ -114,9 +114,9 @@ Returns the peer object, or NIL if the handshake failed."
 
 (defun read-4-bytes-to-integer (stream)
   "Reads 4 big-endian bytes from STREAM and converts the result to an integer."
-  (let ((vector (make-octets 4)))
-    (read-sequence vector stream)
-    (octets-to-integer vector)))
+  (let ((byte-vector (make-octets 4)))
+    (read-sequence byte-vector stream)
+    (octets-to-integer byte-vector)))
 
 (defun read-peer-wire-length-header (socket)
   "Reads a 4-byte peer wire message length header from SOCKET's stream."
