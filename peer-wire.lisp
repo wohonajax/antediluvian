@@ -245,15 +245,11 @@ have."
 Bitfield messages essentially communicate which pieces of a torrent we already
 have."
   (with-socket-stream (stream socket)
-    (flet ((write-bitfield-message-components (bitfield-vector)
-             (send-peer-message-length-header (1+ (number-of-pieces torrent))
-                                              socket)
-             (write-byte (message-id-for-message-type :bitfield) stream)
-             (write-sequence bitfield-vector stream)))
-      (cond ((had-pieces torrent)
-             (write-bitfield-message-components (make-bitfield-vector torrent)))
-            (t (populate-torrent-piece-slots torrent)
-               (write-bitfield-message-components (make-bitfield-vector torrent)))))))
+    (unless (had-pieces torrent)
+      (populate-torrent-piece-slots torrent))
+    (send-peer-message-length-header (1+ (number-of-pieces torrent)) socket)
+    (write-byte (message-id-for-message-type :bitfield) stream)
+    (write-sequence (make-bitfield-vector torrent) stream)))
 
 (defun send-request-message (piece-index byte-offset block-length socket)
   "Sends a request message for PIECE-INDEX, with a BYTE-OFFSET byte offset
