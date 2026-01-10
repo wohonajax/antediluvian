@@ -70,13 +70,18 @@ Binds the chunk to CHUNK-VAR and returns the result of RETURN-FORM."
 we don't have the piece, or if PIECE-INDEX is out of bounds."
   (with-lock-held ((torrent-lock torrent))
     (let ((piece-length (gethash "piece length" (torrent-info torrent))))
-      (read-chunk torrent piece-index 0 piece-length chunk
-        (let* ((pieces (gethash "pieces" (torrent-info torrent)))
-               (sha1-index (* piece-index 20))
-               ;; if the piece is out of bounds, return nil
-               (sha1-hash (handler-case (subseq pieces sha1-index (+ sha1-index 20))
-                            (error () (return-from have-piece-p nil)))))
-          (equalp sha1-hash (digest-sequence :sha1 chunk)))))))
+      ;; read-sequence tries to read an array of rank 0, which isn't a sequence
+      (handler-case (read-chunk torrent piece-index 0 piece-length chunk
+                      (let* ((pieces (gethash "pieces" (torrent-info torrent)))
+                        (sha1-index (* piece-index 20))
+                        ;; if the piece is out of bounds, return nil
+                        (sha1-hash (handler-case (subseq pieces sha1-index (+ sha1-index 20))
+                                     (error () (return-from have-piece-p nil)))))
+                          (equalp sha1-hash (digest-sequence :sha1 chunk))))
+        ;; reading an empty file gives us an
+        ;; error. when that happens, we don't have
+        ;; the piece, so just return nil
+        (error ())))))
 
 (defun write-chunk (torrent piece-index byte-offset chunk chunk-length)
   "Writes a CHUNK indicated by a BYTE-OFFSET into the PIECE-INDEXth piece of
