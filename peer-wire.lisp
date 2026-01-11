@@ -72,44 +72,6 @@ appropriate slots in PEER."
     (when (bit-setp 3 7)
       (setf (supports-nat-traversal-p peer) t))))
 
-(defvar *message-id-to-message-type-alist*
-        '((0 . :choke)
-          (1 . :unchoke)
-          (2 . :interested)
-          (3 . :not-interested)
-          (4 . :have)
-          (5 . :bitfield)
-          (6 . :request)
-          (7 . :piece)
-          (8 . :cancel)
-          (9 . :port))
-  "Alist mapping message byte IDs to message type keywords.")
-
-(defun read-4-bytes-to-integer (stream)
-  "Reads 4 big-endian bytes from STREAM and converts the result to an integer."
-  (let ((byte-vector (make-octets 4)))
-    (read-sequence byte-vector stream)
-    (octets-to-integer byte-vector)))
-
-(defun read-peer-wire-length-header (socket)
-  "Reads a 4-byte peer wire message length header from SOCKET's stream."
-  (read-4-bytes-to-integer (socket-stream socket)))
-
-(defun message-id-to-message-type (id)
-  "Translates a message ID byte to a keyword denoting the message type."
-  (cdr (assoc id *message-id-to-message-type-alist*)))
-
-(defun parse-bitfield (bitfield-vector)
-  "Parses a bitfield out of BITFIELD-VECTOR. Bits are read from left to right."
-  (loop with had-pieces = '()
-        with piece-index = 0
-        for byte across bitfield-vector
-        do (loop for bit below 8
-                 do (when (= 1 (ldb (byte 1 (- 7 bit)) byte))
-                      (push piece-index had-pieces))
-                    (incf piece-index))
-        finally (return (nreverse had-pieces))))
-
 (defun write-handshake (info-hash stream)
   "Writes a BitTorrent protocol handshake associated with INFO-HASH to STREAM."
   (write-handshake-header stream) ; protocol length prefix and string
@@ -196,6 +158,44 @@ NIL if not."
       (return-from perform-handshake nil))
     ;; return t if the handshake was successful
     t))
+
+(defvar *message-id-to-message-type-alist*
+        '((0 . :choke)
+          (1 . :unchoke)
+          (2 . :interested)
+          (3 . :not-interested)
+          (4 . :have)
+          (5 . :bitfield)
+          (6 . :request)
+          (7 . :piece)
+          (8 . :cancel)
+          (9 . :port))
+  "Alist mapping message byte IDs to message type keywords.")
+
+(defun read-4-bytes-to-integer (stream)
+  "Reads 4 big-endian bytes from STREAM and converts the result to an integer."
+  (let ((byte-vector (make-octets 4)))
+    (read-sequence byte-vector stream)
+    (octets-to-integer byte-vector)))
+
+(defun read-peer-wire-length-header (socket)
+  "Reads a 4-byte peer wire message length header from SOCKET's stream."
+  (read-4-bytes-to-integer (socket-stream socket)))
+
+(defun message-id-to-message-type (id)
+  "Translates a message ID byte to a keyword denoting the message type."
+  (cdr (assoc id *message-id-to-message-type-alist*)))
+
+(defun parse-bitfield (bitfield-vector)
+  "Parses a bitfield out of BITFIELD-VECTOR. Bits are read from left to right."
+  (loop with had-pieces = '()
+        with piece-index = 0
+        for byte across bitfield-vector
+        do (loop for bit below 8
+                 do (when (= 1 (ldb (byte 1 (- 7 bit)) byte))
+                          (push piece-index had-pieces))
+                    (incf piece-index))
+        finally (return (nreverse had-pieces))))
 
 (defun message-id-for-message-type (message-type)
   "Returns the byte to be sent to a peer for a MESSAGE-TYPE message.
