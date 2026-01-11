@@ -153,10 +153,8 @@ NIL if not."
     (let ((peer-hash (make-octets 20)))
       (read-sequence peer-hash stream)
       (unless (equalp hash peer-hash)
-        (with-lock-held ((peer-lock peer))
-          (socket-close socket))
-        (with-lock-held (*peer-list-lock*)
-          (removef *peer-list* peer :count 1))
+        (close-peer-socket peer)
+        (remove-peer-from-peer-list peer)
         (return-from perform-handshake nil)))
     ;; return t if the handshake was successful
     t))

@@ -131,10 +131,8 @@ peer socket."
                    (request-had-piece peer))
       (error ()))
     ;; errors take us here; do cleanup
-    (with-lock-held ((peer-lock peer))
-      (socket-close socket))
-    (with-lock-held (*peer-list-lock*)
-      (removef *peer-list* peer :count 1))))
+    (close-peer-socket peer)
+    (remove-peer-from-peer-list peer)))
 
 (defun accept-peer-connection (socket)
   "Accepts a peer connection from a SOCKET and listens in a new thread."
@@ -151,8 +149,12 @@ peer socket."
                                               :element-type '(unsigned-byte 8)
                                               :timeout 10)
                   ;; if the connection fails, abandon the peer
-                  (connection-refused-error () (return-from thread-block))
-                  (timeout-error () (return-from thread-block)))))
+                  (connection-refused-error ()
+                    (remove-peer-from-peer-list peer)
+                    (return-from thread-block))
+                  (timeout-error ()
+                    (remove-peer-from-peer-list peer)
+                    (return-from thread-block)))))
     (push (make-thread (lambda ()
                          (block thread-block
                            (with-lock-held ((peer-lock peer))

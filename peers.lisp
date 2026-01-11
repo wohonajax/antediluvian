@@ -73,3 +73,13 @@ indicated by HASH."
                              :socket socket :id id
                              :torrent (gethash hash *torrent-hashes*))
               *peer-list*))))
+
+(defun close-peer-socket (peer)
+  "Closes the socket associated with PEER."
+  (with-lock-held ((peer-lock peer))
+    (socket-close (peer-socket peer))))
+
+(defun remove-peer-from-peer-list (peer)
+  "Removes PEER from the peer list."
+  (with-lock-held (*peer-list-lock*)
+    (removef *peer-list* peer :count 1)))
