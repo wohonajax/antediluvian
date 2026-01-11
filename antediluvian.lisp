@@ -23,8 +23,10 @@ list of SHA1 hashes, magnet links, or torrent file paths."
           (when (thread-alive-p thread)
             (destroy-thread thread)))
         *peer-connection-threads*)
+  (setf *peer-connection-threads* nil)
   (with-lock-held (*peer-list-lock*)
     (mapc #'close-peer-socket *peer-list*))
+  (mapc #'remove-peer-from-peer-list *peer-list*)
   (destroy-thread *file-writer-thread*))
 
 (defun start (&rest sources)
