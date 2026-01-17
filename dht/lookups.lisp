@@ -6,9 +6,6 @@
 
 (in-package #:antediluvian)
 
-(defconstant +alpha+ 3
-  "The number of simultaneous lookups to perform.")
-
 (defvar *lookup-results-lists* (make-hash-table :test #'equalp)
   "A hash table mapping lookup targets to lists containing nodes received from
 find_node queries.")
