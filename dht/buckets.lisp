@@ -2,10 +2,6 @@
 
 (in-package #:antediluvian)
 
-;;; recommended bucket size limit is 8
-(defconstant +k+ 8
-  "Replication parameter. Used for the bucket size limit, among other things.")
-
 (defstruct bucket
   (min 0 :read-only t)
   (max (expt 2 160) :read-only t)

@@ -1,6 +1,6 @@
 (asdf:defsystem #:antediluvian
   :name "antediluvian"
-  :version "20260111"
+  :version "20260117"
   :description "antediluvian"
   :long-description "Torrent client in Common Lisp"
   :author "Hunter Chandler <wohonajax@gmail.com>"
@@ -16,7 +16,8 @@
                (:file "peer-wire")
                (:module "dht"
                         :serial t
-                        :components ((:file "peers")
+                        :components ((:file "global")
+                                     (:file "peers")
                                      (:file "nodes")
                                      (:file "tokens")
                                      (:file "buckets")
