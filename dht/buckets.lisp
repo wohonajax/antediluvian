@@ -51,14 +51,9 @@ if successful, NIL otherwise."
 
 (defun find-closest-nodes (target)
   "Returns a list of the k closest nodes to TARGET."
-  (let ((results (doubly-linked-list:make-list)))
-    (iterate-table
-     (lambda (node)
-       (insert node results (curry #'node-closer-p target))
-       (when (> (doubly-linked-list:length results) +k+)
-         (pop-from-end results)))
-     :nodely t)
-    (doubly-linked-list:list-values results)))
+  (let ((results (red-black-tree:make-tree :key-func (rcurry #'calculate-node-distance target))))
+    (iterate-table (curry #'insert results) :nodely t)
+    (red-black-tree-to-list results)))
 
 (defun first-empty-slot (bucket)
   "Returns the index of the first empty slot in BUCKET."

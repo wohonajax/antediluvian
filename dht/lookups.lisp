@@ -51,7 +51,7 @@ closest nodes in the routing table."
 (defun initiate-lookup (target)
   "Initiates a lookup procedure for TARGET."
   (setf (gethash target *best-lookup-results*)
-        (doubly-linked-list:make-list))
+        (red-black-tree:make-tree :key-func (rcurry #'calculate-node-distance target)))
   (initiate-dht-procedure target (curry #'lookup target)))
 
 (defun recurse-on-lookup-results (target)
@@ -62,12 +62,7 @@ closest nodes in the routing table."
 
 (defun push-to-results (node target hash-table)
   "Pushes NODE to the list of TARGET-related results under HASH-TABLE."
-  (insert node (gethash target hash-table) #'<
-          :key (rcurry #'calculate-node-distance target))
-  ;; we only want the k closest nodes
-  (let ((closest-nodes (gethash target hash-table)))
-    (when (> (doubly-linked-list:length closest-nodes) +k+)
-      (pop-from-end closest-nodes))))
+  (insert (gethash target hash-table) node))
 
 (defun push-to-lookup-results (node target)
   "Pushes NODE to the list of lookup results under TARGET."
@@ -85,9 +80,8 @@ results are the same as the previous best results."
   (when-let (results (gethash target *lookup-results-lists*))
     (mapc (rcurry #'push-to-lookup-results target) results)
     (remhash target *lookup-results-lists*))
-  (let ((best-results-list (doubly-linked-list:list-values
-                            (gethash target *best-lookup-results*)))
-        (previous-best-results-list (doubly-linked-list:list-values
+  (let ((best-results-list (red-black-tree-to-list (gethash target *best-lookup-results*)))
+        (previous-best-results-list (red-black-tree-to-list
                                      (gethash target *previous-best-lookup-results*))))
     (cond ;; if the previous results are the same as the
           ;; current results, stop recursion. add the
@@ -100,7 +94,8 @@ results are the same as the previous best results."
           ;; current results, recurse on the results we got
           (t (shiftf (gethash target *previous-best-lookup-results*)
                      (gethash target *best-lookup-results*)
-                     (doubly-linked-list:make-list))
+                     (red-black-tree:make-tree :key-func
+                                               (rcurry #'calculate-node-distance target)))
              (mapc (curry #'lookup target) previous-best-results-list)))))
 
 ;;; Announcing peer status
@@ -114,7 +109,8 @@ the DHT for nearby nodes.")
 
 (defun search-for-closest-nodes (info-hash)
   "Initiates a search of the DHT network for the k closest nodes to INFO-HASH."
-  (setf (gethash info-hash *search-results*) (doubly-linked-list:make-list))
+  (setf (gethash info-hash *search-results*)
+        (red-black-tree:make-tree :key-func (rcurry #'calculate-node-distance info-hash)))
   (initiate-dht-procedure
    info-hash
    (lambda (node)
@@ -137,6 +133,5 @@ the DHT for nearby nodes.")
   (remhash transaction-id *active-searches*)
   (unless (= (active-searches info-hash) 0)
     (return-from handle-search-response))
-  (lret ((results (doubly-linked-list:list-values
-                   (gethash info-hash *search-results*))))
+  (lret ((results (red-black-tree-to-list (gethash info-hash *search-results*))))
     (remhash info-hash *search-results*)))
