@@ -36,12 +36,12 @@
                chanl
                dexador
                do-urlencode
-               doubly-linked-list
                filepaths
                ironclad/core
                ironclad/digests
                lparallel
                magnet
+               red-black-tree
                serapeum
                uiop
                usocket))
