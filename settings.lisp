@@ -17,7 +17,7 @@ configuration directory."
   #-mezzano (xdg-config-home relative-path)
   #+mezzano (merge-pathnames relative-path (user-homedir-pathname)))
 
-(defvar *settings-location* (settings-pathspec (filepaths:join "antediluvian" "settings.sexp"))
+(defvar *settings-location* (settings-pathspec (filepaths:join "antediluvian" "settings.lisp"))
   "Where to store and load settings.")
 
 (defvar *download-directory*
