@@ -11,10 +11,13 @@ versions, e.g.: 0.00.0")
   "Whether peers should use the visible port (T) or the given port (NIL).
 Useful for NATs.")
 
-(defvar *settings-location*
-        #-mezzano (xdg-config-home "antediluvian/settings.sexp")
-        #+mezzano (merge-pathnames "antediluvian;settings.sexp"
-                                   (user-homedir-pathname))
+(defun settings-pathspec (relative-path)
+  "Returns an absolute pathname specifier to RELATIVE-PATH relative to the
+platform's configuration directory."
+  #-mezzano (xdg-config-home relative-path)
+  #+mezzano (merge-pathnames relative-path (user-homedir-pathname)))
+
+(defvar *settings-location* (settings-pathspec (filepaths:join "antediluvian" "settings.sexp"))
   "Where to store and load settings.")
 
 (defvar *download-directory*
@@ -32,9 +35,7 @@ Useful for NATs.")
   "Saves settings."
   (macrolet ((make-setting (setting)
                `(list 'setf ',setting ,setting)))
-    (ensure-directories-exist #-mezzano (xdg-config-home "antediluvian/")
-                              #+mezzano (merge-pathnames "antediluvian;"
-                                                         (user-homedir-pathname)))
+    (ensure-directories-exist (settings-pathspec (filepaths:ensure-directory "antediluvian")))
     (with-open-file (file *settings-location*
                           :direction :output
                           :if-exists :supersede
