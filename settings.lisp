@@ -12,8 +12,8 @@ versions, e.g.: 0.00.0")
 Useful for NATs.")
 
 (defun settings-pathspec (relative-path)
-  "Returns an absolute pathname specifier to RELATIVE-PATH relative to the
-platform's configuration directory."
+  "Returns an absolute pathname to RELATIVE-PATH relative to the platform's
+configuration directory."
   #-mezzano (xdg-config-home relative-path)
   #+mezzano (merge-pathnames relative-path (user-homedir-pathname)))
 
