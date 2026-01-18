@@ -6,6 +6,7 @@
   :author "Hunter Chandler <wohonajax@gmail.com>"
   :maintainer "Hunter Chandler <wohonajax@gmail.com>"
   :license "MIT"
+  :serial t
   :components ((:file "package")
                (:file "settings")
                (:file "util")
@@ -29,7 +30,6 @@
                (:file "connect")
                (:file "trackers")
                (:file "antediluvian"))
-  :serial t
   :depends-on (alexandria
                bencode
                bordeaux-threads
