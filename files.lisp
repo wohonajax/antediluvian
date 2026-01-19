@@ -173,8 +173,7 @@ we have each piece on disk or not."
           do (with-lock-held ((torrent-lock torrent))
                (push piece-index (had-pieces torrent)))
         else do (with-lock-held ((torrent-lock torrent))
-                  (push piece-index (needed-pieces torrent)))
-        do (incf piece-index)))
+                  (push piece-index (needed-pieces torrent)))))
 
 (defstruct block-request piece-index byte-offset block-length)
 
