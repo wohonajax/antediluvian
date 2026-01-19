@@ -35,7 +35,7 @@ configuration directory."
   "Saves settings."
   (macrolet ((make-setting (setting)
                `(list 'setf ',setting ,setting)))
-    (ensure-directories-exist (settings-pathspec (filepaths:ensure-directory "antediluvian")))
+    (ensure-directories-exist *settings-location*)
     (with-open-file (file *settings-location*
                           :direction :output
                           :if-exists :supersede
