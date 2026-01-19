@@ -282,7 +282,7 @@ have."
 Bitfield messages essentially communicate which pieces of a torrent we already
 have."
   (with-socket-stream (stream socket)
-    (unless (had-pieces torrent)
+    (unless (or (had-pieces torrent) (needed-pieces torrent))
       (populate-torrent-piece-slots torrent))
     (let ((bitfield-vector (make-bitfield-vector torrent)))
       (send-peer-message-length-header (1+ (length bitfield-vector)) socket)
