@@ -284,9 +284,10 @@ have."
   (with-socket-stream (stream socket)
     (unless (had-pieces torrent)
       (populate-torrent-piece-slots torrent))
-    (send-peer-message-length-header (1+ (number-of-pieces torrent)) socket)
-    (write-byte (message-id-for-message-type :bitfield) stream)
-    (write-sequence (make-bitfield-vector torrent) stream)))
+    (let ((bitfield-vector (make-bitfield-vector torrent)))
+      (send-peer-message-length-header (1+ (length bitfield-vector)) socket)
+      (write-byte (message-id-for-message-type :bitfield) stream)
+      (write-sequence bitfield-vector stream))))
 
 (defun send-request-message (piece-index byte-offset block-length socket)
   "Sends a request message for PIECE-INDEX, with a BYTE-OFFSET byte offset
