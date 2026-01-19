@@ -202,11 +202,11 @@ NIL if not."
 MESSAGE-TYPE must be a keyword."
   (car (rassoc message-type *message-id-to-message-type-alist*)))
 
-(defun pad-integer-to-octets (integer total-length)
-  "Converts INTEGER to a big-endian vector of octets of length TOTAL-LENGTH.
+(defun pad-integer-to-octets (integer number-of-octets)
+  "Converts INTEGER to a big-endian vector of octets of length NUMBER-OF-OCTETS.
 Pads with zeros from the left."
   (let ((integer-vector (integer-to-octets integer)))
-    (concat-vec (make-array (- total-length (length integer-vector))
+    (concat-vec (make-array (- number-of-octets (length integer-vector))
                             :initial-element 0)
                 integer-vector)))
 
