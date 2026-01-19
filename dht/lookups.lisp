@@ -77,8 +77,8 @@ results are the same as the previous best results."
   (when-let (results (gethash target *lookup-results-lists*))
     (mapc (rcurry #'push-to-lookup-results target) results)
     (remhash target *lookup-results-lists*))
-  (let ((best-results-list (red-black-tree-to-list (gethash target *best-lookup-results*)))
-        (previous-best-results-list (red-black-tree-to-list
+  (let ((best-results-list (red-black-tree:list-elements (gethash target *best-lookup-results*)))
+        (previous-best-results-list (red-black-tree:list-elements
                                      (gethash target *previous-best-lookup-results*))))
     (cond ;; if the previous results are the same as the
           ;; current results, stop recursion. add the
@@ -130,5 +130,5 @@ the DHT for nearby nodes.")
   (remhash transaction-id *active-searches*)
   (unless (= (active-searches info-hash) 0)
     (return-from handle-search-response))
-  (lret ((results (red-black-tree-to-list (gethash info-hash *search-results*))))
+  (lret ((results (red-black-tree:list-elements (gethash info-hash *search-results*))))
     (remhash info-hash *search-results*)))
