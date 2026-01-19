@@ -40,7 +40,9 @@ configuration directory."
                           :direction :output
                           :if-exists :supersede
                           :if-does-not-exist :create)
-      (format file "~{~S~^~%~}"
+      (format file "~A~%~A~%~{~S~^~%~}"
+              ";;;; This file is automatically overwritten every time antediluvian shuts down."
+              ";;;; Manually editing it probably isn't what you want to do."
               (list (make-setting *port*)
                     (make-setting *use-implied-port-p*)
                     (make-setting *download-directory*))))))
