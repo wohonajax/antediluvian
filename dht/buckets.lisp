@@ -52,7 +52,7 @@ if successful, NIL otherwise."
 (defun find-closest-nodes (target)
   "Returns a list of the k closest nodes to TARGET."
   (let ((results (red-black-tree:make-tree :key-func (rcurry #'calculate-node-distance target))))
-    (iterate-table (curry #'insert-bounded results) :nodely t)
+    (iterate-table (curry #'bounded-insert results) :nodely t)
     (red-black-tree:list-elements results)))
 
 (defun first-empty-slot (bucket)
