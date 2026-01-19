@@ -59,7 +59,7 @@ closest nodes in the routing table."
 
 (defun push-to-results (node target hash-table)
   "Pushes NODE to the list of TARGET-related results under HASH-TABLE."
-  (insert (gethash target hash-table) node))
+  (insert-bounded (gethash target hash-table) node))
 
 (defun push-to-lookup-results (node target)
   "Pushes NODE to the list of lookup results under TARGET."

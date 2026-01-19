@@ -11,7 +11,7 @@
 ;;; instead of traversing the tree twice to insert an element and
 ;;; immediately delete it, check whether we've inserted something
 ;;; that will be deleted right away and just don't add it if so
-(defun insert-bounded (tree item)
+(defun %insert-bounded (tree item)
   (declare (optimize speed))
   (let ((not-rightmost-p nil))
     (flet ((%insert (tree node)
@@ -25,7 +25,7 @@
                            not-rightmost-p t)
                      (setf x (red-black-tree::right x))))
                (unless not-rightmost-p
-                 (return-from insert-bounded))
+                 (return-from %insert-bounded))
                (setf (red-black-tree::parent node) y)
                (cond
                  ((not (red-black-tree::node-p y))
@@ -44,10 +44,10 @@
           (red-black-tree:delete-node tree (red-black-tree:max (red-black-tree::root tree)))
         node)))))
 
-(defun insert (red-black-tree item)
+(defun insert-bounded (red-black-tree item)
   "Inserts ITEM into RED-BLACK-TREE. Maintains a maximum size of k."
   (if (= (red-black-tree-count red-black-tree) +k+)
-      (insert-bounded red-black-tree item)
+      (%insert-bounded red-black-tree item)
       (red-black-tree:insert red-black-tree item)))
 
 (defun red-black-tree-to-list (red-black-tree)
