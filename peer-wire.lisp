@@ -274,8 +274,8 @@ have."
                  when (member piece-index had-pieces)
                    do (setf (ldb (byte 1 i) bitfield) 1)
                  do (incf piece-index)
-                 finally (setf (aref bitfield-vector vector-index) bitfield)
-                         (return bitfield-vector))))
+                 finally (setf (aref bitfield-vector vector-index) bitfield))
+        finally (return bitfield-vector)))
 
 (defun send-bitfield-message (torrent socket)
   "Sends a bitfield message to the peer connected to SOCKET regarding TORRENT.
