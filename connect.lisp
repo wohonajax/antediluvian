@@ -143,26 +143,26 @@ peer socket."
 
 (defun initiate-peer-connection (peer)
   "Initiates a TCP socket connection with PEER."
-  (macrolet ((try-socket-connection ()
-               `(handler-case (socket-connect (peer-ip peer)
-                                              (peer-port peer)
-                                              :element-type '(unsigned-byte 8)
-                                              :timeout 10)
-                  ;; if the connection fails, abandon the peer
-                  (connection-refused-error ()
-                    (remove-peer-from-peer-list peer)
-                    (return-from thread-block))
-                  (timeout-error ()
-                    (remove-peer-from-peer-list peer)
-                    (return-from thread-block)))))
-    (push (make-thread (lambda ()
-                         (block thread-block
-                           (with-lock-held ((peer-lock peer))
-                             (setf (peer-socket peer) (try-socket-connection)))
-                           (unless (perform-handshake peer)
-                             (return-from thread-block))
-                           (peer-connection-loop peer))))
-          *peer-connection-threads*)))
+  (push (make-thread
+         (lambda ()
+           (block thread-block
+             (with-lock-held ((peer-lock peer))
+               (setf (peer-socket peer)
+                     (handler-case (socket-connect (peer-ip peer)
+                                                   (peer-port peer)
+                                                   :element-type '(unsigned-byte 8)
+                                                   :timeout 10)
+                       ;; if the connection fails, abandon the peer
+                       (connection-refused-error ()
+                         (remove-peer-from-peer-list peer)
+                         (return-from thread-block))
+                       (timeout-error ()
+                         (remove-peer-from-peer-list peer)
+                         (return-from thread-block)))))
+             (unless (perform-handshake peer)
+               (return-from thread-block))
+             (peer-connection-loop peer))))
+        *peer-connection-threads*))
 
 (defun connect-to-peer (peer)
   "Attempts to add PEER to the peer list and establish a connection."
