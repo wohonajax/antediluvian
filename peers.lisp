@@ -25,7 +25,7 @@
    ;; if true then requests will be incoming when we unchoke
    (interested-in-us-p :initform nil :accessor interested-in-us-p)
    ;; lock for this peer object, to allow for thread-safe modification
-   (lock :initform (make-lock) :accessor peer-lock)
+   (lock :initform (make-lock "Peer object lock") :accessor peer-lock)
    ;;; supported protocol extensions indicated
    ;;; by the reserved bytes in the handshake header
    (supports-azureus-messaging-protocol-p
@@ -54,7 +54,7 @@
   "A list of peer objects corresponding to peers for torrents we're downloading
 or uploading.")
 
-(defvar *peer-list-lock* (make-lock "peer list lock")
+(defvar *peer-list-lock* (make-lock "Peer list lock")
   "A lock for modifying *PEER-LIST* from multiple threads.")
 
 (defun make-peer (ip port hash)

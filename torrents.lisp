@@ -10,7 +10,7 @@
    (info :initarg :info :accessor torrent-info)
    (had-pieces :initform '() :accessor had-pieces)
    (needed-pieces :initform '() :accessor needed-pieces)
-   (lock :initform (make-lock) :accessor torrent-lock)))
+   (lock :initform (make-lock "Torrent object lock") :accessor torrent-lock)))
 
 (defvar *torrents* (list)
   "The list of added torrents.")
