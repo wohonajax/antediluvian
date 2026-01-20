@@ -1,5 +1,8 @@
 (in-package #:antediluvian)
 
+(defconstant +bits-per-byte+ 8
+  "The number of bits in one byte.")
+
 (defun minutes-since (time)
   "Returns the time in minutes that has elapsed since TIME."
   (/ (- (get-universal-time)

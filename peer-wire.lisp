@@ -261,9 +261,8 @@ the PIECE-INDEXth piece of a torrent."
   "Returns a vector of bitfields corresponding to the pieces of TORRENT that we
 have."
   (loop with had-pieces = (had-pieces torrent)
-        with bits-per-byte = 8
         ;; we want the ceiling so we don't lose pieces. extra bits are zeros
-        with pieces-length = (ceiling (number-of-pieces torrent) bits-per-byte)
+        with pieces-length = (ceiling (number-of-pieces torrent) +bits-per-byte+)
         with bitfield-vector = (make-octets pieces-length :initial-element 0)
         with piece-index = 0
         for vector-index below pieces-length
