@@ -31,10 +31,6 @@
 (defun make-octets (length &rest args)
   "Makes a vector of length LENGTH with an element type of (UNSIGNED-BYTE 8)."
   (apply #'make-array length :element-type '(unsigned-byte 8) args))
-
-(defun byte-array-to-ascii-string (byte-array)
-  "Converts BYTE-ARRAY to an ASCII string."
-  (map 'string #'code-char byte-array))
 #+mezzano
 (defun random-data (num-bytes)
   "Generates an (unsigned-byte 8) vector of length NUM-BYTES filled with
