@@ -9,7 +9,7 @@ header (for AnteDiluvian). Uses an Azureus-style client ID string."
                (concatenate 'string "-AD" *version* "-"))
               ;; 2 hyphens + 2 client ID characters
               ;; + 4 version number characters = 8
-              ;; 20 - 8 = 12
+              ;; 20 bytes total - 8 = 12 random bytes
               (random-data 12)))
 
 (defvar *peer-id* (generate-peer-id)
