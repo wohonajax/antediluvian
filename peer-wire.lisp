@@ -17,8 +17,8 @@ header (for AnteDiluvian). Uses an Azureus-style client ID string."
 
 ;;;; Peer wire protocol
 
-(defconstant +protocol-string+ "BitTorrent protocol"
-  "The protocol identifier string.")
+(defconstant +protocol-string+ (ascii-string-to-byte-array "BitTorrent protocol")
+  "The protocol identifier string as a byte vector.")
 
 (defconstant +protocol-string-length+ (length +protocol-string+)
   "The length header of the protocol identifier string. Equal to 19 for the
@@ -30,7 +30,7 @@ BitTorrent protocol.")
 (defun write-handshake-header (stream)
   "Writes the BitTorrent handshake header to STREAM."
   (write-byte +protocol-string-length+ stream) ; 19
-  (write-sequence (ascii-string-to-byte-array +protocol-string+) stream)) ; "BitTorrent protocol"
+  (write-sequence +protocol-string+ stream)) ; "BitTorrent protocol"
 
 (defun write-handshake-header-reserved-bytes (stream)
   "Writes the reserved bytes of the handshake that indicate protocol
@@ -99,8 +99,7 @@ Returns the peer's ID if successful, NIL otherwise."
                   peer
                   read-handshake)
     (read-sequence protocol-vector stream)
-    (close-unless (string= (byte-array-to-ascii-string protocol-vector)
-                           +protocol-string+)
+    (close-unless (equalp protocol-vector +protocol-string+)
                   peer
                   read-handshake)
     (read-sequence extensions-vector stream)
@@ -127,8 +126,7 @@ object if successful, NIL otherwise."
                   peer
                   receive-handshake)
     (read-sequence protocol-vector stream)
-    (close-unless (string= (byte-array-to-ascii-string protocol-vector)
-                           +protocol-string+)
+    (close-unless (equalp protocol-vector +protocol-string+)
                   peer
                   receive-handshake)
     (read-sequence extensions-vector stream)
