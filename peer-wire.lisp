@@ -30,7 +30,7 @@ BitTorrent protocol.")
 (defun write-handshake-header (stream)
   "Writes the BitTorrent handshake header to STREAM."
   (write-byte +protocol-string-length+ stream) ; 19
-  (write-sequence +protocol-string+ stream)) ; "BitTorrent protocol"
+  (write-sequence (ascii-string-to-byte-array +protocol-string+) stream)) ; "BitTorrent protocol"
 
 (defun write-handshake-header-reserved-bytes (stream)
   "Writes the reserved bytes of the handshake that indicate protocol
