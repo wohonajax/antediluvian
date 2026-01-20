@@ -17,14 +17,14 @@ header (for AnteDiluvian). Uses an Azureus-style client ID string."
 
 ;;;; Peer wire protocol
 
-(defconstant +protocol-string+ (ascii-string-to-byte-array "BitTorrent protocol")
+(defvar +protocol-string+ (ascii-string-to-byte-array "BitTorrent protocol")
   "The protocol identifier string as a byte vector.")
 
-(defconstant +protocol-string-length+ (length +protocol-string+)
+(defvar +protocol-string-length+ (length +protocol-string+)
   "The length header of the protocol identifier string. Equal to 19 for the
 BitTorrent protocol.")
 
-(defconstant +length-offset+ (expt 2 14)
+(defvar +length-offset+ (expt 2 14)
   "The length offset to use for request and cancel messages.")
 
 (defun write-handshake-header (stream)
