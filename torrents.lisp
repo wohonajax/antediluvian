@@ -86,15 +86,21 @@ a filespec to a torrent file, or a SHA1 hash."
                  (gethash "info" parsed-source)))
          (download-path (make-download-pathname name))
          (file-list (get-file-list info download-path)))
-    (ensure-all-directories-exist file-list)
     (make-instance 'torrent :info-hash hash :name name
                             :destination download-path
                             :file-list file-list
                             :info parsed-source)))
+;;; TODO: populate-torrent-piece-slots? it only gets defined later in files.lisp
+(defun initialize-torrent (torrent)
+  "Initializes things related to TORRENT."
+  (ensure-all-directories-exist (torrent-file-list torrent)))
 
 (defun parse-sources (list-of-sources)
   "Converts every source in LIST-OF-SOURCES to a torrent object."
-  (mapcar #'parse-source list-of-sources))
+  (mapcar (lambda (source)
+            (lret ((torrent (parse-source source)))
+              (initialize-torrent torrent)))
+          list-of-sources))
 
 (defun torrent-pieces (torrent)
   "Gets the pieces from the metainfo for TORRENT."
