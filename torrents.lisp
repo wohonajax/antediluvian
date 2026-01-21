@@ -51,8 +51,8 @@ INFO-DICTIONARY."
                                     *download-directory*))
 
 (defun get-file-list (info-dictionary root-path)
-  "Returns a list of pathnames specifying download locations relative
-to ROOT-PATH for a given torrent's INFO-DICTIONARY."
+  "Returns a list of pathnames specifying download locations in a given
+ROOT-PATH for a given torrent's INFO-DICTIONARY."
   (if-let (files (gethash "files" info-dictionary))
     (mapcar (lambda (file-dictionary)
               ;; the path entry will be a list of (sub-)directories
