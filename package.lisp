@@ -34,6 +34,7 @@
                 #:digest-sequence
                 ;; general utilities
                 #:ascii-string-to-byte-array
+                #:byte-array-to-hex-string
                 #:integer-to-octets
                 #:octets-to-integer
                 ;; ironclad doesn't support mezzano

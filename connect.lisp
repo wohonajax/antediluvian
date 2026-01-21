@@ -138,7 +138,9 @@ peer socket."
   "Accepts a peer connection from a SOCKET and listens in a new thread."
   (when-let* ((accepted-socket (socket-accept socket))
               (peer (receive-handshake accepted-socket)))
-    (push (make-thread (lambda () (peer-connection-loop peer)))
+    (push (make-thread (lambda () (peer-connection-loop peer))
+                       :name (format nil "Peer ~A connection thread"
+                                     (byte-array-to-hex-string (peer-id peer))))
           *peer-connection-threads*)))
 
 (defun connect-peer-socket (peer)
@@ -165,7 +167,8 @@ seconds."
                   (setf (peer-socket peer) socket)))
               (unless (perform-handshake peer)
                 (return-from thread-block))
-              (peer-connection-loop peer))))
+              (peer-connection-loop peer)))
+          :name (format nil "Peer ~A connection thread" (byte-array-to-hex-string (peer-id peer))))
         *peer-connection-threads*))
 
 (defun connect-to-peer (peer)
