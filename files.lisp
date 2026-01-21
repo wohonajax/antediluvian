@@ -28,7 +28,7 @@ evaluated in a FINALLY (RETURN RETURN-FORM) clause."
             (file-dict-list (or (gethash "files" ,info-dictionary)
                                 (dict "path" (make-single-file-download-path ,info-dictionary)
                                       "length" (gethash "length" ,info-dictionary))))
-            (,piece-length (gethash "piece length" ,info-dictionary))
+            (,piece-length (piece-length ,piece-index ,torrent))
             (,byte-index (+ (* ,piece-index ,piece-length)
                             ,byte-offset))
             (file-list (torrent-file-list ,torrent)))
