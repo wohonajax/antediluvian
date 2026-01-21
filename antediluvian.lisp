@@ -18,7 +18,7 @@ list of SHA1 hashes, magnet links, or torrent file paths."
   "Sends announces to all trackers associated with each active torrent that
 we're not active anymore."
   (dolist (torrent *torrents*)
-    (dolist (announce-tier (gethash "annonce-list" (torrent-info torrent)))
+    (dolist (announce-tier (gethash "announce-list" (torrent-info torrent)))
       (dolist (announce-url announce-tier)
         (send-announce announce-url (torrent-info-hash torrent) :event :stopped)))))
 
