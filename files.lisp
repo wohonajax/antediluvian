@@ -126,39 +126,6 @@ TORRENT to disk."
       (pushnew piece-index (had-pieces torrent))
       (removef (needed-pieces torrent) piece-index))))
 
-(defun write-piece (torrent piece piece-index)
-  "Writes the given PIECE-INDEXth PIECE of TORRENT to its file."
-  (let* ((file-destination-path (torrent-destination torrent))
-         (info-dictionary (gethash "info" (torrent-info torrent)))
-         (pieces (gethash "pieces" info-dictionary))
-         (sha1-index (* piece-index 20))
-         (piece-length (gethash "piece length" info-dictionary)))
-    (unless (equalp (digest-sequence :sha1 piece)
-                    (subseq pieces sha1-index (+ sha1-index 20)))
-      (return-from write-piece))
-    (with-open-file (file-stream file-destination-path
-                                 :direction :output
-                                 :if-exists :overwrite
-                                 :if-does-not-exist :create
-                                 :element-type '(unsigned-byte 8))
-      (file-position file-stream (* piece-index piece-length))
-      (write-sequence piece file-stream))))
-
-(defun write-block (torrent block piece-index begin)
-  "Writes a BLOCK starting at a BEGIN offset within the PIECE-INDEXth piece of
-TORRENT to the appropriate file."
-  (let* ((file-destination-path (torrent-destination torrent))
-         (info-dictionary (gethash "info" (torrent-info torrent)))
-         (piece-length (gethash "piece-length" info-dictionary)))
-    (with-open-file (file-stream file-destination-path
-                                 :direction :output
-                                 :if-exists :overwrite
-                                 :if-does-not-exist :create
-                                 :element-type '(unsigned-byte 8))
-      (file-position file-stream (+ (* piece-index piece-length)
-                                    begin))
-      (write-sequence block file-stream))))
-
 (defun read-block (torrent piece-index byte-offset block-length)
   "Reads a block from TORRENT indicated by PIECE-INDEX, BYTE-OFFSET, and
 BLOCK-LENGTH and returns it as a byte vetor."
