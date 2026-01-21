@@ -13,6 +13,14 @@ list of SHA1 hashes, magnet links, or torrent file paths."
     (mapc #'add-torrent torrents)
     ;; FIXME: Figure out a better interface than the DHT function
     (apply #'dht (mapcar #'torrent-info-hash torrents))))
+;;; TODO: keep track of how much we've uploaded/downloaded
+(defun send-stopped-announces ()
+  "Sends announces to all trackers associated with each active torrent that
+we're not active anymore."
+  (dolist (torrent *torrents*)
+    (dolist (announce-tier (gethash "annonce-list" (torrent-info torrent)))
+      (dolist (announce-url announce-tier)
+        (send-announce announce-url (torrent-info-hash torrent) :event :stopped)))))
 
 (defun cleanup ()
   "Performs cleanup on shutdown."
@@ -27,7 +35,8 @@ list of SHA1 hashes, magnet links, or torrent file paths."
   (with-lock-held (*peer-list-lock*)
     (mapc #'close-peer-socket *peer-list*))
   (mapc #'remove-peer-from-peer-list *peer-list*)
-  (destroy-thread *file-writer-thread*))
+  (destroy-thread *file-writer-thread*)
+  (send-stopped-announces))
 
 (defun start (&rest sources)
   "Starts up the torrent client with SOURCES, which should be SHA1 hashes,
