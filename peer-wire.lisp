@@ -331,8 +331,7 @@ this DHT node is listening on."
 (defun request-piece (torrent piece-index socket)
   "Sends request messages for the PIECE-INDEXth piece of TORRENT to the peer
 connected to SOCKET."
-  (loop with piece-length = (gethash "piece length"
-                                     (gethash "info" (torrent-info torrent)))
+  (loop with piece-length = (piece-length piece-index torrent)
         with bytes-requested-so-far = 0
         with current-request-length = +length-offset+
         until (= bytes-requested-so-far piece-length)

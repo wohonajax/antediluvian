@@ -107,3 +107,28 @@ a filespec to a torrent file, or a SHA1 hash."
   ;; so divide the length of the "pieces" value by 20 (bytes per hash)
   (/ (length (torrent-pieces torrent))
      20))
+
+(defun torrent-length (torrent)
+  "Returns the length of TORRENT in bytes."
+  (let ((info-dictionary (gethash "info" (torrent-info torrent))))
+    (if-let (files (gethash "files" info-dictionary))
+      (let ((total 0))
+        (dolist (file-dictionary files)
+          (incf total (gethash "length" file-dictionary)))
+        total)
+      (gethash "length" info-dictionary))))
+
+(defun length-of-last-piece (torrent)
+  "Returns the length of the last piece of TORRENT in bytes."
+  (let* ((metainfo (torrent-info torrent))
+         (info-dictionary (gethash "info" metainfo))
+         (total-length (torrent-length torrent)))
+    (if-let (files (gethash "files" info-dictionary))
+      (- total-length (gethash "length" (lastcar files)))
+      (- total-length (gethash "length" info-dictionary)))))
+
+(defun piece-length (piece-index torrent)
+  "Returns the length of the PIECE-INDEXth piece of TORRENT in bytes."
+  (if (= piece-index (1- (number-of-pieces torrent)))
+      (length-of-last-piece torrent)
+      (gethash "piece length" (gethash "info" (torrent-info torrent)))))

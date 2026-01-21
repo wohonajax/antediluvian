@@ -5,6 +5,7 @@
   (:import-from #:alexandria
                 ;; general utilities
                 #:extremum
+                #:lastcar
                 #:removef
                 ;; higher order functions
                 #:curry
