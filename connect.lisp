@@ -141,27 +141,31 @@ peer socket."
     (push (make-thread (lambda () (peer-connection-loop peer)))
           *peer-connection-threads*)))
 
+(defun connect-peer-socket (peer)
+  "Attempts to connect a TCP socket to PEER. Signals a TIMEOUT-ERROR after 10
+seconds."
+  (socket-connect (peer-ip peer) (peer-port peer)
+                  :element-type '(unsigned-byte 8)
+                  :timeout 10))
+
 (defun initiate-peer-connection (peer)
   "Initiates a TCP socket connection with PEER."
   (push (make-thread
          (lambda ()
            (block thread-block
-             (with-lock-held ((peer-lock peer))
-               (setf (peer-socket peer)
-                     (handler-case (socket-connect (peer-ip peer)
-                                                   (peer-port peer)
-                                                   :element-type '(unsigned-byte 8)
-                                                   :timeout 10)
-                       ;; if the connection fails, abandon the peer
-                       (connection-refused-error ()
-                         (remove-peer-from-peer-list peer)
-                         (return-from thread-block))
-                       (timeout-error ()
-                         (remove-peer-from-peer-list peer)
-                         (return-from thread-block)))))
-             (unless (perform-handshake peer)
-               (return-from thread-block))
-             (peer-connection-loop peer))))
+             (let ((socket (handler-case (connect-peer-socket peer)
+                              ;; if the connection fails, abandon the peer
+                              (connection-refused-error ()
+                                (remove-peer-from-peer-list peer)
+                                (return-from thread-block))
+                              (timeout-error ()
+                                (remove-peer-from-peer-list peer)
+                                (return-from thread-block)))))
+                (with-lock-held ((peer-lock peer))
+                  (setf (peer-socket peer) socket)))
+              (unless (perform-handshake peer)
+                (return-from thread-block))
+              (peer-connection-loop peer))))
         *peer-connection-threads*))
 
 (defun connect-to-peer (peer)
