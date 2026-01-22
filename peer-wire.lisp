@@ -150,7 +150,13 @@ NIL if not."
          (stream (socket-stream socket))
          (info-hash (torrent-info-hash (peer-torrent peer))))
     (write-handshake info-hash stream)
-    (if-let (peer-id (read-handshake info-hash peer stream))
+    (if-let (peer-id (handler-case (read-handshake info-hash peer stream)
+                       ;; reading from a connection that has
+                       ;; been terminated gives us an error.
+                       ;; the peer probably just doesn't have
+                       ;; the info hash we sent.
+                       ;; consider the handshake failed
+                       (error () (return-from perform-handshake nil))))
       (with-lock-held ((peer-lock peer))
         (setf (peer-id peer) peer-id))
       (return-from perform-handshake nil))
