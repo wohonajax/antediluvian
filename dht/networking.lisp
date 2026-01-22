@@ -250,8 +250,9 @@ node in the response."
                                          (declare (ignore e))
                                          (invoke-restart 'bencode::continue))))
                    (bencode:decode packet))))
-      (eswitch ((gethash "y" dict) :test #'string=)
+      (switch ((gethash "y" dict) :test #'string=)
         ("q" (parse-query dict host port))
         ("r" (parse-response dict host port))
         ("e" ;; TODO: handle errors
-         )))))
+         )
+        (t (dht-error host port :method dict))))))

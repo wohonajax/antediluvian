@@ -11,7 +11,6 @@
                 #:curry
                 #:rcurry
                 ;; switch
-                #:eswitch
                 #:switch
                 ;; conditional let forms
                 #:if-let
