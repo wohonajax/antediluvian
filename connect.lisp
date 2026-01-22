@@ -177,7 +177,7 @@ seconds."
               (unless (perform-handshake peer)
                 (return-from thread-block))
               (peer-connection-loop peer)))
-          :name (make-peer-thread-name peer))
+         :name (make-peer-thread-name peer))
         *peer-connection-threads*))
 
 (defun connect-to-peer (peer)
