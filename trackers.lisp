@@ -58,8 +58,9 @@ request. Returns a list of peers."
   "Sends an announce GET request for TORRENT to ANNOUNCE-URL. Returns NIL if
 the request fails."
   (let ((info-hash (torrent-info-hash torrent)))
-    (handler-case (parse-announce-response (send-announce announce-url info-hash)
-                                           info-hash)
+    (handler-case (mapc (lambda (peer) (setf (peer-torrent peer) torrent))
+                        (parse-announce-response (send-announce announce-url info-hash)
+                                                 info-hash))
       (error ()))))
 
 (defun torrent-announce (torrent)
@@ -83,7 +84,5 @@ the list of peers the tracker responds with."
           (let ((operative-tier (nth current-tier announce-list)))
             (rotatef (first operative-tier)
                      (nth current-tracker operative-tier))))
-        ;; return the list of peers after populating their torrent slots
-        (mapc (lambda (peer) (setf (peer-torrent peer) torrent))
-              peers))
+        peers)
       (announce-to-tracker torrent (gethash "announce" metadata)))))
