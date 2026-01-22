@@ -136,7 +136,11 @@ peer socket."
 
 (defun make-peer-thread-name (peer)
   "Returns a string naming a thread associated with PEER."
-  (format nil "Peer ~A connection thread" (byte-array-to-hex-string (peer-id peer))))
+  ;; FIXME: we don't perform the handshake outside of calls to make-thread,
+  ;; meaning we don't get the peer's ID unless we're reusing a peer
+  (if-let (id (peer-id peer))
+    (format nil "Peer ~A connection thread" (byte-array-to-hex-string id))
+    "Peer connection thread"))
 
 (defun accept-peer-connection (socket)
   "Accepts a peer connection from a SOCKET and listens in a new thread."
