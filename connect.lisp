@@ -134,13 +134,16 @@ peer socket."
     (close-peer-socket peer)
     (remove-peer-from-peer-list peer)))
 
+(defun make-peer-thread-name (peer)
+  "Returns a string naming a thread associated with PEER."
+  (format nil "Peer ~A connection thread" (byte-array-to-hex-string (peer-id peer))))
+
 (defun accept-peer-connection (socket)
   "Accepts a peer connection from a SOCKET and listens in a new thread."
   (when-let* ((accepted-socket (socket-accept socket))
               (peer (receive-handshake accepted-socket)))
     (push (make-thread (lambda () (peer-connection-loop peer))
-                       :name (format nil "Peer ~A connection thread"
-                                     (byte-array-to-hex-string (peer-id peer))))
+                       :name (make-peer-thread-name peer))
           *peer-connection-threads*)))
 
 (defun connect-peer-socket (peer)
@@ -156,19 +159,19 @@ seconds."
          (lambda ()
            (block thread-block
              (let ((socket (handler-case (connect-peer-socket peer)
-                              ;; if the connection fails, abandon the peer
-                              (connection-refused-error ()
-                                (remove-peer-from-peer-list peer)
-                                (return-from thread-block))
-                              (timeout-error ()
-                                (remove-peer-from-peer-list peer)
-                                (return-from thread-block)))))
+                             ;; if the connection fails, abandon the peer
+                             (connection-refused-error ()
+                               (remove-peer-from-peer-list peer)
+                               (return-from thread-block))
+                             (timeout-error ()
+                               (remove-peer-from-peer-list peer)
+                               (return-from thread-block)))))
                 (with-lock-held ((peer-lock peer))
                   (setf (peer-socket peer) socket)))
               (unless (perform-handshake peer)
                 (return-from thread-block))
               (peer-connection-loop peer)))
-          :name (format nil "Peer ~A connection thread" (byte-array-to-hex-string (peer-id peer))))
+          :name (make-peer-thread-name peer))
         *peer-connection-threads*))
 
 (defun connect-to-peer (peer)
