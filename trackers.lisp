@@ -31,7 +31,8 @@ The EVENT keyword argument should be one of :STARTED, :STOPPED, or :COMPLETED."
   "Parses RESPONSE-VECTOR, a Bencoded byte vector result from an announce GET
 request. Returns a list of peers."
   (let* ((bencode:*binary-key-p* (curry #'equal '("peers")))
-         (peers-vector (gethash "peers" (bencode:decode response-vector)))
+         (bdecoded-response (bencode:decode response-vector))
+         (peers-vector (gethash "peers" bdecoded-response))
          (total-length (length peers-vector))
          peers)
     (do ((i 0 (+ i 6)))
