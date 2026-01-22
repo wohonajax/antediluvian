@@ -61,3 +61,8 @@ random data."
                    (push-char big-byte)
                    (push-char little-byte))))
         finally (return (subseq result 0 i))))
+
+(defun kill-thread (thread)
+  "Kills THREAD by calling DESTROY-THREAD. Does nothing if THREAD isn't active."
+  (when (thread-alive-p thread)
+    (destroy-thread thread)))

@@ -83,9 +83,9 @@ fails, try ports 6881 through 6889."
   "Performs cleanup on program shutdown. Closes sockets, destroys threads, and
 saves settings."
   (socket-close *listening-dht-socket*)
-  (destroy-thread *secret-rotation-thread*)
-  (destroy-thread *main-dht-thread*)
-  (destroy-thread *bookkeeping-thread*)
+  (kill-thread *secret-rotation-thread*)
+  (kill-thread *main-dht-thread*)
+  (kill-thread *bookkeeping-thread*)
   (save-settings))
 
 (defun dht (&rest hashes)
