@@ -173,19 +173,19 @@ seconds."
   "Initiates a TCP socket connection with PEER."
   (push (make-thread
          (lambda ()
-           (block thread-block
+           (block thread
              (let ((socket (handler-case (connect-peer-socket peer)
                              ;; if the connection fails, abandon the peer
                              (connection-refused-error ()
                                (remove-peer-from-peer-list peer)
-                               (return-from thread-block))
+                               (return-from thread))
                              (timeout-error ()
                                (remove-peer-from-peer-list peer)
-                               (return-from thread-block)))))
+                               (return-from thread)))))
                 (with-lock-held ((peer-lock peer))
                   (setf (peer-socket peer) socket)))
               (unless (perform-handshake peer)
-                (return-from thread-block))
+                (return-from thread))
               (peer-connection-loop peer)))
          :name (make-peer-thread-name peer))
         *peer-connection-threads*))
