@@ -107,32 +107,42 @@ peer socket."
                  (member piece-to-request (had-pieces peer)))))
     (request-piece torrent piece-to-request (peer-socket peer))))
 
-(defun peer-connection-loop (peer)
-  "Main loop for communicating with a PEER using peer wire protocol."
+(defun peer-connection-prelude (peer)
+  "Initial setup for a connection with PEER, including bitfield messages, port
+messages, and unchoke messages."
   (let ((socket (peer-socket peer))
         (torrent (peer-torrent peer)))
-    (handler-case
-        ;; TODO: send keep-alive messages every 2 minutes
-        (loop initially (send-bitfield-message torrent socket)
-                        (when (supports-bittorrent-dht-p peer)
-                          (send-port-message socket))
-                        (send-unchoke-message socket)
-                        (with-lock-held ((peer-lock peer))
-                          (setf (am-choking-p peer) nil))
-              ;; read protocol messages
-              unless (with-lock-held ((peer-lock peer))
-                       (am-choking-p peer))
-                do (wait-for-input socket)
-                   (read-peer-wire-message peer)
-              ;; send protocol messages
-              unless (with-lock-held ((peer-lock peer))
-                       (choking-us-p peer))
-                do (send-piece-to-peer peer)
-                   (request-had-piece peer))
-      (error ()))
-    ;; errors take us here; do cleanup
-    (close-peer-socket peer)
-    (remove-peer-from-peer-list peer)))
+    (send-bitfield-message torrent socket)
+    (when (supports-bittorrent-dht-p peer)
+      (send-port-message socket))
+    (with-lock-held ((peer-lock peer))
+      (setf (am-choking-p peer) nil))))
+
+(defun read-protocol-message (peer)
+  "Reads a protocol message from PEER unless PEER is being choked."
+  (unless (with-lock-held ((peer-lock peer))
+            (am-choking-p peer))
+    (wait-for-input (peer-socket peer))
+    (read-peer-wire-message peer)))
+
+(defun send-protocol-messages (peer)
+  "Sends protocol messages to PEER unless PEER is choking us."
+  (unless (with-lock-held ((peer-lock peer))
+            (choking-us-p peer))
+    (send-piece-to-peer peer)
+    (request-had-piece peer)))
+
+(defun peer-connection-loop (peer)
+  "Main loop for communicating with a PEER using peer wire protocol."
+  (handler-case
+      ;; TODO: send keep-alive messages every 2 minutes
+      (loop initially (peer-connection-prelude peer)
+            do (read-protocol-message peer)
+               (send-protocol-messages peer))
+    (error ()))
+  ;; errors take us here; do cleanup
+  (close-peer-socket peer)
+  (remove-peer-from-peer-list peer))
 
 (defun make-peer-thread-name (peer)
   "Returns a string naming a thread associated with PEER."
